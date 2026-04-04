@@ -63,6 +63,7 @@ var action_modifiers: Dictionary = {
 	"meditate":{ "will.focus": 0.05, "holy.faith": 0.03 },
 	"pray":    { "holy.faith": 0.08, "holy.peace": 0.03 },
 	"wait":    { "will.resolve": 0.01 },
+	"swim":    { "physical.endurance": 0.04, "physical.movement": 0.02 },
 }
 
 func _ready() -> void:
