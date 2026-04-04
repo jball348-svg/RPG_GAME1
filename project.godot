@@ -1,0 +1,20 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; but this file may be used by third-party tools.
+
+config_version=5
+
+[application]
+
+config/name="RPG_GAME1"
+config/description="Archetypal fantasy RPG — Pure vs Mixed class allegory"
+run/main_scene="res://scenes/main/Main.tscn"
+config/features=PackedStringArray("4.2", "GL Compatibility")
+config/icon="res://icon.svg"
+
+[autoload]
+
+SignalBus="*res://autoloads/SignalBus.gd"
+StatRegistry="*res://autoloads/StatRegistry.gd"
+GameClock="*res://autoloads/GameClock.gd"
+PlayerData="*res://autoloads/PlayerData.gd"
