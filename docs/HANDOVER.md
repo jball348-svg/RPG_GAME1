@@ -147,7 +147,7 @@ Transitions: Map ↔ Battle, Map ↔ Cutscene, Map + HUD overlay (HUD does not r
 | 3. World and setting | ✅ Complete |
 | 4. Core loop document | ✅ Complete |
 | 5. Stat registry | ✅ Complete |
-| 6. Technical spike in Godot | 🔄 In progress — Day 1 done |
+| 6. Technical spike in Godot | 🔄 In progress — Day 2 done |
 | 7. Art direction document | ⬜ Not started |
 | 8. Vertical slice | ⬜ Not started |
 
@@ -158,7 +158,7 @@ Transitions: Map ↔ Battle, Map ↔ Cutscene, Map + HUD overlay (HUD does not r
 **Goal:** Prove four things before building the game proper.
 
 **Success criteria (all four must be green before spike is complete):**
-- [ ] Walk on map → Movement skill increments in debug panel
+- [x] Walk on map → Movement skill increments in debug panel
 - [ ] Press attack in battle → Strength increments
 - [ ] Clock runs across all four state transitions without pausing
 - [ ] Pure/Mix flag → NPC shows different dialogue line
@@ -175,19 +175,34 @@ All four autoloads created and pushed to repo. `project.godot` configured with a
 - `docs/stat_registry.md`, `docs/spike_progress.md`
 - Scene folder structure: `scenes/main`, `scenes/battle`, `scenes/hud`, `scenes/cutscene`, `assets/placeholder`
 
-### Day 2 — TODO
-**Goal:** SceneManager autoload + Map scene. Player can move around. Walking fires stat events. Debug panel shows Movement ticking.
+### Day 2 — COMPLETE ✅
+**Goal achieved:** permanent scene shell is in place, the project boots into the map prototype, walking emits stat events, and the debug overlay shows Movement ticking live.
 
-**Tasks:**
-1. Create `autoloads/SceneManager.gd` — `change_state(new_state: String)` function, loads correct scene, handles transitions
-2. Create `scenes/main/Main.tscn` + `Main.gd` — entry point, initialises game, calls SceneManager
-3. Create `scenes/map/Map.tscn` + `Map.gd` — placeholder rectangle tilemap, coloured square player, WASD/arrow movement
-4. Every step emits `SignalBus.action_performed({ "type": "walk" })`
-5. Create `scenes/debug/DebugPanel.tscn` — overlay showing all stat values live, clock time, active flags
-6. Verify: walk on map → Movement stat increments visibly in debug panel
+**Files created / updated:**
+- `autoloads/SceneManager.gd` — exclusive game-state loader for Map / Battle / Cutscene
+- `scenes/main/Main.tscn`, `scenes/main/Main.gd` — root shell with `StateHost` + persistent `OverlayHost`
+- `scenes/map/Map.tscn`, `scenes/map/Map.gd` — bounded placeholder map with 4-direction movement
+- `scenes/debug/DebugPanel.tscn`, `scenes/debug/DebugPanel.gd` — persistent overlay showing state, clock, flags, and the stat snapshot
+- `project.godot` — `SceneManager` autoload added, `move_up`, `move_down`, `move_left`, `move_right` mapped to `WASD` + arrow keys
+
+**Verification completed:**
+- Project now boots successfully into `scenes/main/Main.tscn`
+- Startup performs one clean transition into `map`
+- Walking emits `SignalBus.action_performed({ "type": "walk" })` once per completed step threshold
+- `physical.movement` increases by the existing `0.02` action modifier and appears immediately in the debug panel
+- Clock remains visible and continues advancing while the map scene is active
 
 ### Day 3 — TODO
-Battle scene. Two buttons (Attack, Cast Spell). Each fires correct signal. Transition from map to battle and back. Clock does not pause during transition.
+**Goal:** battle round-trip proof. Enter battle from map, fire combat stat events, and return to map without losing the clock or debug overlay.
+
+**Tasks:**
+1. Create `scenes/battle/Battle.tscn` + `Battle.gd`
+2. Add a temporary map-side trigger that calls `SceneManager.change_state("battle")`
+3. Add two battle buttons: `Attack` and `Cast Spell`
+4. `Attack` emits `SignalBus.action_performed({ "type": "attack" })`
+5. `Cast Spell` emits `SignalBus.action_performed({ "type": "cast" })`
+6. Add a return path to map through `SceneManager.change_state("map")`
+7. Verify: `physical.strength` / magik stats tick correctly and the clock + debug overlay persist across the full map → battle → map round-trip
 
 ### Day 4 — TODO
 HUD scene (overlay, not replacing map). Cutscene scene — NPC moves, dialogue box reads Pure/Mix flag, shows one of two lines.
@@ -205,12 +220,14 @@ autoloads/          Global singletons (always running)
   StatRegistry.gd
   GameClock.gd
   PlayerData.gd
+  SceneManager.gd
 scenes/
   main/             Entry point
   map/              Top-down map state
   battle/           Battle state
   hud/              HUD overlay
   cutscene/         Cutscene state
+  debug/            Persistent debug overlay for the spike
 assets/
   placeholder/      Spike-only placeholder art
 docs/
@@ -229,5 +246,7 @@ project.godot       Godot project config
 > "Here is the project context: [paste HANDOVER.md]. I am working on Day 2 of the technical spike. Help me build the SceneManager and Map scene."
 
 **After each session:** Update `docs/spike_progress.md` to reflect what was completed. Update this document if any locked decisions change or new decisions are made.
+
+**Current spike convention:** gameplay world movement uses dedicated `move_*` actions in `project.godot` (`WASD` + arrow keys). Keep `ui_*` reserved for menus and overlays.
 
 **This document lives at:** `docs/HANDOVER.md` in the repo. Keep it current. It is the shared memory of the project.
