@@ -16,7 +16,7 @@ Everything else is production.
 ---
 
 ## Stage 1 — Real town map (editor-designed)
-**Status:** 🔄 In progress (tileset proof done by Cascade, runtime-generated layout)
+**Status:** 🔄 In progress (editor-built map in place; collision + trigger + camera pass completed)
 
 **Goal:** A town map that is designed in Godot's TileMap editor, not assembled in GDScript at runtime.
 
@@ -26,15 +26,15 @@ Everything else is production.
 - [X] Acquire a town building tileset (facades, rooftops, doors, windows) — 32×32, CC0, matching art direction
 - [x] Redesign the starting town in the TileMap editor: paths, buildings, shop locations, NPC placement zones
 - [x] Remove the runtime tile-generation code from `Map.gd` — map data lives in the `.tscn`, not in script
-- [ ] Place collision shapes on impassable tiles (walls, trees, buildings)
-- [ ] Place trigger zones for: town exit (north), bookstore entrance, key NPC positions
-- [ ] Camera bounds set to match the designed map
+- [x] Place collision shapes on impassable tiles (walls, trees, buildings)
+- [x] Place trigger zones for: town exit (north), bookstore entrance, key NPC positions
+- [x] Camera bounds set to match the designed map
 
 **Verification:**
 - [ ] Walk around the town — collision works, camera stays in bounds
 - [ ] Town reads as a town: buildings are identifiable, paths are clear, there's a sense of place
-- [ ] Trigger zones are in place even if not yet wired
-- [ ] No runtime tile generation remaining in Map.gd
+- [x] Trigger zones are in place even if not yet wired
+- [x] No runtime tile generation remaining in Map.gd
 
 **Done state:** The starting town exists as a real designed level.
 
@@ -70,14 +70,14 @@ Everything else is production.
 ---
 
 ## Stage 3 — Town exit and mine entrance cutscene
-**Status:** ⬜ Not started
+**Status:** 🔄 In progress
 
 **Goal:** Leaving the town triggers a point-of-no-return prompt. Confirming plays a cutscene.
 
 **Tasks:**
-- [ ] Town exit trigger zone (north edge of map) — overlap fires a confirmation dialogue: "You are leaving town. The mine awaits. Continue?"
-- [ ] Confirmation yes → transition to cutscene state
-- [ ] Confirmation no → player stays in town
+- [x] Town exit trigger zone (north edge of map) — overlap fires a confirmation dialogue: "You are leaving town. The mine awaits. Continue?"
+- [x] Confirmation yes → transition to cutscene state
+- [x] Confirmation no → player stays in town
 - [ ] Cutscene: player sprite walks toward the mine entrance, class-specific animation plays, equipment loadout visible
 - [ ] Cutscene fires `Will.resolve` and `Holy.faith` stat increments (entering danger willingly)
 - [ ] Cutscene ends → transition to mine map
@@ -261,7 +261,7 @@ Everything else is production.
 |---|---|---|
 | 1 | Real town map (editor-designed) | 🔄 In progress |
 | 2 | NPC dialogue system | ⬜ |
-| 3 | Town exit + mine entrance cutscene | ⬜ |
+| 3 | Town exit + mine entrance cutscene | 🔄 In progress |
 | 4 | Mine dungeon map | ⬜ |
 | 5 | Battle system | ⬜ |
 | 6 | Boss room + moral choice | ⬜ |

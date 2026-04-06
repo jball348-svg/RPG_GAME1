@@ -4,7 +4,7 @@
 [ext_resource type="TileSet" path="res://scenes/map/TownTileset.tres" id="2_nuen2"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hgphw"]
-size = Vector2(192, 96)
+size = Vector2(1280, 96)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_4yt6b"]
 size = Vector2(64, 64)
@@ -19,6 +19,16 @@ size = Vector2(96, 96)
 size = Vector2(96, 64)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_48h8m"]
+size = Vector2(20, 20)
+
+[sub_resource type="Gradient" id="Gradient_jx2fk"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(0.717647, 0.603922, 0.337255, 1, 0.717647, 0.603922, 0.337255, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_8r4jv"]
+width = 32
+height = 32
+gradient = SubResource("Gradient_jx2fk")
 
 [node name="Map" type="Node2D" unique_id=639196259]
 script = ExtResource("1_ub3q0")
@@ -47,9 +57,9 @@ layer_4/tile_data = PackedInt32Array(524320, 458752, 70, 589856, 458752, 71, 655
 
 [node name="Triggers" type="Node2D" parent="." unique_id=1622875716]
 
-[node name="TownExitTrigger" type="Area2D" parent="Triggers" unique_id=988198537]
+[node name="TownExitTrigger" type="Area2D" parent="." unique_id=988198537]
 
-[node name="@CollisionShape2D@16" type="CollisionShape2D" parent="Triggers/TownExitTrigger" unique_id=1993897471]
+[node name="@CollisionShape2D@16" type="CollisionShape2D" parent="TownExitTrigger" unique_id=1993897471]
 position = Vector2(640, 48)
 shape = SubResource("RectangleShape2D_hgphw")
 
@@ -85,13 +95,9 @@ position = Vector2(624, 752)
 [node name="@CollisionShape2D@21" type="CollisionShape2D" parent="Player" unique_id=1885935161]
 shape = SubResource("RectangleShape2D_48h8m")
 
-[node name="@Polygon2D@22" type="Polygon2D" parent="Player" unique_id=844466718]
-color = Color(0.79, 0.35, 0.24, 1)
-polygon = PackedVector2Array(-10, -10, 10, -10, 10, 10, -10, 10)
-
-[node name="@Polygon2D@23" type="Polygon2D" parent="Player" unique_id=717617978]
-color = Color(0.1, 0.08, 0.06, 1)
-polygon = PackedVector2Array(-4, -10, 4, -10, 4, -2, -4, -2)
+[node name="PlayerSprite" type="Sprite2D" parent="Player" unique_id=844466718]
+position = Vector2(0, -6)
+texture = SubResource("GradientTexture2D_8r4jv")
 
 [node name="MapCamera" type="Camera2D" parent="Player" unique_id=1949770270]
 position_smoothing_enabled = true
@@ -112,3 +118,5 @@ offset_top = 28.0
 offset_right = 932.0
 offset_bottom = 92.0
 text = "Frontier Hamlet"
+
+[node name="TownExitDialog" type="ConfirmationDialog" parent="UI" unique_id=480808937]

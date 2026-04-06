@@ -20,6 +20,15 @@ run/main_scene="res://scenes/main/Main.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://icon.svg"
 
+[display]
+
+window/size/viewport_width=480
+window/size/viewport_height=270
+window/size/window_width_override=1280
+window/size/window_height_override=720
+window/stretch/mode="viewport"
+window/stretch/aspect="keep"
+
 [autoload]
 
 SignalBus="*res://autoloads/SignalBus.gd"
