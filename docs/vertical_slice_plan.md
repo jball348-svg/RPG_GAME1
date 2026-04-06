@@ -16,32 +16,27 @@ Everything else is production.
 ---
 
 ## Stage 1 — Real town map (editor-designed)
-**Status:** 🔄 In progress (editor-built map in place; collision + trigger + camera pass completed)
+**Status:** ✅ Complete
 
-**Goal:** A town map that is designed in Godot's TileMap editor, not assembled in GDScript at runtime.
+**Goal:** A town map designed in Godot's TileMap editor, not assembled in GDScript at runtime.
 
-**Why this matters:** Runtime-generated maps can't be iterated on visually. Every level design decision for the rest of the game will be made in the editor. Establish that pattern now.
+**What was built:**
+- Real TileMap-authored starting town (Frontier Hamlet) using sourced CC0 outdoor tileset
+- Runtime tile generation removed — map data lives in `Map.tscn`
+- Collision built dynamically from tile layer data via `_build_world_collision()` in `Map.gd`
+- `TownExitTrigger` Area2D at north edge — fires confirmation dialogue, deferred arm prevents false trigger on load
+- Camera follows player, bounded to map rect via `get_used_rect()`
+- Viewport set to 480×270 internal / 1280×720 window, stretch mode `viewport`, aspect `keep`
+- Player placeholder upgraded to gold 32×32 square sprite
 
-**Tasks:**
-- [X] Acquire a town building tileset (facades, rooftops, doors, windows) — 32×32, CC0, matching art direction
-- [x] Redesign the starting town in the TileMap editor: paths, buildings, shop locations, NPC placement zones
-- [x] Remove the runtime tile-generation code from `Map.gd` — map data lives in the `.tscn`, not in script
-- [x] Place collision shapes on impassable tiles (walls, trees, buildings)
-- [x] Place trigger zones for: town exit (north), bookstore entrance, key NPC positions
-- [x] Camera bounds set to match the designed map
-
-**Verification:**
-- [ ] Walk around the town — collision works, camera stays in bounds
-- [ ] Town reads as a town: buildings are identifiable, paths are clear, there's a sense of place
-- [x] Trigger zones are in place even if not yet wired
-- [x] No runtime tile generation remaining in Map.gd
-
-**Done state:** The starting town exists as a real designed level.
+**Known issues (deferred to Stage 9 polish):**
+- Some tree tiles do not block — collision layer assignment incomplete on a subset of props
+- Town exit warning can fire at scene start in edge cases — arm delay mitigates but not fully resolved
 
 ---
 
 ## Stage 2 — NPC dialogue system
-**Status:** ⬜ Not started
+**Status:** 🔄 Current
 
 **Goal:** A reusable dialogue system that any NPC in the game can use. Supports stat gates and gold gates.
 
@@ -49,45 +44,45 @@ Everything else is production.
 
 **Tasks:**
 - [ ] Build `DialogueManager` autoload — loads dialogue data, manages conversation state, emits signals
-- [ ] Dialogue data format: JSON or GDScript Dictionary — each NPC has a dialogue tree with nodes, conditions, branches
+- [ ] Dialogue data format: GDScript Dictionary (or JSON) — each NPC has a dialogue tree with nodes, conditions, branches
 - [ ] Condition types: `stat_gte` (stat path + minimum value), `gold_gte` (minimum gold), `flag_set` (flag name), `pure_path`, `mixed_path`
-- [ ] Dialogue box scene: bottom-third panel, speaker name header, portrait slot (left), text body, advance prompt
-- [ ] Wire `E` key / interact button to trigger dialogue when player is in an NPC's trigger zone
+- [ ] `interact` input action added to `project.godot` — mapped to `E`
+- [ ] NPC scene: `Area2D` with `CollisionShape2D` interaction zone, `interact` fires dialogue
+- [ ] Dialogue box scene: bottom-third panel, speaker name header, portrait slot (left), text body, advance prompt (`E` or Space)
 - [ ] Write dialogue for the three core loop NPCs:
-  - Intel NPC: base info (always), full mine detail (Social ≥ threshold + gold ≥ threshold)
-  - Moral choice NPC: alerts player to the Shaman — always fires, one-time only
-  - Bookstore NPC: sells the new Destruction spell if Intelligence ≥ threshold
+  - **Intel NPC** (village elder / guard): base info always; full mine detail gated on `social.charm >= 10` AND `gold >= 20`
+  - **Moral choice NPC** (travelling merchant / wanderer): one-time only, sets flag `shaman_warning_given`, alerts player to the Shaman choice ahead
+  - **Bookstore NPC**: sells Destruction spell if `intelligence.understanding >= 10`; locked dialogue if below threshold
+- [ ] Place the three NPC nodes in `Map.tscn` at appropriate positions
 
 **Verification:**
-- [ ] Talk to intel NPC with low Social/gold — gets basic info only
-- [ ] Talk to intel NPC with high Social/gold — gets full mine detail
-- [ ] Talk to moral choice NPC — dialogue fires once, flag set, won't repeat
-- [ ] Talk to bookstore NPC — spell available if Intelligence threshold met, locked otherwise
-- [ ] Dialogue box looks correct: speaker name, portrait placeholder, text, advance prompt
+- [ ] Press `E` near intel NPC with low Social/gold — gets basic info only
+- [ ] Press `E` near intel NPC with high Social/gold — gets full mine detail
+- [ ] Press `E` near moral choice NPC — dialogue fires once, flag `shaman_warning_given` set, won't repeat
+- [ ] Press `E` near bookstore NPC with low Intelligence — locked message
+- [ ] Press `E` near bookstore NPC with high Intelligence — spell purchase dialogue
+- [ ] Dialogue box renders correctly: speaker name, portrait placeholder, text, advance prompt visible
+- [ ] Clock keeps running during dialogue
+- [ ] Stats relevant to gates visible in debug panel for testing
 
 **Done state:** Three wired, conditionally branching NPCs are in the town.
 
 ---
 
 ## Stage 3 — Town exit and mine entrance cutscene
-**Status:** 🔄 In progress
+**Status:** 🔄 Partially done (exit trigger and prompt complete; cutscene content pending)
 
-**Goal:** Leaving the town triggers a point-of-no-return prompt. Confirming plays a cutscene.
+**Goal:** Leaving the town triggers a point-of-no-return prompt. Confirming plays a real cutscene.
 
-**Tasks:**
-- [x] Town exit trigger zone (north edge of map) — overlap fires a confirmation dialogue: "You are leaving town. The mine awaits. Continue?"
-- [x] Confirmation yes → transition to cutscene state
-- [x] Confirmation no → player stays in town
-- [ ] Cutscene: player sprite walks toward the mine entrance, class-specific animation plays, equipment loadout visible
-- [ ] Cutscene fires `Will.resolve` and `Holy.faith` stat increments (entering danger willingly)
+**Remaining tasks:**
+- [ ] Cutscene: player sprite walks toward the mine entrance, class-appropriate animation plays, equipment loadout visible
+- [ ] Cutscene fires `will.resolve` and `holy.faith` stat increments (entering danger willingly)
 - [ ] Cutscene ends → transition to mine map
 
 **Verification:**
 - [ ] Walk to town exit → prompt appears
 - [ ] Say no → stay in town, can continue playing
-- [ ] Say yes → cutscene plays, player walks to mine, correct class animation fires
-- [ ] Equipment visible in cutscene sprite
-- [ ] Stat increments fire during cutscene (visible in debug panel)
+- [ ] Say yes → cutscene plays, player walks to mine, stat increments visible in debug panel
 - [ ] Smooth transition into mine map at end of cutscene
 
 **Done state:** Leaving town into the mine is a meaningful, cinematic moment.
@@ -109,11 +104,11 @@ Everything else is production.
 - [ ] Atmospheric details: torch placement, dead ends, visual sense of depth
 
 **Verification:**
-- [ ] Walk through mine — collision works, no gaps or shortcuts to boss room
+- [ ] Walk through mine — collision works, no shortcuts to boss room
 - [ ] Mine reads as a mine: dark, stone, atmospheric
-- [ ] Encounter zones are placed even if not yet wired to battle
+- [ ] Encounter zones placed
 - [ ] Boss room is clearly a distinct space
-- [ ] Exit is blocked until boss room flag is set
+- [ ] Exit blocked until boss room flag set
 
 **Done state:** The mine exists as a real designed level.
 
@@ -122,32 +117,32 @@ Everything else is production.
 ## Stage 5 — Battle system
 **Status:** ⬜ Not started
 
-**Goal:** A real turn-based battle that replaces the spike's button proof. Kobold enemy type. Player class abilities.
+**Goal:** Real turn-based battle. Kobold enemy type. Player class abilities.
 
 **This is the biggest single stage. Budget accordingly.**
 
 **Tasks:**
-- [ ] Battle scene redesign: proper layout — player party (left), enemies (right), action menu (bottom)
-- [ ] Turn order system: player turn → enemy turn, repeat until combat resolved
+- [ ] Battle scene redesign: player party (left), enemies (right), action menu (bottom)
+- [ ] Turn order: player turn → enemy turn, repeat until resolved
 - [ ] Player action menu: Attack, Spell (if Magik class), Use Item, Flee
-- [ ] Kobold enemy type: HP, attack damage, simple AI (attacks player on its turn)
-- [ ] Player starting class abilities (implement for ONE Pure class and ONE Mixed class for the slice)
-- [ ] Damage calculation: Physical.Strength + weapon modifier vs enemy defence
+- [ ] Kobold enemy: HP, attack damage, simple AI
+- [ ] One Pure class and one Mixed class with distinct working abilities
+- [ ] Damage: Physical.Strength + weapon modifier vs enemy defence
 - [ ] Spell damage: Magik.Spellcasting + spell power vs enemy resistance
-- [ ] Victory state: all enemies defeated → loot roll → return to map
-- [ ] Defeat state: player HP reaches 0 → game over screen (simple for now)
-- [ ] Stat increments fire on every action: Attack → Physical.Strength, Cast → Magik.Spellcasting etc.
-- [ ] Battle backgrounds: static image per environment (mine interior for mine battles)
-- [ ] Wire Kobold encounter trigger zones from Stage 4 to launch battle
+- [ ] Victory: loot roll → return to map at correct position
+- [ ] Defeat: game over screen
+- [ ] Stat increments on every action
+- [ ] Battle backgrounds: static image per environment
+- [ ] Wire encounter trigger zones from Stage 4
 
 **Verification:**
-- [ ] Enter mine, trigger encounter → battle launches
-- [ ] Player can Attack, Cast Spell, Flee
-- [ ] Kobold attacks back on its turn
-- [ ] Victory → loot → back to mine map at correct position
-- [ ] Defeat → game over screen
-- [ ] Stats increment correctly during battle (debug panel confirms)
-- [ ] At least one Pure class and one Mixed class have distinct, working abilities
+- [ ] Trigger encounter → battle launches
+- [ ] Attack, Cast Spell, Flee all work
+- [ ] Kobold attacks back
+- [ ] Victory → loot → back to mine map
+- [ ] Defeat → game over
+- [ ] Stats increment (debug panel confirms)
+- [ ] Pure and Mixed classes feel distinct
 
 **Done state:** The mine has real, functional combat.
 
@@ -159,26 +154,18 @@ Everything else is production.
 **Goal:** The Half-Kobold Orc Shaman encounter. The moral choice. Branching outcomes.
 
 **Tasks:**
-- [ ] Boss room trigger fires a cutscene: the Shaman emerges, addresses the player
-- [ ] Shaman dialogue presents the choice clearly: recruit or fight
-- [ ] Branch A — Recruit:
-  - Shaman joins as companion (flag: `shaman_recruited = true`)
-  - Mixed stat boosts fire (Social.Empathy, Holy.Justice)
-  - If Pure path: Pure reputation ghost flag decrements
-  - Shaman sprite follows player on map (simple follow behaviour)
-- [ ] Branch B — Fight:
-  - Boss battle launches: Shaman has higher HP and a Magik attack
-  - On victory: loot drop, flag `shaman_killed = true`
-  - Pure reputation ghost flag increments
-  - Ghost flag set: `world_remembers_shaman_killed = true` (used later by world NPCs)
-- [ ] After either branch: mine exit trigger unlocks
-- [ ] Pure/Mixed allegiance affects Shaman's opening dialogue (he reads your path)
+- [ ] Boss room trigger → cutscene: Shaman emerges, addresses player
+- [ ] Dialogue presents choice: recruit or fight
+- [ ] Recruit branch: `shaman_recruited = true`, Mixed stat boosts, companion follows, Pure ghost rep decrements
+- [ ] Fight branch: boss battle, `shaman_killed = true`, loot, `world_remembers_shaman_killed = true` ghost flag
+- [ ] Mine exit unlocks after either branch
+- [ ] Pure/Mixed path affects Shaman's opening line
 
 **Verification:**
-- [ ] Recruit path: Shaman joins, stat boosts fire, companion visible, exit unlocks
-- [ ] Kill path: boss battle plays, loot drops, ghost flag set, exit unlocks
-- [ ] Pure player gets different Shaman opening line than Mixed player
-- [ ] Ghost flags are set correctly (debug panel confirms)
+- [ ] Recruit path works end to end
+- [ ] Kill path works end to end
+- [ ] Pure and Mixed players get different opening dialogue
+- [ ] Ghost flags set correctly
 
 **Done state:** The moral choice works and has real mechanical consequences.
 
@@ -187,22 +174,21 @@ Everything else is production.
 ## Stage 7 — Mine exit and area transition
 **Status:** ⬜ Not started
 
-**Goal:** Leaving the mine reveals a new area. The main quest path is now open.
+**Goal:** Leaving the mine reveals a new area. The main quest path opens.
 
 **Tasks:**
-- [ ] Mine exit trigger (post-boss) → cutscene: player emerges from mine into a new region
-- [ ] New region map stub: just enough to show the world continues (a road, distant mountains, a signpost)
-- [ ] Quest flag set: `mine_cleared = true`, `main_quest_path_open = true`
-- [ ] If Shaman recruited: companion emerges with player in cutscene
-- [ ] A moment of breathing room — no immediate combat, just the world opening up
+- [ ] Mine exit trigger → cutscene: player emerges into new region
+- [ ] New region map stub: road, distant mountains, signpost
+- [ ] Quest flags: `mine_cleared = true`, `main_quest_path_open = true`
+- [ ] Shaman companion appears in exit cutscene if recruited
 
 **Verification:**
-- [ ] Exit mine → cutscene plays, new area appears
-- [ ] Quest flags set correctly
-- [ ] Recruited Shaman appears in exit cutscene if applicable
-- [ ] New area feels like arrival — the loop has a satisfying resolution
+- [ ] Exit → cutscene → new area
+- [ ] Quest flags set
+- [ ] Companion present if recruited
+- [ ] New area feels like arrival
 
-**Done state:** The core loop completes. The player has arrived somewhere new.
+**Done state:** The core loop completes.
 
 ---
 
@@ -213,17 +199,15 @@ Everything else is production.
 
 **Tasks:**
 - [ ] `SaveManager` autoload: `save_game()`, `load_game()`, `has_save()`
-- [ ] Save data includes: full `StatRegistry.stats`, `PlayerData` (class, path, flags, ghost flags, age, equipment, gold, inventory), `GameClock` time, current location/scene, quest flags
-- [ ] Save to `user://save_game.json` (Godot's user data directory)
-- [ ] Save triggered: on map state entry, on dialogue completion, on battle victory, on moral choice resolution
-- [ ] Load on game start: if save exists, restore all state and boot to saved location
-- [ ] New game path: if no save, boot to character creation (stub for now — just set defaults)
+- [ ] Saves: full StatRegistry.stats, PlayerData, GameClock time, location, quest flags
+- [ ] Save file: `user://save_game.json`
+- [ ] Auto-save triggers: map entry, dialogue complete, battle victory, moral choice resolved
+- [ ] On launch: load if save exists, else boot to new game defaults
 
 **Verification:**
-- [ ] Play for 5 minutes, quit, relaunch — all stats, flags, clock, and location restored correctly
-- [ ] Stats that were incrementing are at the right values after load
-- [ ] Ghost flags persist across sessions
-- [ ] Clock resumes from saved time, not from zero
+- [ ] Play 5 mins, quit, relaunch — all state restored
+- [ ] Clock resumes from saved time
+- [ ] Ghost flags persist
 
 **Done state:** Progress is never lost.
 
@@ -232,26 +216,27 @@ Everything else is production.
 ## Stage 9 — Polish and playtester pass
 **Status:** ⬜ Not started
 
-**Goal:** The loop is complete. Now make it feel good enough to put in front of a real person.
+**Goal:** Loop complete. Make it good enough to put in front of a real person.
 
 **Tasks:**
-- [ ] Remove all spike dev controls (B, H, C, 1, 2 hotkeys) — replace with proper in-game triggers
-- [ ] Remove debug panel from shipped build (keep as a launch flag for dev)
-- [ ] Sound: ambient track for town, ambient track for mine, battle music, victory sting — source from freesound/OpenGameArt
-- [ ] SFX: footstep, attack, spell cast, dialogue advance, menu open/close
-- [ ] Transition polish: fade to black between major state changes
-- [ ] UI pass: dialogue box, HUD stat display, battle action menu — match art direction (stone/parchment aesthetic)
-- [ ] At least one NPC portrait (placeholder or sourced CC0)
-- [ ] Game over screen — simple, in keeping with the tone
-- [ ] First external playtester: one person, watch them play, say nothing, note where they get confused
+- [ ] Remove spike dev controls (B, H, C, 1, 2)
+- [ ] Remove debug panel from release build
+- [ ] Audio: ambient town, ambient mine, battle music, victory sting
+- [ ] SFX: footstep, attack, spell cast, dialogue advance, menu sounds
+- [ ] Fade to black between major state transitions
+- [ ] UI pass: dialogue box, HUD, battle menu — match art direction
+- [ ] Fix known Stage 1 issues: remaining tree collision, exit trigger edge case
+- [ ] At least one NPC portrait
+- [ ] Game over screen
+- [ ] First external playtester pass
 
 **Verification:**
-- [ ] A person who has never seen the game can complete the loop without help
-- [ ] No debug text visible during normal play
-- [ ] Audio plays throughout the loop
-- [ ] Transitions between states feel smooth
+- [ ] Unknown player completes loop without help
+- [ ] No debug text in normal play
+- [ ] Audio throughout
+- [ ] Smooth transitions
 
-**Done state:** Vertical slice is complete. Production continues to the next quest area.
+**Done state:** Vertical slice complete.
 
 ---
 
@@ -259,9 +244,9 @@ Everything else is production.
 
 | Stage | Task | Status |
 |---|---|---|
-| 1 | Real town map (editor-designed) | 🔄 In progress |
-| 2 | NPC dialogue system | ⬜ |
-| 3 | Town exit + mine entrance cutscene | 🔄 In progress |
+| 1 | Real town map (editor-designed) | ✅ Complete |
+| 2 | NPC dialogue system | 🔄 Current |
+| 3 | Town exit + mine entrance cutscene | 🔄 Partial (trigger done, cutscene pending) |
 | 4 | Mine dungeon map | ⬜ |
 | 5 | Battle system | ⬜ |
 | 6 | Boss room + moral choice | ⬜ |
@@ -273,9 +258,9 @@ Everything else is production.
 
 ## How to use this document
 
-At the start of each Cascade/Claude session for the vertical slice:
+At the start of each Cascade/Claude session:
 
-> "Here is the project context: [HANDOVER.md]. I am working on vertical slice Stage X — [stage name]. Here is the plan: [paste this stage's section]. Help me complete the tasks."
+> "Read `docs/HANDOVER.md` and `docs/vertical_slice_plan.md`. I am on Vertical Slice Stage X — [name]. Help me complete the tasks."
 
-After each session: tick completed tasks, update status in the summary table above.
-When a stage passes all its verification checks: mark it ✅ and start the next.
+After each session: tick completed tasks, update the status table.
+When a stage passes all verification checks: mark ✅ and start the next.

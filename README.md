@@ -1,47 +1,70 @@
-# RPG_GAME1 — Technical Spike
+# RPG_GAME1
 
-Archetypal fantasy RPG. Pure vs Mixed class allegory. Deep character stat system.
+An archetypal high fantasy RPG. You choose at the start whether you are **Pure** (one class, optionally specialised) or **Mixed** (multiclass, versatile but diluted). This choice drives the game's central conflict — a war between Pure and Mixed factions — and every NPC, faction, and moral decision responds to it. The allegory is intentional.
 
-## Spike goal
-Prove four things before building the game:
-1. Signal bus fires stat events → StatRegistry responds
-2. Four game states transition cleanly
-3. Clock runs continuously across all state changes
-4. Pure/Mix flag influences downstream NPC dialogue
+Built solo in Godot 4 (GDScript). Target platform: PC / Steam.
+
+---
+
+## Status
+
+Currently in production — building the vertical slice (core loop playable start to finish).
+
+| Phase | Status |
+|---|---|
+| Pre-production | ✅ Complete |
+| Technical spike | ✅ Complete |
+| Vertical slice | 🔄 In progress — Stage 2 of 9 |
+
+See `docs/vertical_slice_plan.md` for the full stage breakdown.
+
+---
 
 ## Setup
-1. Open Godot 4 (4.2+)
-2. Open this folder as a project
-3. Autoloads are pre-configured in `project.godot`
-4. Run the project or open `scenes/main/Main.tscn`
-5. The Day 4 spike boots straight into the map prototype with the debug overlay visible plus battle, HUD, cutscene, and path-switch proof controls
 
-## Structure
+1. Install Godot 4.6+
+2. Clone this repo
+3. Open Godot → Import → select this folder
+4. Run the project (`F5`) or open `scenes/main/Main.tscn`
+5. The game boots into the starting town map
+
+**Movement:** `WASD` or arrow keys  
+**Dev controls (spike era, will be removed):** `B` battle · `H` HUD · `C` cutscene · `1` Pure path · `2` Mixed path
+
+---
+
+## Architecture
+
 ```
-autoloads/       — Global singletons (SignalBus, StatRegistry, GameClock, PlayerData, SceneManager)
-scenes/          — Game state scenes (Map, Battle, HUD, Cutscene, Main, Debug)
-assets/          — Placeholder only during spike
-docs/            — Design documents
+autoloads/        Global singletons — always running
+  SignalBus.gd    All game signals
+  StatRegistry.gd Stat tree, action modifiers, Luck derivation
+  GameClock.gd    Always-on clock, never pauses
+  PlayerData.gd   Class, path, flags, ghost flags, age, equipment
+  SceneManager.gd Game state loader (Map / Battle / HUD / Cutscene)
+scenes/
+  main/           Entry point and persistent overlay host
+  map/            Top-down map state
+  battle/         Turn-based battle state
+  hud/            HUD overlay (stat summary, equipment, inventory)
+  cutscene/       Scripted sequence state
+  debug/          Dev-only stat/clock overlay (removed before release)
+assets/
+  art/            Mood boards and sourced tilesets
+docs/
+  HANDOVER.md           LLM agent context — source of truth
+  vertical_slice_plan.md Stage-by-stage build plan
+  stat_registry.md       Stat design reference
+  art_direction.md       All visual decisions and asset rules
 ```
 
-## Spike controls and debug
-- Movement: `WASD` or arrow keys
-- Enter battle proof: `B`
-- Toggle HUD overlay: `H`
-- Enter cutscene proof: `C`
-- Set path to Pure: `1`
-- Set path to Mixed: `2`
-- Debug overlay: top-left panel shows current state, clock, player path/flags, and the live stat snapshot
-- HUD proof target: `H` opens a full-screen overlay above the map, blocks movement, and keeps the clock running
-- Cutscene proof target: `C` runs the placeholder scripted sequence and branches dialogue off the current Pure/Mixed path
-- Battle proof target: `B` enters battle, `Attack` increments `physical.strength`, `Cast Spell` increments magik stats, and `Return to Map` preserves the clock + debug overlay
+---
 
-## Day 5 - All checks complete
+## Design
 
+- **Stat system:** 6 top-level stats (Physical, Magik, Intelligence, Social, Will, Holy), each with sub-skills that increase through use — Oblivion-style. Every action feeds something.
+- **Visibility tiers:** Some stats always shown, some unlock at milestones, some are ghost stats the player never sees but always feels.
+- **Pure vs Mixed:** Not just a class choice — a political identity. The world responds.
+- **Time:** An always-on clock that never pauses. Age is a stat. Buffs expire. The world ticks while you read menus.
 
-## Day progress
-- [x] Day 1 — Autoloads + project scaffold
-- [x] Day 2 — SceneManager + Map scene
-- [x] Day 3 — Battle scene + map round-trip
-- [x] Day 4 — HUD + Cutscene implementation
-- [x] Day 5 — Wire + verify all four success criteria
+Full design documentation in `docs/`.
