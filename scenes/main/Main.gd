@@ -2,6 +2,7 @@ extends Node
 
 const HUD_SCENE: PackedScene = preload("res://scenes/hud/HUD.tscn")
 const DEBUG_PANEL_SCENE: PackedScene = preload("res://scenes/debug/DebugPanel.tscn")
+const DIALOGUE_BOX_SCENE: PackedScene = preload("res://scenes/ui/DialogueBox.tscn")
 
 @onready var state_host: Node = $StateHost
 @onready var overlay_host: CanvasLayer = $OverlayHost
@@ -10,6 +11,7 @@ func _ready() -> void:
 	SceneManager.configure_hosts(state_host, overlay_host)
 	_ensure_spike_hud()
 	_ensure_debug_panel()
+	_ensure_dialogue_box()
 	SceneManager.change_state("map")
 
 func _ensure_spike_hud() -> void:
@@ -27,3 +29,11 @@ func _ensure_debug_panel() -> void:
 	var debug_panel: Control = DEBUG_PANEL_SCENE.instantiate() as Control
 	debug_panel.name = "DebugPanel"
 	overlay_host.add_child(debug_panel)
+
+func _ensure_dialogue_box() -> void:
+	if overlay_host.get_node_or_null("DialogueBox") != null:
+		return
+
+	var dialogue_box: Control = DIALOGUE_BOX_SCENE.instantiate() as Control
+	dialogue_box.name = "DialogueBox"
+	overlay_host.add_child(dialogue_box)

@@ -25,6 +25,11 @@ signal new_day(day_number: int)
 # Emitted by SceneManager when the game changes state.
 signal state_changed(from_state: String, to_state: String)
 
+# --- Dialogue signals ---
+# Emitted by DialogueManager when an NPC conversation starts or ends.
+signal dialogue_started(npc_id: String)
+signal dialogue_ended(npc_id: String)
+
 # --- Flag signals ---
 # Emitted when a major player flag is set (Pure/Mix choice, moral decisions).
 signal flag_set(flag_name: String, value: Variant)

@@ -134,7 +134,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_scene_manager().change_state("battle")
 
 func _physics_process(delta: float) -> void:
-	if _is_hud_open() or town_exit_dialog.visible:
+	if _is_hud_open() or _is_dialogue_active() or town_exit_dialog.visible:
 		player.velocity = Vector2.ZERO
 		return
 
@@ -200,6 +200,9 @@ func _toggle_hud() -> void:
 func _is_hud_open() -> bool:
 	var hud = _get_spike_hud()
 	return hud != null and hud.is_open()
+
+func _is_dialogue_active() -> bool:
+	return DialogueManager.is_active()
 
 func _get_spike_hud():
 	var overlay_host: CanvasLayer = _scene_manager().get_overlay_host()

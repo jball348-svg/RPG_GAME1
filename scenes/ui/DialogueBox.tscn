@@ -1,0 +1,67 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/DialogueBox.gd" id="1_dialogue"]
+
+[sub_resource type="Gradient" id="Gradient_portrait"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(0.211765, 0.2, 0.180392, 1, 0.211765, 0.2, 0.180392, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_portrait"]
+width = 64
+height = 64
+gradient = SubResource("Gradient_portrait")
+
+[node name="DialogueBox" type="Control"]
+script = ExtResource("1_dialogue")
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchor_top = 0.66
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 12.0
+offset_right = -16.0
+offset_bottom = -12.0
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+
+[node name="Content" type="HBoxContainer" parent="Panel/Margin"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 14
+
+[node name="Portrait" type="TextureRect" parent="Panel/Margin/Content"]
+custom_minimum_size = Vector2(64, 64)
+texture = SubResource("GradientTexture2D_portrait")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="RightColumn" type="VBoxContainer" parent="Panel/Margin/Content"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="SpeakerLabel" type="Label" parent="Panel/Margin/Content/RightColumn"]
+text = "Speaker"
+theme_override_font_sizes/font_size = 18
+
+[node name="BodyLabel" type="Label" parent="Panel/Margin/Content/RightColumn"]
+size_flags_vertical = 3
+autowrap_mode = 2
+vertical_alignment = 0
+text = "Dialogue text goes here."
+
+[node name="Footer" type="HBoxContainer" parent="Panel/Margin/Content/RightColumn"]
+size_flags_horizontal = 3
+
+[node name="Spacer" type="Control" parent="Panel/Margin/Content/RightColumn/Footer"]
+size_flags_horizontal = 3
+
+[node name="AdvancePrompt" type="Label" parent="Panel/Margin/Content/RightColumn/Footer"]
+text = "▶ E to continue"

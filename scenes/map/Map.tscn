@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://scenes/map/Map.gd" id="1_ub3q0"]
 [ext_resource type="TileSet" path="res://scenes/map/TownTileset.tres" id="2_nuen2"]
+[ext_resource type="PackedScene" path="res://scenes/npc/NPC.tscn" id="3_npc"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hgphw"]
 size = Vector2(1280, 96)
@@ -103,6 +104,21 @@ texture = SubResource("GradientTexture2D_8r4jv")
 zoom = Vector2(0.5, 0.5)
 position_smoothing_enabled = true
 position_smoothing_speed = 8.0
+
+[node name="IntelNPC" parent="." instance=ExtResource("3_npc")]
+position = Vector2(528, 400)
+npc_id = "intel_npc"
+npc_name = "Village Guard"
+
+[node name="MoralChoiceNPC" parent="." instance=ExtResource("3_npc")]
+position = Vector2(624, 240)
+npc_id = "moral_choice_npc"
+npc_name = "Traveling Merchant"
+
+[node name="BookstoreNPC" parent="." instance=ExtResource("3_npc")]
+position = Vector2(304, 416)
+npc_id = "bookstore_npc"
+npc_name = "Bookstore Keeper"
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=2101638366]
 
