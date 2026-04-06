@@ -223,7 +223,7 @@ All four autoloads created and pushed to repo. `project.godot` configured with a
 - Cutscene scene loads headlessly without errors via `godot --headless --path . --scene res://scenes/cutscene/Cutscene.tscn --quit-after 4`
 - Final manual proof of clock continuity and dialogue branching is intentionally deferred to Day 5
 
-### Day 5 — NEXT
+### Day 5 — COMPLETE ✅
 **Goal:** run the final manual verification pass, debug any regressions, and then close the spike.
 
 **Checklist:**
@@ -234,6 +234,8 @@ All four autoloads created and pushed to repo. `project.godot` configured with a
 5. Trigger cutscene with `C` as Mixed; confirm scripted movement, Mixed dialogue line, and return to map
 6. Re-run the battle proof with `B`, `Attack`, `Cast Spell`, and `Return to Map`; confirm the overlay stack remains stable and HUD stays map-only
 7. If all four success criteria are green, update `docs/spike_progress.md`, this document, and `README.md` one final time to mark the technical spike complete
+
+ALL MANUAL CHECKS COMPLETE. SPIKE FINISHED.
 
 ---
 

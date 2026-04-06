@@ -36,17 +36,12 @@ docs/            — Design documents
 - Cutscene proof target: `C` runs the placeholder scripted sequence and branches dialogue off the current Pure/Mixed path
 - Battle proof target: `B` enters battle, `Attack` increments `physical.strength`, `Cast Spell` increments magik stats, and `Return to Map` preserves the clock + debug overlay
 
-## Day 4 manual runbook
-1. Boot into `scenes/main/Main.tscn` and confirm the debug panel shows `Path: pure` if no path was set yet.
-2. Walk on the map, open HUD with `H`, and confirm the clock keeps advancing while movement is paused.
-3. Press `1`, then `2`, and confirm the path updates immediately in the debug panel and HUD.
-4. Press `C` while Pure and confirm the Pure sentry line, then return to map.
-5. Press `2`, then `C`, and confirm the Mixed sentry line, then return to map.
-6. Press `B` and rerun the battle proof to make sure Day 3 still holds after the Day 4 overlay/cutscene wiring.
+## Day 5 - All checks complete
+
 
 ## Day progress
 - [x] Day 1 — Autoloads + project scaffold
 - [x] Day 2 — SceneManager + Map scene
 - [x] Day 3 — Battle scene + map round-trip
 - [x] Day 4 — HUD + Cutscene implementation
-- [ ] Day 5 — Wire + verify all four success criteria
+- [x] Day 5 — Wire + verify all four success criteria

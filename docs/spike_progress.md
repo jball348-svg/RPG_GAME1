@@ -56,10 +56,12 @@ Prove four things before building the game.
 - [x] Headless cutscene load passes: `godot --headless --path . --scene res://scenes/cutscene/Cutscene.tscn --quit-after 4`
 
 ### Day 5 — Wire + verify
-- [ ] Boot from `Main` and confirm blank `chosen_path` defaults to `pure` in the debug panel and HUD
-- [ ] Walk on map, open HUD with `H`, confirm movement stops while HUD is open, and confirm the clock keeps advancing
-- [ ] Use `1` and `2` on map and confirm the path updates immediately in debug + HUD without a scene reload
-- [ ] Trigger cutscene with `C` as Pure and confirm the Pure dialogue branch, scripted movement, and return to map
-- [ ] Trigger cutscene with `C` as Mixed and confirm the Mixed dialogue branch, scripted movement, and return to map
-- [ ] Re-run the battle proof with `B`, `Attack`, `Cast Spell`, and `Return to Map`; confirm HUD stays hidden outside map
-- [ ] If all checks pass, mark the remaining two success criteria green and close the technical spike
+- [x] Boot from `Main` and confirm blank `chosen_path` defaults to `pure` in the debug panel and HUD
+- [x] Walk on map, open HUD with `H`, confirm movement stops while HUD is open, and confirm the clock keeps advancing
+- [x] Use `1` and `2` on map and confirm the path updates immediately in debug + HUD without a scene reload
+- [x] Trigger cutscene with `C` as Pure and confirm the Pure dialogue branch, scripted movement, and return to map
+- [x] Trigger cutscene with `C` as Mixed and confirm the Mixed dialogue branch, scripted movement, and return to map
+- [x] Re-run the battle proof with `B`, `Attack`, `Cast Spell`, and `Return to Map`; confirm HUD stays hidden outside map
+- [x] If all checks pass, mark the remaining two success criteria green and close the technical spike
+
+Al spike activity and tests passed, completed clean. Spike finished successfully
