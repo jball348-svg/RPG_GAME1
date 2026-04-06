@@ -1,5 +1,11 @@
 extends PanelContainer
 
+const PANEL_MARGIN := 8.0
+const PANEL_WIDTH_RATIO := 0.3
+const PANEL_HEIGHT_RATIO := 0.55
+const PANEL_MIN_SIZE := Vector2(180.0, 140.0)
+const PANEL_MAX_SIZE := Vector2(260.0, 240.0)
+
 const CATEGORY_ORDER: Array[String] = [
 	"physical",
 	"magik",
@@ -21,15 +27,28 @@ const SKILL_ORDER: Dictionary = {
 var _content_label: RichTextLabel
 
 func _ready() -> void:
-	offset_left = 16.0
-	offset_top = 16.0
-	offset_right = 356.0
-	offset_bottom = 536.0
-	custom_minimum_size = Vector2(340.0, 520.0)
+	if not get_viewport().size_changed.is_connected(_on_viewport_size_changed):
+		get_viewport().size_changed.connect(_on_viewport_size_changed)
+
+	_apply_layout()
 
 	_build_panel()
 	_connect_signals()
 	_refresh()
+
+func _on_viewport_size_changed() -> void:
+	_apply_layout()
+
+func _apply_layout() -> void:
+	var viewport_size := get_viewport_rect().size
+	var panel_width: float = clamp(viewport_size.x * PANEL_WIDTH_RATIO, PANEL_MIN_SIZE.x, PANEL_MAX_SIZE.x)
+	var panel_height: float = clamp(viewport_size.y * PANEL_HEIGHT_RATIO, PANEL_MIN_SIZE.y, PANEL_MAX_SIZE.y)
+
+	offset_left = viewport_size.x - panel_width - PANEL_MARGIN
+	offset_top = PANEL_MARGIN
+	offset_right = viewport_size.x - PANEL_MARGIN
+	offset_bottom = PANEL_MARGIN + panel_height
+	custom_minimum_size = Vector2(panel_width, panel_height)
 
 func _build_panel() -> void:
 	if _content_label != null:
@@ -48,6 +67,7 @@ func _build_panel() -> void:
 	_content_label.anchor_right = 1.0
 	_content_label.anchor_bottom = 1.0
 	_content_label.bbcode_enabled = false
+	_content_label.add_theme_font_size_override("normal_font_size", 10)
 	_content_label.fit_content = false
 	_content_label.scroll_active = true
 	margin.add_child(_content_label)

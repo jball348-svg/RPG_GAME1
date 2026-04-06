@@ -100,6 +100,7 @@ position = Vector2(0, -6)
 texture = SubResource("GradientTexture2D_8r4jv")
 
 [node name="MapCamera" type="Camera2D" parent="Player" unique_id=1949770270]
+zoom = Vector2(0.5, 0.5)
 position_smoothing_enabled = true
 position_smoothing_speed = 8.0
 

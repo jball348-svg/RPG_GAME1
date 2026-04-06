@@ -4,10 +4,14 @@ const MOVE_SPEED := 180.0
 const STEP_DISTANCE := 24.0
 const PLAYER_HALF_EXTENTS := Vector2(10.0, 10.0)
 const BLOCKING_TILE_LAYERS: Array[int] = [2, 3]
+const OVERLAY_BLOCKING_LAYER := 4
+const ROAD_LAYER := 1
+const OVERLAY_BLOCK_BOTTOM_ROWS := 4
 const TOWN_EXIT_PROMPT_TEXT := "You prepare to leave for the mine. There is no turning back. Continue?"
 const HINT_TEXT := "Frontier Hamlet\nMove: WASD / Arrows\nB: Battle   H: HUD\nC: Cutscene   1: Pure   2: Mixed"
 
 var _distance_since_step: float = 0.0
+var _town_exit_trigger_armed := false
 
 @onready var ground_map: TileMap = $GroundMap
 @onready var world_collision: StaticBody2D = $WorldCollision
@@ -32,6 +36,8 @@ func _build_world_collision() -> void:
 	for child in world_collision.get_children():
 		child.queue_free()
 
+	var used_rect := ground_map.get_used_rect()
+	var overlay_block_start_y := used_rect.end.y - OVERLAY_BLOCK_BOTTOM_ROWS
 	var tile_size := ground_map.tile_set.tile_size
 	var tile_size_vector := Vector2(tile_size.x, tile_size.y)
 	var half_tile := tile_size_vector * 0.5
@@ -42,6 +48,18 @@ func _build_world_collision() -> void:
 			if ground_map.get_cell_source_id(layer_index, cell) == -1:
 				continue
 			blocked_cells[cell] = true
+
+	for cell in ground_map.get_used_cells(OVERLAY_BLOCKING_LAYER):
+		if cell.y < overlay_block_start_y:
+			continue
+
+		if ground_map.get_cell_source_id(ROAD_LAYER, cell) != -1:
+			continue
+
+		if ground_map.get_cell_source_id(OVERLAY_BLOCKING_LAYER, cell) == -1:
+			continue
+
+		blocked_cells[cell] = true
 
 	for cell_value in blocked_cells.keys():
 		var cell: Vector2i = cell_value
@@ -55,6 +73,10 @@ func _build_world_collision() -> void:
 
 func _wire_town_exit_prompt() -> void:
 	town_exit_dialog.dialog_text = TOWN_EXIT_PROMPT_TEXT
+	town_exit_dialog.hide()
+	_town_exit_trigger_armed = false
+	town_exit_trigger.monitoring = false
+	call_deferred("_arm_town_exit_trigger")
 
 	if not town_exit_trigger.body_entered.is_connected(_on_town_exit_trigger_body_entered):
 		town_exit_trigger.body_entered.connect(_on_town_exit_trigger_body_entered)
@@ -64,6 +86,13 @@ func _wire_town_exit_prompt() -> void:
 
 	if not town_exit_dialog.canceled.is_connected(_on_town_exit_canceled):
 		town_exit_dialog.canceled.connect(_on_town_exit_canceled)
+
+func _arm_town_exit_trigger() -> void:
+	if not is_instance_valid(town_exit_trigger):
+		return
+
+	town_exit_trigger.monitoring = true
+	_town_exit_trigger_armed = true
 
 func _configure_map_camera() -> void:
 	var used_rect := ground_map.get_used_rect()
@@ -145,6 +174,9 @@ func _clamp_player_to_map() -> void:
 		player.global_position = clamped_position
 
 func _on_town_exit_trigger_body_entered(body: Node) -> void:
+	if not _town_exit_trigger_armed:
+		return
+
 	if body != player:
 		return
 
