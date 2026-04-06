@@ -23,7 +23,7 @@ Everything else is production.
 **Why this matters:** Runtime-generated maps can't be iterated on visually. Every level design decision for the rest of the game will be made in the editor. Establish that pattern now.
 
 **Tasks:**
-- [ ] Acquire a town building tileset (facades, rooftops, doors, windows) — 32×32, CC0, matching art direction
+- [X] Acquire a town building tileset (facades, rooftops, doors, windows) — 32×32, CC0, matching art direction
 - [ ] Redesign the starting town in the TileMap editor: paths, buildings, shop locations, NPC placement zones
 - [ ] Remove the runtime tile-generation code from `Map.gd` — map data lives in the `.tscn`, not in script
 - [ ] Place collision shapes on impassable tiles (walls, trees, buildings)
