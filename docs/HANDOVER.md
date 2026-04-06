@@ -147,7 +147,7 @@ Transitions: Map ↔ Battle, Map ↔ Cutscene, Map + HUD overlay (HUD does not r
 | 3. World and setting | ✅ Complete |
 | 4. Core loop document | ✅ Complete |
 | 5. Stat registry | ✅ Complete |
-| 6. Technical spike in Godot | 🔄 In progress — Day 3 done |
+| 6. Technical spike in Godot | 🔄 In progress — Day 4 implemented, Day 5 verification pending |
 | 7. Art direction document | ⬜ Not started |
 | 8. Vertical slice | ⬜ Not started |
 
@@ -208,24 +208,32 @@ All four autoloads created and pushed to repo. `project.godot` configured with a
 - `Return to Map` goes back through `SceneManager.change_state("map")`
 - The debug overlay persists and the clock keeps advancing through the full map → battle → map round-trip
 
-### Day 4 — TODO
-**Goal:** prove the remaining two spike requirements with the lightest possible implementation: HUD as a persistent overlay, Cutscene as an exclusive state, and Pure/Mixed dialogue branching off `PlayerData.chosen_path`.
+### Day 4 — COMPLETE ✅
+**Goal achieved:** the last two spike features are now implemented. HUD lives as a persistent overlay, Cutscene exists as an exclusive state, and the Pure/Mixed branch now reads directly from `PlayerData.chosen_path`.
 
-**Tasks:**
-1. Add a minimal HUD `Control` under `OverlayHost` rather than under `SceneManager`
-2. Toggle HUD with `H` while keeping the map visible underneath
-3. Block map input while HUD is open, but keep the clock running
-4. Show placeholder inventory/equipment framing, current clock, current path/class, and a compact stat summary
-5. Add a temporary cutscene trigger on `C` from the map
-6. Use `PlayerData.chosen_path` as the spike source of truth; if unset, initialize it to `pure`
-7. Add dev-only allegiance switches: `1` sets Pure, `2` sets Mixed
-8. Create `scenes/cutscene/Cutscene.tscn` + `Cutscene.gd`
-9. Run one short scripted placeholder movement sequence
-10. Show one of two dialogue lines based on the current path
-11. Return to map through `SceneManager` and verify clock continuity across map, HUD, and cutscene
+**Files created / updated:**
+- `autoloads/PlayerData.gd` — `ensure_spike_defaults()` now defaults blank path state to `pure`; `set_chosen_path()` validates and emits a refresh signal
+- `scenes/main/Main.gd` — persistent HUD instantiated under `OverlayHost` alongside the debug panel
+- `scenes/hud/HUD.tscn`, `scenes/hud/HUD.gd` — full-screen semi-transparent HUD overlay with clock/status, path/class/age, equipment/inventory placeholders, and compact stat summary
+- `scenes/map/Map.gd`, `scenes/map/Map.tscn` — `H` toggles HUD, `C` enters cutscene, `1/2` switch path, movement and other map triggers pause while HUD is open, and the on-screen hint reflects all spike controls
+- `scenes/cutscene/Cutscene.tscn`, `scenes/cutscene/Cutscene.gd` — scripted placeholder sequence with one Pure line and one Mixed line, then return to map
 
-### Day 5 — TODO
-Wire everything together. Run all four success criteria. Debug anything broken.
+**Verification completed:**
+- Project boots headlessly without parse or scene-load errors via `godot --headless --path . --quit-after 4`
+- Cutscene scene loads headlessly without errors via `godot --headless --path . --scene res://scenes/cutscene/Cutscene.tscn --quit-after 4`
+- Final manual proof of clock continuity and dialogue branching is intentionally deferred to Day 5
+
+### Day 5 — NEXT
+**Goal:** run the final manual verification pass, debug any regressions, and then close the spike.
+
+**Checklist:**
+1. Boot from `scenes/main/Main.tscn` and confirm blank path state defaults to `pure`
+2. Open and close HUD with `H`; confirm the map stays visible, movement pauses, and the clock continues ticking
+3. Use `1` and `2` on map; confirm path changes immediately in both debug panel and HUD
+4. Trigger cutscene with `C` as Pure; confirm scripted movement, Pure dialogue line, and return to map
+5. Trigger cutscene with `C` as Mixed; confirm scripted movement, Mixed dialogue line, and return to map
+6. Re-run the battle proof with `B`, `Attack`, `Cast Spell`, and `Return to Map`; confirm the overlay stack remains stable and HUD stays map-only
+7. If all four success criteria are green, update `docs/spike_progress.md`, this document, and `README.md` one final time to mark the technical spike complete
 
 ---
 
@@ -264,6 +272,6 @@ project.godot       Godot project config
 
 **After each session:** Update `docs/spike_progress.md` to reflect what was completed. Update this document if any locked decisions change or new decisions are made.
 
-**Current spike convention:** gameplay world movement uses dedicated `move_*` actions in `project.godot` (`WASD` + arrow keys). Use `debug_*`, `toggle_hud`, and `set_path_*` for spike-only proof controls. Keep `ui_*` reserved for menus and overlays.
+**Current spike convention:** gameplay world movement uses dedicated `move_*` actions in `project.godot` (`WASD` + arrow keys). Spike proof controls are `B` battle, `H` HUD toggle, `C` cutscene, `1` Pure path, and `2` Mixed path. Keep `ui_*` reserved for production menus and overlays.
 
 **This document lives at:** `docs/HANDOVER.md` in the repo. Keep it current. It is the shared memory of the project.

@@ -41,17 +41,25 @@ Prove four things before building the game.
 - [x] Proof complete: `attack` increments `physical.strength`, `cast` increments `magik.spellcasting` + `magik.attunement`, and the clock/debug overlay persist across the map → battle → map round-trip
 
 ### Day 4 — HUD + Cutscene
-- [ ] Add a minimal HUD overlay under `OverlayHost` (not a `SceneManager` state)
-- [ ] Toggle HUD on `H` while keeping the map visible underneath
-- [ ] Block map movement while HUD is open, but keep the clock running
-- [ ] Show placeholder inventory/equipment framing, current clock, current path/class, and a compact stat summary
-- [ ] Add a temporary map-side cutscene trigger on `C`
-- [ ] Use `PlayerData.chosen_path` as the spike source of truth, defaulting to `pure` if unset
-- [ ] Add dev-only allegiance switches: `1` = Pure, `2` = Mixed
-- [ ] Create `Cutscene.tscn` / `Cutscene.gd`
-- [ ] Run one short scripted placeholder movement sequence
-- [ ] Show one of two dialogue lines based on the Pure/Mixed path
-- [ ] Return to map through `SceneManager` and verify clock continuity across map, HUD, and cutscene
+- [x] Add a minimal HUD overlay under `OverlayHost` (not a `SceneManager` state)
+- [x] Toggle HUD on `H` while keeping the map visible underneath
+- [x] Block map movement while HUD is open, but keep the clock running
+- [x] Show placeholder inventory/equipment framing, current clock, current path/class, and a compact stat summary
+- [x] Add a temporary map-side cutscene trigger on `C`
+- [x] Use `PlayerData.chosen_path` as the spike source of truth, defaulting to `pure` if unset
+- [x] Add dev-only allegiance switches: `1` = Pure, `2` = Mixed
+- [x] Create `Cutscene.tscn` / `Cutscene.gd`
+- [x] Run one short scripted placeholder movement sequence
+- [x] Show one of two dialogue lines based on the Pure/Mixed path
+- [x] Return to map through `SceneManager`; manual continuity proof is queued for Day 5 verification
+- [x] Headless smoke passes: `godot --headless --path . --quit-after 4`
+- [x] Headless cutscene load passes: `godot --headless --path . --scene res://scenes/cutscene/Cutscene.tscn --quit-after 4`
 
 ### Day 5 — Wire + verify
-TODO
+- [ ] Boot from `Main` and confirm blank `chosen_path` defaults to `pure` in the debug panel and HUD
+- [ ] Walk on map, open HUD with `H`, confirm movement stops while HUD is open, and confirm the clock keeps advancing
+- [ ] Use `1` and `2` on map and confirm the path updates immediately in debug + HUD without a scene reload
+- [ ] Trigger cutscene with `C` as Pure and confirm the Pure dialogue branch, scripted movement, and return to map
+- [ ] Trigger cutscene with `C` as Mixed and confirm the Mixed dialogue branch, scripted movement, and return to map
+- [ ] Re-run the battle proof with `B`, `Attack`, `Cast Spell`, and `Return to Map`; confirm HUD stays hidden outside map
+- [ ] If all checks pass, mark the remaining two success criteria green and close the technical spike

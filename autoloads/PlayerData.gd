@@ -4,6 +4,8 @@
 # StatRegistry handles the numbers. This handles the identity.
 extends Node
 
+const VALID_PATHS: Array[String] = ["pure", "mixed"]
+
 # --- Class system ---
 # chosen_class: the player's primary class (e.g. "knight", "mage", "rogue")
 # chosen_path: "pure" or "mixed"
@@ -50,6 +52,7 @@ var age_days: int   = 0
 
 func _ready() -> void:
 	SignalBus.new_day.connect(_on_new_day)
+	ensure_spike_defaults()
 
 # Age advances with the clock.
 func _on_new_day(_day_number: int) -> void:
@@ -77,6 +80,21 @@ func get_ghost_flag(flag_name: String, default: Variant = null) -> Variant:
 	return ghost_flags.get(flag_name, default)
 
 # --- Convenience ---
+func ensure_spike_defaults() -> void:
+	if chosen_path == "":
+		set_chosen_path("pure")
+
+func set_chosen_path(path: String) -> void:
+	if not VALID_PATHS.has(path):
+		push_warning("Invalid chosen_path requested: %s" % path)
+		return
+
+	if chosen_path == path:
+		return
+
+	chosen_path = path
+	SignalBus.flag_set.emit("chosen_path", chosen_path)
+
 func is_pure() -> bool:
 	return chosen_path == "pure"
 

@@ -5,21 +5,51 @@ const INNER_MARGIN := 32.0
 const PLAYER_SIZE := Vector2(32.0, 32.0)
 const MOVE_SPEED := 180.0
 const STEP_DISTANCE := 24.0
+const HINT_TEXT := "Day 4 Spike Controls\nMove: WASD / Arrows\nB: Battle   H: HUD\nC: Cutscene   1: Pure   2: Mixed"
 
 var _player_position: Vector2 = WORLD_SIZE * 0.5
 var _distance_since_step: float = 0.0
 
+@onready var hint_label: Label = $UI/HintLabel
+
 func _ready() -> void:
 	PlayerData.current_location = "spike_map"
 	PlayerData.current_region = "debug_region"
+	hint_label.text = HINT_TEXT
 	queue_redraw()
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("toggle_hud"):
+		get_viewport().set_input_as_handled()
+		_toggle_hud()
+		return
+
+	if _is_hud_open():
+		return
+
+	if event.is_action_pressed("set_path_pure"):
+		get_viewport().set_input_as_handled()
+		PlayerData.set_chosen_path("pure")
+		return
+
+	if event.is_action_pressed("set_path_mixed"):
+		get_viewport().set_input_as_handled()
+		PlayerData.set_chosen_path("mixed")
+		return
+
+	if event.is_action_pressed("debug_cutscene"):
+		get_viewport().set_input_as_handled()
+		SceneManager.change_state("cutscene")
+		return
+
 	if event.is_action_pressed("debug_battle"):
 		get_viewport().set_input_as_handled()
 		SceneManager.change_state("battle")
 
 func _physics_process(delta: float) -> void:
+	if _is_hud_open():
+		return
+
 	var input_vector: Vector2 = Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if input_vector.is_zero_approx():
 		return
@@ -43,6 +73,22 @@ func _physics_process(delta: float) -> void:
 		SignalBus.action_performed.emit({"type": "walk"})
 
 	queue_redraw()
+
+func _toggle_hud() -> void:
+	var hud = _get_spike_hud()
+	if hud != null:
+		hud.toggle()
+
+func _is_hud_open() -> bool:
+	var hud = _get_spike_hud()
+	return hud != null and hud.is_open()
+
+func _get_spike_hud():
+	var overlay_host: CanvasLayer = SceneManager.get_overlay_host()
+	if overlay_host == null:
+		return null
+
+	return overlay_host.get_node_or_null("SpikeHUD")
 
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, WORLD_SIZE), Color(0.10, 0.13, 0.10), true)
