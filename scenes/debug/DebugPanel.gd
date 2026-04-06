@@ -81,7 +81,7 @@ func _build_snapshot() -> String:
 	var display_class := PlayerData.get_display_class()
 	var time_data: Dictionary = GameClock.get_time()
 
-	lines.append("Day 2 Debug Panel")
+	lines.append("Technical Spike Debug Panel")
 	lines.append("State: %s" % _display_value(current_state, "none"))
 	lines.append("Clock: %s" % time_data.get("display", "unknown"))
 	lines.append("Location: %s (%s)" % [

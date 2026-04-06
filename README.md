@@ -14,7 +14,7 @@ Prove four things before building the game:
 2. Open this folder as a project
 3. Autoloads are pre-configured in `project.godot`
 4. Run the project or open `scenes/main/Main.tscn`
-5. The Day 2 spike boots straight into the map prototype with the debug overlay visible
+5. The Day 3 spike boots straight into the map prototype with the debug overlay visible and a battle trigger on `B`
 
 ## Structure
 ```
@@ -26,12 +26,14 @@ docs/            — Design documents
 
 ## Spike controls and debug
 - Movement: `WASD` or arrow keys
+- Enter battle proof: `B`
 - Debug overlay: top-left panel shows current state, clock, player path/flags, and the live stat snapshot
-- Day 2 proof target: each completed walking step increments `physical.movement` by `0.02`
+- Day 3 proof target: `B` enters battle, `Attack` increments `physical.strength`, `Cast Spell` increments magik stats, and `Return to Map` preserves the clock + debug overlay
+- Reserved for Day 4: `H` = HUD toggle, `C` = cutscene trigger, `1` = Pure path, `2` = Mixed path
 
 ## Day progress
 - [x] Day 1 — Autoloads + project scaffold
 - [x] Day 2 — SceneManager + Map scene
-- [ ] Day 3 — Battle scene + map round-trip
+- [x] Day 3 — Battle scene + map round-trip
 - [ ] Day 4 — HUD + Cutscene
 - [ ] Day 5 — Wire + verify all four success criteria

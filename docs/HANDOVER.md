@@ -147,7 +147,7 @@ Transitions: Map ↔ Battle, Map ↔ Cutscene, Map + HUD overlay (HUD does not r
 | 3. World and setting | ✅ Complete |
 | 4. Core loop document | ✅ Complete |
 | 5. Stat registry | ✅ Complete |
-| 6. Technical spike in Godot | 🔄 In progress — Day 2 done |
+| 6. Technical spike in Godot | 🔄 In progress — Day 3 done |
 | 7. Art direction document | ⬜ Not started |
 | 8. Vertical slice | ⬜ Not started |
 
@@ -159,7 +159,7 @@ Transitions: Map ↔ Battle, Map ↔ Cutscene, Map + HUD overlay (HUD does not r
 
 **Success criteria (all four must be green before spike is complete):**
 - [x] Walk on map → Movement skill increments in debug panel
-- [ ] Press attack in battle → Strength increments
+- [x] Press attack in battle → Strength increments
 - [ ] Clock runs across all four state transitions without pausing
 - [ ] Pure/Mix flag → NPC shows different dialogue line
 
@@ -192,20 +192,37 @@ All four autoloads created and pushed to repo. `project.godot` configured with a
 - `physical.movement` increases by the existing `0.02` action modifier and appears immediately in the debug panel
 - Clock remains visible and continues advancing while the map scene is active
 
-### Day 3 — TODO
-**Goal:** battle round-trip proof. Enter battle from map, fire combat stat events, and return to map without losing the clock or debug overlay.
+### Day 3 — COMPLETE ✅
+**Goal achieved:** battle round-trip proof is now in place. The map can enter battle through a dev-only trigger, combat actions fire stat events, and the project returns cleanly to map without losing the clock or debug overlay.
 
-**Tasks:**
-1. Create `scenes/battle/Battle.tscn` + `Battle.gd`
-2. Add a temporary map-side trigger that calls `SceneManager.change_state("battle")`
-3. Add two battle buttons: `Attack` and `Cast Spell`
-4. `Attack` emits `SignalBus.action_performed({ "type": "attack" })`
-5. `Cast Spell` emits `SignalBus.action_performed({ "type": "cast" })`
-6. Add a return path to map through `SceneManager.change_state("map")`
-7. Verify: `physical.strength` / magik stats tick correctly and the clock + debug overlay persist across the full map → battle → map round-trip
+**Files created / updated:**
+- `scenes/battle/Battle.tscn`, `scenes/battle/Battle.gd` — minimal battle proof scene with `Attack`, `Cast Spell`, and `Return to Map`
+- `scenes/map/Map.tscn`, `scenes/map/Map.gd` — on-screen spike hint plus temporary `B` trigger into battle
+- `scenes/debug/DebugPanel.gd` — title generalized from Day 2 to a spike-wide debug label
+- `project.godot` — `debug_battle` on `B` plus reserved Day 4 controls: `toggle_hud`, `debug_cutscene`, `set_path_pure`, `set_path_mixed`
+
+**Verification completed:**
+- Entering battle from map goes through `SceneManager.change_state("battle")`
+- `Attack` emits `SignalBus.action_performed({ "type": "attack" })` and increments `physical.strength` by the existing `0.05` modifier
+- `Cast Spell` emits `SignalBus.action_performed({ "type": "cast" })` and increments `magik.spellcasting` by `0.05` plus `magik.attunement` by `0.02`
+- `Return to Map` goes back through `SceneManager.change_state("map")`
+- The debug overlay persists and the clock keeps advancing through the full map → battle → map round-trip
 
 ### Day 4 — TODO
-HUD scene (overlay, not replacing map). Cutscene scene — NPC moves, dialogue box reads Pure/Mix flag, shows one of two lines.
+**Goal:** prove the remaining two spike requirements with the lightest possible implementation: HUD as a persistent overlay, Cutscene as an exclusive state, and Pure/Mixed dialogue branching off `PlayerData.chosen_path`.
+
+**Tasks:**
+1. Add a minimal HUD `Control` under `OverlayHost` rather than under `SceneManager`
+2. Toggle HUD with `H` while keeping the map visible underneath
+3. Block map input while HUD is open, but keep the clock running
+4. Show placeholder inventory/equipment framing, current clock, current path/class, and a compact stat summary
+5. Add a temporary cutscene trigger on `C` from the map
+6. Use `PlayerData.chosen_path` as the spike source of truth; if unset, initialize it to `pure`
+7. Add dev-only allegiance switches: `1` sets Pure, `2` sets Mixed
+8. Create `scenes/cutscene/Cutscene.tscn` + `Cutscene.gd`
+9. Run one short scripted placeholder movement sequence
+10. Show one of two dialogue lines based on the current path
+11. Return to map through `SceneManager` and verify clock continuity across map, HUD, and cutscene
 
 ### Day 5 — TODO
 Wire everything together. Run all four success criteria. Debug anything broken.
@@ -247,6 +264,6 @@ project.godot       Godot project config
 
 **After each session:** Update `docs/spike_progress.md` to reflect what was completed. Update this document if any locked decisions change or new decisions are made.
 
-**Current spike convention:** gameplay world movement uses dedicated `move_*` actions in `project.godot` (`WASD` + arrow keys). Keep `ui_*` reserved for menus and overlays.
+**Current spike convention:** gameplay world movement uses dedicated `move_*` actions in `project.godot` (`WASD` + arrow keys). Use `debug_*`, `toggle_hud`, and `set_path_*` for spike-only proof controls. Keep `ui_*` reserved for menus and overlays.
 
 **This document lives at:** `docs/HANDOVER.md` in the repo. Keep it current. It is the shared memory of the project.

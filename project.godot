@@ -54,3 +54,28 @@ move_right={
 , Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":4194321,"physical_keycode":4194321,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
 ])
 }
+debug_battle={
+"deadzone": 0.5,
+"events": Array[InputEvent]([Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":66,"physical_keycode":66,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+])
+}
+toggle_hud={
+"deadzone": 0.5,
+"events": Array[InputEvent]([Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":72,"physical_keycode":72,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+])
+}
+debug_cutscene={
+"deadzone": 0.5,
+"events": Array[InputEvent]([Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":67,"physical_keycode":67,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+])
+}
+set_path_pure={
+"deadzone": 0.5,
+"events": Array[InputEvent]([Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":49,"physical_keycode":49,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+])
+}
+set_path_mixed={
+"deadzone": 0.5,
+"events": Array[InputEvent]([Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":50,"physical_keycode":50,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+])
+}

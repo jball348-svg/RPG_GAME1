@@ -1,0 +1,46 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/battle/Battle.gd" id="1_battle"]
+
+[node name="Battle" type="Node2D"]
+script = ExtResource("1_battle")
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="BattlePanel" type="PanelContainer" parent="UI"]
+offset_left = 280.0
+offset_top = 118.0
+offset_right = 680.0
+offset_bottom = 422.0
+
+[node name="Margin" type="MarginContainer" parent="UI/BattlePanel"]
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 388.0
+offset_bottom = 292.0
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="Content" type="VBoxContainer" parent="UI/BattlePanel/Margin"]
+offset_right = 344.0
+offset_bottom = 248.0
+theme_override_constants/separation = 14
+
+[node name="TitleLabel" type="Label" parent="UI/BattlePanel/Margin/Content"]
+text = "Day 3 Battle Proof"
+horizontal_alignment = 1
+
+[node name="BodyLabel" type="Label" parent="UI/BattlePanel/Margin/Content"]
+text = "Attack and Cast Spell emit stat actions into StatRegistry.\nReturn to Map proves the scene round-trip while the clock and debug panel stay alive."
+horizontal_alignment = 1
+
+[node name="AttackButton" type="Button" parent="UI/BattlePanel/Margin/Content"]
+text = "Attack"
+
+[node name="CastSpellButton" type="Button" parent="UI/BattlePanel/Margin/Content"]
+text = "Cast Spell"
+
+[node name="ReturnButton" type="Button" parent="UI/BattlePanel/Margin/Content"]
+text = "Return to Map"

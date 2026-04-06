@@ -5,7 +5,7 @@ Prove four things before building the game.
 
 ## Success criteria
 - [x] Walk on map → Movement skill increments in debug panel
-- [ ] Press attack in battle → Strength increments
+- [x] Press attack in battle → Strength increments
 - [ ] Clock runs across all four state transitions without pausing
 - [ ] Pure/Mix flag → NPC shows different dialogue line
 
@@ -31,15 +31,27 @@ Prove four things before building the game.
 - [x] Proof complete: walking increments `physical.movement` by `0.02` and displays immediately
 
 ### Day 3 — Battle scene
-- [ ] Add `Battle.tscn` + `Battle.gd`
-- [ ] Add a temporary trigger from map into battle through `SceneManager.change_state("battle")`
-- [ ] Add `Attack` and `Cast Spell` buttons
-- [ ] Emit `SignalBus.action_performed({ "type": "attack" })` and `SignalBus.action_performed({ "type": "cast" })`
-- [ ] Return to map through `SceneManager`
-- [ ] Verify the clock and debug overlay persist across the map → battle → map round-trip
+- [x] `Battle.tscn` / `Battle.gd` added as a minimal battle proof scene
+- [x] `project.godot` updated with `debug_battle` on `B`, plus reserved Day 4 inputs: `toggle_hud`, `debug_cutscene`, `set_path_pure`, `set_path_mixed`
+- [x] `Map.tscn` / `Map.gd` updated with an on-screen hint and a temporary map-side `B` trigger into battle through `SceneManager.change_state("battle")`
+- [x] Battle scene includes `Attack`, `Cast Spell`, and `Return to Map` buttons
+- [x] `Attack` emits `SignalBus.action_performed({ "type": "attack" })`
+- [x] `Cast Spell` emits `SignalBus.action_performed({ "type": "cast" })`
+- [x] Return path to map goes back through `SceneManager.change_state("map")`
+- [x] Proof complete: `attack` increments `physical.strength`, `cast` increments `magik.spellcasting` + `magik.attunement`, and the clock/debug overlay persist across the map → battle → map round-trip
 
 ### Day 4 — HUD + Cutscene
-TODO
+- [ ] Add a minimal HUD overlay under `OverlayHost` (not a `SceneManager` state)
+- [ ] Toggle HUD on `H` while keeping the map visible underneath
+- [ ] Block map movement while HUD is open, but keep the clock running
+- [ ] Show placeholder inventory/equipment framing, current clock, current path/class, and a compact stat summary
+- [ ] Add a temporary map-side cutscene trigger on `C`
+- [ ] Use `PlayerData.chosen_path` as the spike source of truth, defaulting to `pure` if unset
+- [ ] Add dev-only allegiance switches: `1` = Pure, `2` = Mixed
+- [ ] Create `Cutscene.tscn` / `Cutscene.gd`
+- [ ] Run one short scripted placeholder movement sequence
+- [ ] Show one of two dialogue lines based on the Pure/Mixed path
+- [ ] Return to map through `SceneManager` and verify clock continuity across map, HUD, and cutscene
 
 ### Day 5 — Wire + verify
 TODO

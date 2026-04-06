@@ -14,6 +14,11 @@ func _ready() -> void:
 	PlayerData.current_region = "debug_region"
 	queue_redraw()
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("debug_battle"):
+		get_viewport().set_input_as_handled()
+		SceneManager.change_state("battle")
+
 func _physics_process(delta: float) -> void:
 	var input_vector: Vector2 = Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if input_vector.is_zero_approx():
