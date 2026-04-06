@@ -24,8 +24,8 @@ Everything else is production.
 
 **Tasks:**
 - [X] Acquire a town building tileset (facades, rooftops, doors, windows) — 32×32, CC0, matching art direction
-- [ ] Redesign the starting town in the TileMap editor: paths, buildings, shop locations, NPC placement zones
-- [ ] Remove the runtime tile-generation code from `Map.gd` — map data lives in the `.tscn`, not in script
+- [x] Redesign the starting town in the TileMap editor: paths, buildings, shop locations, NPC placement zones
+- [x] Remove the runtime tile-generation code from `Map.gd` — map data lives in the `.tscn`, not in script
 - [ ] Place collision shapes on impassable tiles (walls, trees, buildings)
 - [ ] Place trigger zones for: town exit (north), bookstore entrance, key NPC positions
 - [ ] Camera bounds set to match the designed map
