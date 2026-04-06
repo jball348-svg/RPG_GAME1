@@ -138,7 +138,9 @@ Transitions: Map ↔ Battle, Map ↔ Cutscene, Map + HUD overlay (HUD does not r
 
 ---
 
-## Pre-production status
+## Pre-production status — COMPLETE ✅
+
+All 8 pre-production steps are done. The project is now in **production**.
 
 | Step | Status |
 |---|---|
@@ -147,95 +149,71 @@ Transitions: Map ↔ Battle, Map ↔ Cutscene, Map + HUD overlay (HUD does not r
 | 3. World and setting | ✅ Complete |
 | 4. Core loop document | ✅ Complete |
 | 5. Stat registry | ✅ Complete |
-| 6. Technical spike in Godot | 🔄 In progress — Day 4 implemented, Day 5 verification pending |
-| 7. Art direction document | ⬜ Not started |
-| 8. Vertical slice | ⬜ Not started |
+| 6. Technical spike in Godot | ✅ Complete — all 5 days, all 4 criteria passed |
+| 7. Art direction document | ✅ Complete — see `docs/art_direction.md` |
+| 8. Vertical slice | 🔄 Next — build the core loop scenario for real |
 
 ---
 
-## Technical spike — current status
+## Technical spike — COMPLETE ✅
 
-**Goal:** Prove four things before building the game proper.
+All four success criteria passed. All five days complete.
 
-**Success criteria (all four must be green before spike is complete):**
 - [x] Walk on map → Movement skill increments in debug panel
 - [x] Press attack in battle → Strength increments
-- [ ] Clock runs across all four state transitions without pausing
-- [ ] Pure/Mix flag → NPC shows different dialogue line
+- [x] Clock runs across all four state transitions without pausing
+- [x] Pure/Mix flag → NPC shows different dialogue line
 
-### Day 1 — COMPLETE ✅
-All four autoloads created and pushed to repo. `project.godot` configured with autoloads pre-registered.
+### Infrastructure proven and in place
 
-**Files created:**
-- `autoloads/SignalBus.gd` — all game signals: action_performed, stat_changed, clock_ticked, new_day, state_changed, flag_set
-- `autoloads/StatRegistry.gd` — full stat tree, action_modifiers map, temp modifier system, derived Luck, clock-driven decay
-- `autoloads/GameClock.gd` — always-on clock at 2× real time, set_speed_multiplier() for rest/sleep, day rollover
-- `autoloads/PlayerData.gd` — class, path, specialisation, mixed_classes, flags, ghost_flags, age (tied to clock), equipment slots, inventory sketch
-- `project.godot` — autoloads registered, main scene pointed at `scenes/main/Main.tscn`
-- `docs/stat_registry.md`, `docs/spike_progress.md`
-- Scene folder structure: `scenes/main`, `scenes/battle`, `scenes/hud`, `scenes/cutscene`, `assets/placeholder`
+| File | Purpose |
+|---|---|
+| `autoloads/SignalBus.gd` | All game signals: action_performed, stat_changed, clock_ticked, new_day, state_changed, flag_set |
+| `autoloads/StatRegistry.gd` | Full stat tree, action_modifiers map, temp modifier system, derived Luck, clock-driven decay |
+| `autoloads/GameClock.gd` | Always-on clock at 2× real time, set_speed_multiplier() for rest/sleep, day rollover |
+| `autoloads/PlayerData.gd` | Class, path, specialisation, flags, ghost_flags, age (tied to clock), equipment slots |
+| `autoloads/SceneManager.gd` | Exclusive game-state loader for Map / Battle / Cutscene |
+| `scenes/main/` | Root shell with StateHost + persistent OverlayHost |
+| `scenes/map/` | Placeholder map, WASD movement, stat event emission |
+| `scenes/battle/` | Attack + Cast Spell buttons, stat events, round-trip to map |
+| `scenes/hud/` | Persistent overlay, clock/status, stat summary, equipment placeholders |
+| `scenes/cutscene/` | Scripted sequence, Pure/Mixed dialogue branching |
+| `scenes/debug/` | Dev-only stat/clock/flag overlay — remove before vertical slice |
 
-### Day 2 — COMPLETE ✅
-**Goal achieved:** permanent scene shell is in place, the project boots into the map prototype, walking emits stat events, and the debug overlay shows Movement ticking live.
+**Spike controls (dev only — remove in vertical slice):**
+`WASD/arrows` move · `B` enter battle · `H` toggle HUD · `C` cutscene · `1` Pure path · `2` Mixed path
 
-**Files created / updated:**
-- `autoloads/SceneManager.gd` — exclusive game-state loader for Map / Battle / Cutscene
-- `scenes/main/Main.tscn`, `scenes/main/Main.gd` — root shell with `StateHost` + persistent `OverlayHost`
-- `scenes/map/Map.tscn`, `scenes/map/Map.gd` — bounded placeholder map with 4-direction movement
-- `scenes/debug/DebugPanel.tscn`, `scenes/debug/DebugPanel.gd` — persistent overlay showing state, clock, flags, and the stat snapshot
-- `project.godot` — `SceneManager` autoload added, `move_up`, `move_down`, `move_left`, `move_right` mapped to `WASD` + arrow keys
+---
 
-**Verification completed:**
-- Project now boots successfully into `scenes/main/Main.tscn`
-- Startup performs one clean transition into `map`
-- Walking emits `SignalBus.action_performed({ "type": "walk" })` once per completed step threshold
-- `physical.movement` increases by the existing `0.02` action modifier and appears immediately in the debug panel
-- Clock remains visible and continues advancing while the map scene is active
+## Current phase — production
 
-### Day 3 — COMPLETE ✅
-**Goal achieved:** battle round-trip proof is now in place. The map can enter battle through a dev-only trigger, combat actions fire stat events, and the project returns cleanly to map without losing the clock or debug overlay.
+**The spike is the skeleton. Production puts flesh on it.**
 
-**Files created / updated:**
-- `scenes/battle/Battle.tscn`, `scenes/battle/Battle.gd` — minimal battle proof scene with `Attack`, `Cast Spell`, and `Return to Map`
-- `scenes/map/Map.tscn`, `scenes/map/Map.gd` — on-screen spike hint plus temporary `B` trigger into battle
-- `scenes/debug/DebugPanel.gd` — title generalized from Day 2 to a spike-wide debug label
-- `project.godot` — `debug_battle` on `B` plus reserved Day 4 controls: `toggle_hud`, `debug_cutscene`, `set_path_pure`, `set_path_mixed`
+The immediate next steps in order:
 
-**Verification completed:**
-- Entering battle from map goes through `SceneManager.change_state("battle")`
-- `Attack` emits `SignalBus.action_performed({ "type": "attack" })` and increments `physical.strength` by the existing `0.05` modifier
-- `Cast Spell` emits `SignalBus.action_performed({ "type": "cast" })` and increments `magik.spellcasting` by `0.05` plus `magik.attunement` by `0.02`
-- `Return to Map` goes back through `SceneManager.change_state("map")`
-- The debug overlay persists and the clock keeps advancing through the full map → battle → map round-trip
+### Step 7 (completing): Art direction document
+Before any real asset work, one document must exist: `docs/art_direction.md`.
+It must answer: tile resolution (16×16 or 32×32?), colour palette (how many colours, what tone?), reference games for visual style, asset sources to use, and what consistency rules to follow when mixing packs.
+**This decision gates all art work. Do not source or place any assets until it exists.**
 
-### Day 4 — COMPLETE ✅
-**Goal achieved:** the last two spike features are now implemented. HUD lives as a persistent overlay, Cutscene exists as an exclusive state, and the Pure/Mixed branch now reads directly from `PlayerData.chosen_path`.
+### Step 8: Vertical slice — the core loop, for real
+Build the reference scenario (town → mine → boss → exit) with:
+- Real tilesets replacing placeholder rectangles
+- Real NPC dialogue system (not spike placeholders)
+- Real stat gating on NPC conversations
+- Real battle with Kobold enemies and the player's starting class abilities
+- Real moral choice with the Half-Kobold Orc Shaman
+- Real cutscene at the mine entrance
+- Save/load working
 
-**Files created / updated:**
-- `autoloads/PlayerData.gd` — `ensure_spike_defaults()` now defaults blank path state to `pure`; `set_chosen_path()` validates and emits a refresh signal
-- `scenes/main/Main.gd` — persistent HUD instantiated under `OverlayHost` alongside the debug panel
-- `scenes/hud/HUD.tscn`, `scenes/hud/HUD.gd` — full-screen semi-transparent HUD overlay with clock/status, path/class/age, equipment/inventory placeholders, and compact stat summary
-- `scenes/map/Map.gd`, `scenes/map/Map.tscn` — `H` toggles HUD, `C` enters cutscene, `1/2` switch path, movement and other map triggers pause while HUD is open, and the on-screen hint reflects all spike controls
-- `scenes/cutscene/Cutscene.tscn`, `scenes/cutscene/Cutscene.gd` — scripted placeholder sequence with one Pure line and one Mixed line, then return to map
+This is the first thing a playtester will ever see. It must be complete and polished before production continues into further areas or quest content.
 
-**Verification completed:**
-- Project boots headlessly without parse or scene-load errors via `godot --headless --path . --quit-after 4`
-- Cutscene scene loads headlessly without errors via `godot --headless --path . --scene res://scenes/cutscene/Cutscene.tscn --quit-after 4`
-- Final manual proof of clock continuity and dialogue branching is intentionally deferred to Day 5
-
-### Day 5 — COMPLETE ✅
-**Goal:** run the final manual verification pass, debug any regressions, and then close the spike.
-
-**Checklist:**
-1. Boot from `scenes/main/Main.tscn` and confirm blank path state defaults to `pure`
-2. Open and close HUD with `H`; confirm the map stays visible, movement pauses, and the clock continues ticking
-3. Use `1` and `2` on map; confirm path changes immediately in both debug panel and HUD
-4. Trigger cutscene with `C` as Pure; confirm scripted movement, Pure dialogue line, and return to map
-5. Trigger cutscene with `C` as Mixed; confirm scripted movement, Mixed dialogue line, and return to map
-6. Re-run the battle proof with `B`, `Attack`, `Cast Spell`, and `Return to Map`; confirm the overlay stack remains stable and HUD stays map-only
-7. If all four success criteria are green, update `docs/spike_progress.md`, this document, and `README.md` one final time to mark the technical spike complete
-
-ALL MANUAL CHECKS COMPLETE. SPIKE FINISHED.
+### Production order after vertical slice
+1. Class selection screen (character creation)
+2. Save system (full stat + quest + clock snapshot)
+3. Main quest — remaining acts and locations
+4. Polish pass on vertical slice
+5. Steam page + first devlog (marketing starts here — not at launch)
 
 ---
 
@@ -254,13 +232,14 @@ scenes/
   battle/           Battle state
   hud/              HUD overlay
   cutscene/         Cutscene state
-  debug/            Persistent debug overlay for the spike
+  debug/            Dev-only spike overlay (remove before vertical slice)
 assets/
-  placeholder/      Spike-only placeholder art
+  placeholder/      Spike-only — replace entirely during vertical slice
 docs/
-  HANDOVER.md       This file — LLM context document
+  HANDOVER.md       This file — LLM context document (keep current)
   stat_registry.md  Stat design reference
-  spike_progress.md Day-by-day checklist
+  spike_progress.md Spike day-by-day log (archived — spike complete)
+  art_direction.md  Art direction decisions (to be created)
 project.godot       Godot project config
 ```
 
@@ -268,12 +247,10 @@ project.godot       Godot project config
 
 ## How to use this document
 
-**Starting a new session:** Paste this document (or link to it) at the top of your conversation with the agent, then state what you are working on today. Example:
+**Starting a new session:** Paste the raw URL or contents at the top of your conversation, then state what you are working on. Example:
 
-> "Here is the project context: [paste HANDOVER.md]. I am working on Day 2 of the technical spike. Help me build the SceneManager and Map scene."
+> "Here is the project context: [paste HANDOVER.md]. I am working on the art direction document. Help me make the decisions and write `docs/art_direction.md`."
 
-**After each session:** Update `docs/spike_progress.md` to reflect what was completed. Update this document if any locked decisions change or new decisions are made.
+**After each session:** Update this document if any locked decisions change, new decisions are made, or phase status changes. The HANDOVER is the shared memory. Keep it current or it becomes useless.
 
-**Current spike convention:** gameplay world movement uses dedicated `move_*` actions in `project.godot` (`WASD` + arrow keys). Spike proof controls are `B` battle, `H` HUD toggle, `C` cutscene, `1` Pure path, and `2` Mixed path. Keep `ui_*` reserved for production menus and overlays.
-
-**This document lives at:** `docs/HANDOVER.md` in the repo. Keep it current. It is the shared memory of the project.
+**Raw file URL:** `https://raw.githubusercontent.com/jball348-svg/RPG_GAME1/main/docs/HANDOVER.md`
