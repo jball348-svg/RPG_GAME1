@@ -8,6 +8,7 @@ const VALID_PATHS: Array[String] = ["pure", "mixed"]
 const CLASS_FIGHTER := "fighter"
 const CLASS_BATTLEMAGE := "battlemage"
 const HEALTH_POTION_ID := "health_potion"
+const SHAMAN_TALISMAN_ID := "shaman_talisman"
 const DEFAULT_POTION_COUNT := 2
 const DEFAULT_WEAPON_MODIFIER := 5
 

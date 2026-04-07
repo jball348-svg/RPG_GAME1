@@ -30,17 +30,14 @@ const KOBOLD_ATTACK_DAMAGE := 6
 const KOBOLD_DEFENCE := 3
 const KOBOLD_RESISTANCE := 2
 const KOBOLD_DEFEND_BONUS := 2
-const SHAMAN_MAX_HP := 54
-const SHAMAN_ATTACK_DAMAGE := 8
+const SHAMAN_MAX_HP := 60
+const SHAMAN_ATTACK_DAMAGE := 9
 const SHAMAN_DEFENCE := 4
-const SHAMAN_RESISTANCE := 3
-const SHAMAN_HEAL_AMOUNT := 16
-const SHAMAN_HEAL_THRESHOLD_RATIO := 0.4
-const SHAMAN_HEX_DAMAGE := 4
+const SHAMAN_RESISTANCE := 4
+const SHAMAN_HEAL_AMOUNT := 10
 const SHAMAN_HEX_PENALTY := 2
-const SHAMAN_HEX_TURNS := 2
-const SHAMAN_GOLD_REWARD_MIN := 18
-const SHAMAN_GOLD_REWARD_MAX := 26
+const SHAMAN_GOLD_REWARD := 25
+const SHAMAN_TALISMAN_LABEL := "Shaman's Talisman"
 const HEALTH_POTION_HEAL := 20
 
 const KNIGHT_PLAYER_REGION := Rect2i(64, 64, 64, 64)
@@ -124,31 +121,27 @@ var _battle_over := false
 var _boss_placeholder_mode := false
 var _shaman_boss_mode := false
 var _shaman_heal_used := false
-var _player_hex_turns_remaining := 0
+var _player_hexed := false
 var _bob_time := 0.0
 var _player_class_id := ""
 var _last_viewport_size := Vector2.ZERO
 
 func _ready() -> void:
-    randomize()
-    _context = SceneManager.consume_state_payload()
-    _load_ui_textures()
-    _build_scene()
-    _configure_battle_state()
-    _layout_scene()
-    _refresh_all_ui()
+	randomize()
+	_context = SceneManager.consume_state_payload()
+	_load_ui_textures()
+	_build_scene()
+	_configure_battle_state()
+	_layout_scene()
+	_refresh_all_ui()
 
-    if not get_viewport().size_changed.is_connected(_on_viewport_size_changed):
-        get_viewport().size_changed.connect(_on_viewport_size_changed)
+	if not get_viewport().size_changed.is_connected(_on_viewport_size_changed):
+		get_viewport().size_changed.connect(_on_viewport_size_changed)
 
-    call_deferred("_start_battle_flow")
+	call_deferred("_start_battle_flow")
 
 func _process(delta: float) -> void:
-    _bob_time += delta
-    if is_instance_valid(_player_sprite):
-        _player_sprite.position = _player_base_position + Vector2(0.0, sin(_bob_time * 2.8) * _scale_y(3.0))
-    if is_instance_valid(_enemy_sprite) and not _battle_over:
-        _enemy_sprite.position = _enemy_base_position + Vector2(0.0, sin(_bob_time * 3.0 + 0.8) * _scale_y(2.5))
+	_bob_time += delta
 	if is_instance_valid(_player_sprite):
 		_player_sprite.position = _player_base_position + Vector2(0.0, sin(_bob_time * 2.8) * _scale_y(3.0))
 	if is_instance_valid(_enemy_sprite) and not _battle_over:
@@ -424,15 +417,40 @@ func _configure_battle_state() -> void:
 		PlayerData.ensure_spike_defaults()
 		_player_class_id = PlayerData.resolve_vertical_slice_class_id()
 
+	_shaman_boss_mode = _encounter_kind() == BATTLE_KIND_BOSS_SHAMAN
+	_boss_placeholder_mode = _encounter_kind() == BATTLE_KIND_BOSS_PLACEHOLDER
+	_shaman_heal_used = false
+	_player_hexed = false
+	_enemy_defend_active = false
+	_enemy_staggered = false
+
+	if _shaman_boss_mode:
+		_enemy_max_hp = SHAMAN_MAX_HP
+		_enemy_hp = SHAMAN_MAX_HP
+		_enemy_attack_damage = SHAMAN_ATTACK_DAMAGE
+		_enemy_defence = SHAMAN_DEFENCE
+		_enemy_resistance = SHAMAN_RESISTANCE
+		_enemy_defend_bonus = 0
+		_enemy_display_name = "Shaman"
+		_enemy_intro_log = "The Shaman steps forward. He does not look afraid."
+	else:
+		_enemy_max_hp = KOBOLD_MAX_HP
+		_enemy_hp = KOBOLD_MAX_HP
+		_enemy_attack_damage = KOBOLD_ATTACK_DAMAGE
+		_enemy_defence = KOBOLD_DEFENCE
+		_enemy_resistance = KOBOLD_RESISTANCE
+		_enemy_defend_bonus = KOBOLD_DEFEND_BONUS
+		_enemy_display_name = "Kobold"
+		_enemy_intro_log = "A kobold rushes from the dark."
+
 	_apply_battle_sprite_art()
 	PlayerData.ensure_vertical_slice_inventory()
 	if PlayerData.current_hp <= 0:
 		PlayerData.restore_hp_full()
 
-	_boss_placeholder_mode = _encounter_kind() == BATTLE_KIND_BOSS_PLACEHOLDER
 	_player_name_label.text = PlayerData.get_display_class()
-	_enemy_name_label.text = "Kobold" if not _boss_placeholder_mode else "Boss Gate"
-	_append_log("A kobold rushes from the dark." if not _boss_placeholder_mode else "The sealed chamber stirs.")
+	_enemy_name_label.text = "Boss Gate" if _boss_placeholder_mode else _enemy_display_name
+	_append_log("The sealed chamber stirs." if _boss_placeholder_mode else _enemy_intro_log)
 
 func _layout_scene() -> void:
 	var viewport_size := get_viewport_rect().size
@@ -523,13 +541,24 @@ func _apply_battle_sprite_art() -> void:
 		_player_sprite.flip_h = true
 		_player_scale_multiplier = _reference_scale_for_height(_player_sprite.texture, PLAYER_TARGET_HEIGHT, 1.4)
 
-	_enemy_sprite.texture = _load_cropped_texture(
-		ENEMY_KOBOLD_SPRITE_PATH,
-		KOBOLD_ENEMY_REGION,
-		_make_fallback_texture(64, 64, Color(0.45, 0.15, 0.14))
-	)
-	_enemy_sprite.flip_h = true
-	_enemy_scale_multiplier = _reference_scale_for_height(_enemy_sprite.texture, ENEMY_TARGET_HEIGHT, 1.5)
+	if _shaman_boss_mode:
+		_enemy_sprite.texture = _load_cropped_texture(
+			ENEMY_SHAMAN_SPRITE_PATH,
+			SHAMAN_ENEMY_REGION,
+			_make_fallback_texture(64, 80, Color(0.33, 0.17, 0.41)),
+			true,
+			true
+		)
+		_enemy_sprite.flip_h = true
+		_enemy_scale_multiplier = _reference_scale_for_height(_enemy_sprite.texture, SHAMAN_TARGET_HEIGHT, 1.5)
+	else:
+		_enemy_sprite.texture = _load_cropped_texture(
+			ENEMY_KOBOLD_SPRITE_PATH,
+			KOBOLD_ENEMY_REGION,
+			_make_fallback_texture(64, 64, Color(0.45, 0.15, 0.14))
+		)
+		_enemy_sprite.flip_h = true
+		_enemy_scale_multiplier = _reference_scale_for_height(_enemy_sprite.texture, ENEMY_TARGET_HEIGHT, 1.5)
 
 func _position_hp_widget(container: Node, top_left: Vector2) -> void:
 	var widget := container as Control
@@ -560,7 +589,7 @@ func _refresh_all_ui() -> void:
 
 func _refresh_hp_ui() -> void:
 	_update_hp_widget(_player_hp_fill, _player_hp_label, PlayerData.current_hp, PlayerData.get_max_hp())
-	_update_hp_widget(_enemy_hp_fill, _enemy_hp_label, _enemy_hp, KOBOLD_MAX_HP)
+	_update_hp_widget(_enemy_hp_fill, _enemy_hp_label, _enemy_hp, _enemy_max_hp)
 
 func _update_hp_widget(fill: ColorRect, value_label: Label, current_hp: int, max_hp: int) -> void:
 	var ratio := 0.0 if max_hp <= 0 else clampf(float(current_hp) / float(max_hp), 0.0, 1.0)
@@ -588,7 +617,8 @@ func _refresh_main_menu_buttons() -> void:
 	_spell_button.tooltip_text = "" if PlayerData.has_battle_magik() else "No Magik ability."
 	_item_button.disabled = not can_act or PlayerData.get_item_count(PlayerData.HEALTH_POTION_ID) <= 0
 	_item_button.tooltip_text = "" if PlayerData.get_item_count(PlayerData.HEALTH_POTION_ID) > 0 else "No items."
-	_flee_button.disabled = not can_act
+	_flee_button.disabled = not can_act or _shaman_boss_mode
+	_flee_button.tooltip_text = "The Shaman seals the chamber." if _shaman_boss_mode else ""
 	_ability_button.disabled = not can_act or _ability_cooldown_remaining > 0
 	_ability_button.text = _ability_button_text()
 	_ability_button.tooltip_text = "" if _ability_cooldown_remaining <= 0 else "Cooldown: %d turn(s)." % _ability_cooldown_remaining
@@ -679,6 +709,10 @@ func _begin_enemy_turn() -> void:
 	if _battle_over:
 		return
 
+	if _shaman_boss_mode:
+		_run_shaman_enemy_turn()
+		return
+
 	if randf() <= 0.2:
 		_run_enemy_defend()
 	else:
@@ -687,18 +721,18 @@ func _begin_enemy_turn() -> void:
 func _run_enemy_attack() -> void:
 	if _enemy_staggered and randf() <= 0.5:
 		_enemy_staggered = false
-		_append_log("Kobold stumbles and misses.")
+		_append_log("%s stumbles and misses." % _enemy_display_name)
 		await get_tree().create_timer(0.4).timeout
 		_begin_player_turn()
 		return
 
 	_enemy_staggered = false
-	PlayerData.take_battle_damage(KOBOLD_ATTACK_DAMAGE)
-	SignalBus.action_performed.emit({"type": "take_damage", "source": "kobold"})
+	PlayerData.take_battle_damage(_enemy_attack_damage)
+	SignalBus.action_performed.emit({"type": "take_damage", "source": _enemy_display_name.to_lower()})
 	_flash_sprite(_player_sprite)
 	_refresh_hp_ui()
-	_append_log("Kobold attacks for %d damage." % KOBOLD_ATTACK_DAMAGE)
-	if KOBOLD_ATTACK_DAMAGE >= 10:
+	_append_log("%s attacks for %d damage." % [_enemy_display_name, _enemy_attack_damage])
+	if _enemy_attack_damage >= 10:
 		_shake_camera(8.0)
 
 	if PlayerData.current_hp <= 0:
@@ -711,8 +745,61 @@ func _run_enemy_attack() -> void:
 func _run_enemy_defend() -> void:
 	_enemy_defend_active = true
 	_enemy_staggered = false
-	_append_log("Kobold braces behind a jagged guard.")
+	_append_log("%s braces behind a jagged guard." % _enemy_display_name)
 	await get_tree().create_timer(0.45).timeout
+	_begin_player_turn()
+
+func _run_shaman_enemy_turn() -> void:
+	if _enemy_staggered and randf() <= 0.5:
+		_enemy_staggered = false
+		_append_log("The Shaman falters and loses the moment.")
+		await get_tree().create_timer(0.45).timeout
+		_begin_player_turn()
+		return
+
+	match _choose_shaman_action():
+		"heal":
+			_run_shaman_heal()
+		"hex":
+			_run_shaman_hex()
+		_:
+			_run_enemy_attack()
+
+func _choose_shaman_action() -> String:
+	var choices: Array[Dictionary] = [
+		{"id": "attack", "weight": 60.0},
+		{"id": "hex", "weight": 25.0},
+	]
+	if not _shaman_heal_used and _enemy_hp < _enemy_max_hp:
+		choices.append({"id": "heal", "weight": 15.0})
+
+	var total_weight := 0.0
+	for choice in choices:
+		total_weight += float(choice.get("weight", 0.0))
+
+	var roll := randf() * total_weight
+	var running_weight := 0.0
+	for choice in choices:
+		running_weight += float(choice.get("weight", 0.0))
+		if roll <= running_weight:
+			return str(choice.get("id", "attack"))
+
+	return "attack"
+
+func _run_shaman_hex() -> void:
+	_player_hexed = true
+	_append_log("The Shaman casts Hex. Your next strike will falter.")
+	await get_tree().create_timer(0.55).timeout
+	_begin_player_turn()
+
+func _run_shaman_heal() -> void:
+	_shaman_heal_used = true
+	var previous_hp := _enemy_hp
+	_enemy_hp = mini(_enemy_max_hp, _enemy_hp + SHAMAN_HEAL_AMOUNT)
+	var restored := _enemy_hp - previous_hp
+	_refresh_hp_ui()
+	_append_log("The Shaman gathers himself and restores %d HP." % restored)
+	await get_tree().create_timer(0.55).timeout
 	_begin_player_turn()
 
 func _on_attack_pressed() -> void:
@@ -767,7 +854,7 @@ func _on_submenu_option_pressed(action_id: String) -> void:
 func _resolve_player_attack() -> void:
 	_input_locked = true
 	SignalBus.action_performed.emit({"type": "attack", "context": "battle"})
-	var damage := _calculate_physical_damage(_player_strength_for_attack() + PlayerData.get_battle_weapon_modifier())
+	var damage := _calculate_physical_damage(_modified_attack_power(_player_strength_for_attack() + PlayerData.get_battle_weapon_modifier()))
 	_apply_damage_to_enemy(damage, "You attack for %d damage." % damage, true)
 
 func _resolve_flamebolt() -> void:
@@ -775,8 +862,8 @@ func _resolve_flamebolt() -> void:
 	SignalBus.action_performed.emit({"type": "cast", "spell": "flamebolt"})
 	var spell_power := 6 if _player_class_id == PlayerData.CLASS_BATTLEMAGE else 8
 	var base_damage := int(round(StatRegistry.get_stat("magik.spellcasting"))) + spell_power
-	var damage := maxi(1, base_damage - KOBOLD_RESISTANCE)
-	_apply_damage_to_enemy(damage, "Flamebolt scorches the kobold for %d damage." % damage, true)
+	var damage := maxi(1, base_damage - _enemy_resistance)
+	_apply_damage_to_enemy(damage, "Flamebolt scorches the %s for %d damage." % [_enemy_display_name.to_lower(), damage], true)
 
 func _use_health_potion() -> void:
 	if PlayerData.get_item_count(PlayerData.HEALTH_POTION_ID) <= 0:
@@ -797,6 +884,11 @@ func _use_health_potion() -> void:
 	_finish_player_turn()
 
 func _attempt_flee() -> void:
+	if _shaman_boss_mode:
+		_append_log("The Shaman seals the chamber. There is no escape.")
+		_show_main_menu()
+		return
+
 	_input_locked = true
 	SignalBus.action_performed.emit({"type": "flee_attempt"})
 	var resolve := int(round(StatRegistry.get_stat("will.resolve")))
@@ -814,22 +906,22 @@ func _attempt_flee() -> void:
 func _resolve_shield_bash() -> void:
 	_input_locked = true
 	SignalBus.action_performed.emit({"type": "shield_bash"})
-	var damage := _calculate_physical_damage(_player_strength_for_attack() + 3)
+	var damage := _calculate_physical_damage(_modified_attack_power(_player_strength_for_attack() + 3))
 	_enemy_staggered = true
 	_ability_cooldown_remaining = 4
-	_apply_damage_to_enemy(damage, "Shield Bash hits for %d damage and staggers the kobold." % damage, true, true)
+	_apply_damage_to_enemy(damage, "Shield Bash hits for %d damage and staggers the %s." % [damage, _enemy_display_name.to_lower()], true, true)
 
 func _resolve_arcane_strike() -> void:
 	_input_locked = true
 	SignalBus.action_performed.emit({"type": "arcane_strike"})
-	var physical_damage := _calculate_physical_damage(_player_strength_for_attack() + PlayerData.get_battle_weapon_modifier())
+	var physical_damage := _calculate_physical_damage(_modified_attack_power(_player_strength_for_attack() + PlayerData.get_battle_weapon_modifier()))
 	var magik_damage := 4
 	var total_damage := physical_damage + magik_damage
 	_ability_cooldown_remaining = 3
-	_apply_damage_to_enemy(total_damage, "Arcane Strike lands for %d physical + %d magik damage." % [physical_damage, magik_damage], true, true)
+	_apply_damage_to_enemy(total_damage, "Arcane Strike lands for %d damage." % total_damage, true, true)
 
 func _calculate_physical_damage(attack_power: int) -> int:
-	var defence := KOBOLD_DEFENCE + (KOBOLD_DEFEND_BONUS if _enemy_defend_active else 0)
+	var defence := _enemy_defence + (_enemy_defend_bonus if _enemy_defend_active else 0)
 	return maxi(1, attack_power - defence)
 
 func _player_strength_for_attack() -> int:
@@ -837,6 +929,14 @@ func _player_strength_for_attack() -> int:
 	if _player_class_id == PlayerData.CLASS_FIGHTER:
 		base_strength += 2
 	return base_strength
+
+func _modified_attack_power(base_attack_power: int) -> int:
+	if not _player_hexed:
+		return base_attack_power
+
+	_player_hexed = false
+	_append_log("The hex weakens your strike.")
+	return maxi(1, base_attack_power - SHAMAN_HEX_PENALTY)
 
 func _apply_damage_to_enemy(damage: int, log_text: String, consume_defend_bonus: bool, is_heavy: bool = false) -> void:
 	_enemy_hp = maxi(0, _enemy_hp - damage)
@@ -879,24 +979,36 @@ func _run_victory_sequence() -> void:
 	_center_banner.visible = false
 
 	var gold_reward := randi_range(10, 15)
-	PlayerData.gold += gold_reward
-	SignalBus.action_performed.emit({"type": "battle_victory"})
+	var status_text := "Victory! You recover %d gold." % gold_reward
+	_loot_label.text = "Victory!\nGold found: %d" % gold_reward
 
-	if _encounter_kind() == BATTLE_KIND_STANDARD:
+	if _shaman_boss_mode:
+		gold_reward = SHAMAN_GOLD_REWARD
+		status_text = "The Shaman falls. The mine is silent."
+		_loot_label.text = "Victory!\nGold found: %d\nFound: %s" % [gold_reward, SHAMAN_TALISMAN_LABEL]
+		PlayerData.add_item(PlayerData.SHAMAN_TALISMAN_ID, 1)
+		PlayerData.set_flag(SHAMAN_KILLED_FLAG, true)
+		PlayerData.set_flag(MINE_BOSS_RESOLVED_FLAG, true)
+		PlayerData.set_flag(MINE_EXIT_UNLOCKED_FLAG, true)
+		PlayerData.set_ghost_flag("world_remembers_shaman_killed", true)
+		if PlayerData.is_mixed():
+			PlayerData.set_ghost_flag("mixed_betrayed_own", true)
+		PlayerData.set_flag(MINE_ENCOUNTER_PROGRESS_FLAG, maxi(int(PlayerData.get_flag(MINE_ENCOUNTER_PROGRESS_FLAG, 0)), 3))
+	elif _encounter_kind() == BATTLE_KIND_STANDARD:
 		var encounter_index := int(_context.get("encounter_index", -1))
 		var new_progress := maxi(int(PlayerData.get_flag(MINE_ENCOUNTER_PROGRESS_FLAG, 0)), encounter_index + 1)
 		PlayerData.set_flag(MINE_ENCOUNTER_PROGRESS_FLAG, new_progress)
 		if new_progress >= 3 and not PlayerData.get_flag(MINE_BOSS_READY_FLAG, false):
 			PlayerData.set_flag(MINE_BOSS_READY_FLAG, true)
+		if new_progress >= 3:
+			status_text = "Victory! You recover %d gold. Boss chamber unlocked." % gold_reward
 
-	_loot_label.text = "Victory!\nGold found: %d" % gold_reward
+	PlayerData.gold += gold_reward
+	SignalBus.action_performed.emit({"type": "battle_victory"})
+
 	_loot_panel.visible = true
 	await get_tree().create_timer(1.2).timeout
 	_loot_panel.visible = false
-
-	var status_text := "Victory! You recover %d gold." % gold_reward
-	if _encounter_kind() == BATTLE_KIND_STANDARD and int(PlayerData.get_flag(MINE_ENCOUNTER_PROGRESS_FLAG, 0)) >= 3:
-		status_text = "Victory! You recover %d gold. Boss chamber unlocked." % gold_reward
 
 	_return_to_map(status_text, str(_context.get("suppressed_trigger_type", "")), int(_context.get("suppressed_trigger_index", -1)))
 
