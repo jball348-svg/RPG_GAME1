@@ -32,6 +32,14 @@ var dialogue_trees: Dictionary = {
 			"set_flags": [
 				{"flag": "shaman_warning_given", "value": true},
 			],
+			"fallback": 1,
+			"next": -1,
+		},
+		{
+			"speaker": "Traveling Merchant",
+			"text": "I've told you all I know, friend. The rest is up to you.",
+			"portrait": "",
+			"conditions": [],
 			"next": -1,
 		},
 	],
@@ -42,11 +50,22 @@ var dialogue_trees: Dictionary = {
 			"portrait": "",
 			"conditions": [
 				{"type": "stat_gte", "stat": "intelligence.understanding", "value": 10.0},
+				{"type": "flag_set", "flag": "destruction_spell_unlocked", "negate": true},
 			],
 			"set_flags": [
 				{"flag": "destruction_spell_unlocked", "value": true},
 			],
 			"fallback": 1,
+			"next": -1,
+		},
+		{
+			"speaker": "Bookstore Keeper",
+			"text": "Study well. Come back when you need more.",
+			"portrait": "",
+			"conditions": [
+				{"type": "flag_set", "flag": "destruction_spell_unlocked"},
+			],
+			"fallback": 2,
 			"next": -1,
 		},
 		{

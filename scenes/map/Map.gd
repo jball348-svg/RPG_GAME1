@@ -8,7 +8,7 @@ const OVERLAY_BLOCKING_LAYER := 4
 const ROAD_LAYER := 1
 const OVERLAY_BLOCK_BOTTOM_ROWS := 4
 const TOWN_EXIT_PROMPT_TEXT := "You prepare to leave for the mine. There is no turning back. Continue?"
-const HINT_TEXT := "Frontier Hamlet\nMove: WASD / Arrows\nB: Battle   H: HUD\nC: Cutscene   1: Pure   2: Mixed"
+const HINT_TEXT := "Frontier Hamlet\nMove: WASD / Arrows\nB: Battle   H: HUD\nC: Cutscene   1: Pure   2: Mixed\n3: Social+Gold  4: Intel  0: Reset stats"
 
 var _distance_since_step: float = 0.0
 var _town_exit_trigger_armed := false
@@ -76,7 +76,7 @@ func _wire_town_exit_prompt() -> void:
 	town_exit_dialog.hide()
 	_town_exit_trigger_armed = false
 	town_exit_trigger.monitoring = false
-	call_deferred("_arm_town_exit_trigger")
+	_arm_town_exit_trigger()
 
 	if not town_exit_trigger.body_entered.is_connected(_on_town_exit_trigger_body_entered):
 		town_exit_trigger.body_entered.connect(_on_town_exit_trigger_body_entered)
@@ -91,6 +91,8 @@ func _arm_town_exit_trigger() -> void:
 	if not is_instance_valid(town_exit_trigger):
 		return
 
+	await get_tree().physics_frame
+	await get_tree().physics_frame
 	town_exit_trigger.monitoring = true
 	_town_exit_trigger_armed = true
 
@@ -114,15 +116,33 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _is_hud_open():
 		return
 
-	if event.is_action_pressed("set_path_pure"):
-		get_viewport().set_input_as_handled()
-		_player_data().set_chosen_path("pure")
-		return
+	if OS.is_debug_build():
+		if event.is_action_pressed("set_path_pure"):
+			get_viewport().set_input_as_handled()
+			_player_data().set_chosen_path("pure")
+			return
 
-	if event.is_action_pressed("set_path_mixed"):
-		get_viewport().set_input_as_handled()
-		_player_data().set_chosen_path("mixed")
-		return
+		if event.is_action_pressed("set_path_mixed"):
+			get_viewport().set_input_as_handled()
+			_player_data().set_chosen_path("mixed")
+			return
+
+		if event.is_action_pressed("debug_stat_bump_social"):
+			get_viewport().set_input_as_handled()
+			StatRegistry._increment_stat("social.charm", 5.0)
+			StatRegistry._recalculate_luck()
+			PlayerData.gold += 25
+			return
+
+		if event.is_action_pressed("debug_stat_bump_intelligence"):
+			get_viewport().set_input_as_handled()
+			StatRegistry._increment_stat("intelligence.understanding", 5.0)
+			return
+
+		if event.is_action_pressed("debug_stat_bump_reset"):
+			get_viewport().set_input_as_handled()
+			_reset_debug_stats_and_gold()
+			return
 
 	if event.is_action_pressed("debug_cutscene"):
 		get_viewport().set_input_as_handled()
@@ -180,6 +200,13 @@ func _on_town_exit_trigger_body_entered(body: Node) -> void:
 	if body != player:
 		return
 
+	var used_rect := ground_map.get_used_rect()
+	var tile_size := ground_map.tile_set.tile_size
+	var map_top_y := float(used_rect.position.y * tile_size.y)
+	var map_mid_y := map_top_y + float(used_rect.size.y * tile_size.y) * 0.5
+	if player.global_position.y > map_mid_y:
+		return
+
 	if town_exit_dialog.visible:
 		return
 
@@ -203,6 +230,20 @@ func _is_hud_open() -> bool:
 
 func _is_dialogue_active() -> bool:
 	return DialogueManager.is_active()
+
+func _reset_debug_stats_and_gold() -> void:
+	for category_value in StatRegistry.stats.keys():
+		var category := str(category_value)
+		var category_stats: Dictionary = StatRegistry.stats[category]
+		for skill_value in category_stats.keys():
+			var skill := str(skill_value)
+			var current_value: float = float(category_stats[skill])
+			if is_zero_approx(current_value):
+				continue
+			StatRegistry._increment_stat("%s.%s" % [category, skill], -current_value)
+
+	StatRegistry._recalculate_luck()
+	PlayerData.gold = 0
 
 func _get_spike_hud():
 	var overlay_host: CanvasLayer = _scene_manager().get_overlay_host()
