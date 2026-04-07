@@ -114,6 +114,10 @@ func _should_be_visible() -> bool:
 	if hud != null and hud.is_open():
 		return false
 
+	var prompt_modal = overlay_host.get_node_or_null("PromptModal")
+	if prompt_modal != null and prompt_modal.is_open():
+		return false
+
 	return true
 
 func _refresh() -> void:

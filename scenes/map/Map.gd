@@ -7,11 +7,19 @@ const BLOCKING_TILE_LAYERS: Array[int] = [2, 3]
 const OVERLAY_BLOCKING_LAYER := 4
 const ROAD_LAYER := 1
 const OVERLAY_BLOCK_BOTTOM_ROWS := 4
+const TOWN_EXIT_PROMPT_ID := "town_exit"
+const TOWN_EXIT_PROMPT_TITLE := "Leave for the Mine?"
+const TOWN_EXIT_PROMPT_CONFIRM_TEXT := "Continue"
+const TOWN_EXIT_PROMPT_CANCEL_TEXT := "Stay"
 const TOWN_EXIT_PROMPT_TEXT := "You prepare to leave for the mine. There is no turning back. Continue?"
 const TOWN_HINT_TEXT := "Frontier Hamlet\nMove: WASD / Arrows\nB: Battle   H: HUD\nC: Cutscene   1: Pure   2: Mixed\n3: Social+Gold  4: Intel  0: Reset stats"
 const MINE_HINT_BASE_TEXT := "Kobold Mine\nMove: WASD / Arrows\nB: Battle   H: HUD\nC: Cutscene   1: Pure   2: Mixed\n3: Social+Gold  4: Intel  0: Reset stats"
 const MINE_BOSS_LOCKED_TEXT := "A heavy ward blocks the top shaft. Clear earlier encounter rooms first."
 const MINE_EXIT_LOCKED_TEXT := "The mine exit is sealed. Resolve the boss room first."
+const MINE_EXIT_PROMPT_ID := "mine_exit"
+const MINE_EXIT_PROMPT_TITLE := "Leave Kobold Mine?"
+const MINE_EXIT_PROMPT_CONFIRM_TEXT := "Leave"
+const MINE_EXIT_PROMPT_CANCEL_TEXT := "Stay"
 const MINE_EXIT_PROMPT_TEXT := "Leave the mine? Stage 7 transition is still pending, but this will mark mine progression as cleared."
 
 const FRONTIER_REGION := "frontier_village"
@@ -48,20 +56,84 @@ const MINE_EXIT_GATE_CELLS: Array[Vector2i] = [
 	Vector2i(35, 2),
 	Vector2i(35, 3),
 ]
+const MINE_WEST_BRANCH_BLOCKER_CELLS: Array[Vector2i] = [
+	Vector2i(15, 12),
+	Vector2i(15, 13),
+	Vector2i(15, 14),
+]
+const MINE_EAST_BRANCH_BLOCKER_CELLS: Array[Vector2i] = [
+	Vector2i(26, 12),
+	Vector2i(26, 13),
+	Vector2i(26, 14),
+]
+const MINE_TOP_SHAFT_BLOCKER_CELLS: Array[Vector2i] = [
+	Vector2i(19, 7),
+	Vector2i(20, 7),
+	Vector2i(21, 7),
+	Vector2i(22, 7),
+]
 
 const MINE_TERRAIN_SOURCE_ID := 0
 const MINE_PROPS_SOURCE_ID := 1
-const MINE_FLOOR_TILE := Vector2i(6, 0)
-const MINE_FLOOR_VARIANT_TILE := Vector2i(6, 1)
-const MINE_WALL_TILE := Vector2i(0, 0)
+const MINE_FLOOR_TILES: Array[Vector2i] = [
+	Vector2i(6, 0),
+	Vector2i(7, 0),
+	Vector2i(6, 1),
+	Vector2i(7, 1),
+	Vector2i(6, 2),
+	Vector2i(7, 2),
+]
+const MINE_WALL_FILL_TILES: Array[Vector2i] = [
+	Vector2i(1, 2),
+	Vector2i(2, 2),
+	Vector2i(3, 2),
+	Vector2i(4, 2),
+	Vector2i(1, 3),
+	Vector2i(2, 3),
+	Vector2i(3, 3),
+	Vector2i(4, 3),
+]
+const MINE_WALL_TOP_TILES: Array[Vector2i] = [
+	Vector2i(1, 0),
+	Vector2i(2, 0),
+	Vector2i(3, 0),
+	Vector2i(4, 0),
+]
+const MINE_WALL_BOTTOM_TILES: Array[Vector2i] = [
+	Vector2i(1, 5),
+	Vector2i(2, 5),
+	Vector2i(3, 5),
+	Vector2i(4, 5),
+]
+const MINE_WALL_LEFT_TILES: Array[Vector2i] = [
+	Vector2i(0, 1),
+	Vector2i(0, 2),
+	Vector2i(0, 3),
+	Vector2i(0, 4),
+]
+const MINE_WALL_RIGHT_TILES: Array[Vector2i] = [
+	Vector2i(5, 1),
+	Vector2i(5, 2),
+	Vector2i(5, 3),
+	Vector2i(5, 4),
+]
+const MINE_WALL_TOP_LEFT_TILE := Vector2i(0, 0)
+const MINE_WALL_TOP_RIGHT_TILE := Vector2i(5, 0)
+const MINE_WALL_BOTTOM_LEFT_TILE := Vector2i(0, 5)
+const MINE_WALL_BOTTOM_RIGHT_TILE := Vector2i(5, 5)
 const MINE_PROP_BRAZIER_TILE := Vector2i(0, 0)
-const MINE_PROP_STALAGMITE_TILE := Vector2i(0, 1)
+const MINE_PROP_SPIKE_PAIR_TILE := Vector2i(1, 0)
+const MINE_PROP_STALAGMITE_TILE := Vector2i(2, 1)
+const MINE_PROP_IRON_CRATE_TILE := Vector2i(3, 0)
+const MINE_PROP_FIRE_GRATE_TILE := Vector2i(4, 0)
 const MINE_PROP_ROCK_CLUSTER_A_TILE := Vector2i(1, 1)
 const MINE_PROP_ROCK_CLUSTER_B_TILE := Vector2i(3, 1)
 const MINE_PROP_BOULDER_TILE := Vector2i(1, 2)
 const MINE_PROP_BOULDER_WIDE_TILE := Vector2i(3, 2)
 const MINE_PROP_CRATE_TILE := Vector2i(2, 0)
 const MINE_PROP_TORCH_TILE := Vector2i(5, 0)
+const MINE_PROP_TALL_STALAGMITE_TILE := Vector2i(0, 1)
+const MINE_PROP_TALL_STALAGMITE_SIZE := Vector2i(1, 2)
 
 const MINE_TERRAIN_TEXTURE_PATH := "res://assets/art/tilesets/basic caves and dungeons 32x32 standard - v1.0/tiles/tiles-all-32x32.png"
 const MINE_PROPS_TEXTURE_PATH := "res://assets/art/tilesets/basic caves and dungeons 32x32 standard - v1.0/assets/assets-all.png"
@@ -83,8 +155,6 @@ var _mine_status_text := ""
 @onready var town_exit_trigger: Area2D = $TownExitTrigger
 @onready var hint_backdrop: ColorRect = $UI/HintBackdrop
 @onready var hint_label: Label = $UI/HintLabel
-@onready var town_exit_dialog: ConfirmationDialog = $UI/TownExitDialog
-@onready var mine_exit_dialog: ConfirmationDialog = $UI/MineExitDialog
 
 func _ready() -> void:
 	_town_tileset = ground_map.tile_set
@@ -99,12 +169,33 @@ func _ready() -> void:
 	map_camera.make_current()
 	_configure_map_camera()
 	_layout_map_ui()
+	_connect_overlay_signals()
 
 	if not get_viewport().size_changed.is_connected(_on_viewport_size_changed):
 		get_viewport().size_changed.connect(_on_viewport_size_changed)
 
 func _should_load_mine_start_map() -> bool:
 	return _player_data().current_region == MINE_REGION
+
+func _connect_overlay_signals() -> void:
+	SignalBus.dialogue_started.connect(_on_overlay_state_changed)
+	SignalBus.dialogue_ended.connect(_on_overlay_state_changed)
+
+	var prompt_modal = _get_prompt_modal()
+	if prompt_modal == null:
+		return
+
+	if not prompt_modal.confirmed.is_connected(_on_prompt_modal_confirmed):
+		prompt_modal.confirmed.connect(_on_prompt_modal_confirmed)
+
+	if not prompt_modal.canceled.is_connected(_on_prompt_modal_canceled):
+		prompt_modal.canceled.connect(_on_prompt_modal_canceled)
+
+	if not prompt_modal.opened.is_connected(_on_overlay_state_changed):
+		prompt_modal.opened.connect(_on_overlay_state_changed)
+
+	if not prompt_modal.closed.is_connected(_on_overlay_state_changed):
+		prompt_modal.closed.connect(_on_overlay_state_changed)
 
 func _setup_town_map() -> void:
 	_player_data().current_location = TOWN_LOCATION
@@ -135,8 +226,7 @@ func _setup_mine_start_map() -> void:
 
 func _disable_town_only_content() -> void:
 	_town_exit_trigger_armed = false
-	town_exit_dialog.hide()
-	mine_exit_dialog.hide()
+	_hide_prompt_modal()
 
 	if is_instance_valid(town_exit_trigger):
 		town_exit_trigger.monitoring = false
@@ -161,16 +251,23 @@ func _build_mine_layout() -> void:
 	for y in range(MINE_MAP_SIZE.y):
 		for x in range(MINE_MAP_SIZE.x):
 			var cell := Vector2i(x, y)
-			var floor_tile := MINE_FLOOR_VARIANT_TILE if (x + y) % 3 == 0 else MINE_FLOOR_TILE
-			ground_map.set_cell(0, cell, MINE_TERRAIN_SOURCE_ID, floor_tile)
+			ground_map.set_cell(0, cell, MINE_TERRAIN_SOURCE_ID, _mine_floor_tile_for(cell))
 
 			if walkable_cells.has(cell):
 				continue
 
-			ground_map.set_cell(2, cell, MINE_TERRAIN_SOURCE_ID, MINE_WALL_TILE)
+			ground_map.set_cell(2, cell, MINE_TERRAIN_SOURCE_ID, _mine_wall_tile_for(cell, walkable_cells))
 
 	_stamp_mine_props()
+	_apply_mine_sequence_blockers()
 	_apply_mine_exit_gate_blocker()
+
+func _rebuild_mine_geometry() -> void:
+	if not _is_mine_start_map:
+		return
+
+	_build_mine_layout()
+	_build_world_collision()
 
 func _build_mine_walkable_cells() -> Dictionary:
 	var walkable := {}
@@ -193,12 +290,70 @@ func _mark_walkable_rect(walkable: Dictionary, rect: Rect2i) -> void:
 		for x in range(rect.position.x, rect.end.x):
 			walkable[Vector2i(x, y)] = true
 
+func _hash_index(cell: Vector2i, item_count: int) -> int:
+	if item_count <= 0:
+		return 0
+
+	return posmod(cell.x * 37 + cell.y * 17, item_count)
+
+func _variant_tile_for(cell: Vector2i, variants: Array[Vector2i]) -> Vector2i:
+	return variants[_hash_index(cell, variants.size())]
+
+func _mine_floor_tile_for(cell: Vector2i) -> Vector2i:
+	return _variant_tile_for(cell, MINE_FLOOR_TILES)
+
+func _mine_wall_tile_for(cell: Vector2i, walkable_cells: Dictionary) -> Vector2i:
+	var up := walkable_cells.has(cell + Vector2i.UP)
+	var down := walkable_cells.has(cell + Vector2i.DOWN)
+	var left := walkable_cells.has(cell + Vector2i.LEFT)
+	var right := walkable_cells.has(cell + Vector2i.RIGHT)
+
+	if down and right and not up and not left:
+		return MINE_WALL_TOP_LEFT_TILE
+	if down and left and not up and not right:
+		return MINE_WALL_TOP_RIGHT_TILE
+	if up and right and not down and not left:
+		return MINE_WALL_BOTTOM_LEFT_TILE
+	if up and left and not down and not right:
+		return MINE_WALL_BOTTOM_RIGHT_TILE
+	if down and not up:
+		return _variant_tile_for(cell, MINE_WALL_TOP_TILES)
+	if up and not down:
+		return _variant_tile_for(cell, MINE_WALL_BOTTOM_TILES)
+	if right and not left:
+		return _variant_tile_for(cell, MINE_WALL_LEFT_TILES)
+	if left and not right:
+		return _variant_tile_for(cell, MINE_WALL_RIGHT_TILES)
+
+	var walkable_neighbors := 0
+	if up:
+		walkable_neighbors += 1
+	if down:
+		walkable_neighbors += 1
+	if left:
+		walkable_neighbors += 1
+	if right:
+		walkable_neighbors += 1
+
+	if walkable_neighbors >= 2:
+		if down:
+			return _variant_tile_for(cell, MINE_WALL_TOP_TILES)
+		if up:
+			return _variant_tile_for(cell, MINE_WALL_BOTTOM_TILES)
+		if right:
+			return _variant_tile_for(cell, MINE_WALL_LEFT_TILES)
+		if left:
+			return _variant_tile_for(cell, MINE_WALL_RIGHT_TILES)
+
+	return _variant_tile_for(cell, MINE_WALL_FILL_TILES)
+
 func _stamp_prop_cells(atlas_coord: Vector2i, cells: Array[Vector2i]) -> void:
 	for cell in cells:
 		ground_map.set_cell(3, cell, MINE_PROPS_SOURCE_ID, atlas_coord)
 
 func _stamp_mine_props() -> void:
-	_stamp_prop_cells(MINE_PROP_CRATE_TILE, [Vector2i(19, 26), Vector2i(22, 26), Vector2i(38, 2)])
+	_stamp_prop_cells(MINE_PROP_CRATE_TILE, [Vector2i(19, 26), Vector2i(22, 26), Vector2i(18, 15), Vector2i(23, 15)])
+	_stamp_prop_cells(MINE_PROP_IRON_CRATE_TILE, [Vector2i(20, 26), Vector2i(21, 26), Vector2i(18, 5), Vector2i(23, 5)])
 	_stamp_prop_cells(MINE_PROP_TORCH_TILE, [
 		Vector2i(18, 24),
 		Vector2i(23, 24),
@@ -210,6 +365,8 @@ func _stamp_mine_props() -> void:
 		Vector2i(35, 13),
 	])
 	_stamp_prop_cells(MINE_PROP_BRAZIER_TILE, [Vector2i(15, 2), Vector2i(26, 2)])
+	_stamp_prop_cells(MINE_PROP_FIRE_GRATE_TILE, [Vector2i(19, 2), Vector2i(22, 2)])
+	_stamp_prop_cells(MINE_PROP_SPIKE_PAIR_TILE, [Vector2i(17, 25), Vector2i(24, 25), Vector2i(7, 8), Vector2i(34, 7)])
 	_stamp_prop_cells(MINE_PROP_STALAGMITE_TILE, [
 		Vector2i(17, 23),
 		Vector2i(24, 23),
@@ -219,6 +376,12 @@ func _stamp_mine_props() -> void:
 		Vector2i(36, 7),
 		Vector2i(15, 4),
 		Vector2i(26, 4),
+	])
+	_stamp_prop_cells(MINE_PROP_TALL_STALAGMITE_TILE, [
+		Vector2i(4, 8),
+		Vector2i(17, 22),
+		Vector2i(24, 22),
+		Vector2i(30, 7),
 	])
 	_stamp_prop_cells(MINE_PROP_ROCK_CLUSTER_A_TILE, [
 		Vector2i(18, 23),
@@ -255,26 +418,54 @@ func _stamp_mine_props() -> void:
 		Vector2i(28, 1),
 	])
 
+func _apply_mine_sequence_blockers() -> void:
+	var progress := _mine_encounter_progress()
+
+	if progress < 1:
+		_stamp_mine_blocker(MINE_WEST_BRANCH_BLOCKER_CELLS, [
+			{"tile": MINE_PROP_ROCK_CLUSTER_A_TILE, "cells": [Vector2i(15, 12)]},
+			{"tile": MINE_PROP_BOULDER_WIDE_TILE, "cells": [Vector2i(15, 13)]},
+			{"tile": MINE_PROP_CRATE_TILE, "cells": [Vector2i(15, 14)]},
+		])
+
+	if progress < 2:
+		_stamp_mine_blocker(MINE_EAST_BRANCH_BLOCKER_CELLS, [
+			{"tile": MINE_PROP_IRON_CRATE_TILE, "cells": [Vector2i(26, 12)]},
+			{"tile": MINE_PROP_ROCK_CLUSTER_B_TILE, "cells": [Vector2i(26, 13)]},
+			{"tile": MINE_PROP_BOULDER_TILE, "cells": [Vector2i(26, 14)]},
+		])
+
+	if progress < 3:
+		_stamp_mine_blocker(MINE_TOP_SHAFT_BLOCKER_CELLS, [
+			{"tile": MINE_PROP_BOULDER_TILE, "cells": [Vector2i(19, 7), Vector2i(22, 7)]},
+			{"tile": MINE_PROP_BOULDER_WIDE_TILE, "cells": [Vector2i(20, 7)]},
+			{"tile": MINE_PROP_SPIKE_PAIR_TILE, "cells": [Vector2i(21, 7)]},
+		])
+
+func _stamp_mine_blocker(cells: Array[Vector2i], prop_specs: Array[Dictionary]) -> void:
+	for cell in cells:
+		ground_map.set_cell(2, cell, MINE_TERRAIN_SOURCE_ID, _variant_tile_for(cell, MINE_WALL_FILL_TILES))
+
+	for spec in prop_specs:
+		var atlas_coord: Vector2i = spec["tile"]
+		var prop_cells: Array[Vector2i] = spec["cells"]
+		_stamp_prop_cells(atlas_coord, prop_cells)
+
 func _apply_mine_exit_gate_blocker() -> void:
 	if _player_data().get_flag(MINE_EXIT_UNLOCKED_FLAG, false):
-		_open_mine_exit_gate(false)
 		return
 
 	for cell in MINE_EXIT_GATE_CELLS:
-		ground_map.set_cell(2, cell, MINE_TERRAIN_SOURCE_ID, MINE_WALL_TILE)
+		ground_map.set_cell(2, cell, MINE_TERRAIN_SOURCE_ID, _variant_tile_for(cell, MINE_WALL_FILL_TILES))
 
-	ground_map.set_cell(3, Vector2i(34, 2), MINE_PROPS_SOURCE_ID, MINE_PROP_CRATE_TILE)
-	ground_map.set_cell(3, Vector2i(35, 3), MINE_PROPS_SOURCE_ID, MINE_PROP_CRATE_TILE)
-	ground_map.set_cell(3, Vector2i(35, 2), MINE_PROPS_SOURCE_ID, MINE_PROP_ROCK_CLUSTER_A_TILE)
-	ground_map.set_cell(3, Vector2i(34, 3), MINE_PROPS_SOURCE_ID, MINE_PROP_BOULDER_TILE)
+	ground_map.set_cell(3, Vector2i(34, 2), MINE_PROPS_SOURCE_ID, MINE_PROP_FIRE_GRATE_TILE)
+	ground_map.set_cell(3, Vector2i(35, 2), MINE_PROPS_SOURCE_ID, MINE_PROP_IRON_CRATE_TILE)
+	ground_map.set_cell(3, Vector2i(34, 3), MINE_PROPS_SOURCE_ID, MINE_PROP_ROCK_CLUSTER_A_TILE)
+	ground_map.set_cell(3, Vector2i(35, 3), MINE_PROPS_SOURCE_ID, MINE_PROP_BOULDER_TILE)
 
 func _open_mine_exit_gate(rebuild_collision: bool = true) -> void:
-	for cell in MINE_EXIT_GATE_CELLS:
-		ground_map.erase_cell(2, cell)
-		ground_map.erase_cell(3, cell)
-
 	if rebuild_collision:
-		_build_world_collision()
+		_rebuild_mine_geometry()
 
 func _build_mine_tileset() -> TileSet:
 	var tile_set := TileSet.new()
@@ -288,8 +479,14 @@ func _build_mine_tileset() -> TileSet:
 	var terrain_source := TileSetAtlasSource.new()
 	terrain_source.texture = terrain_texture
 	terrain_source.texture_region_size = Vector2i(32, 32)
-	for atlas_coord in [MINE_FLOOR_TILE, MINE_FLOOR_VARIANT_TILE, MINE_WALL_TILE]:
-		terrain_source.create_tile(atlas_coord)
+	for atlas_coord in MINE_FLOOR_TILES + MINE_WALL_FILL_TILES + MINE_WALL_TOP_TILES + MINE_WALL_BOTTOM_TILES + MINE_WALL_LEFT_TILES + MINE_WALL_RIGHT_TILES + [
+		MINE_WALL_TOP_LEFT_TILE,
+		MINE_WALL_TOP_RIGHT_TILE,
+		MINE_WALL_BOTTOM_LEFT_TILE,
+		MINE_WALL_BOTTOM_RIGHT_TILE,
+	]:
+		if not terrain_source.has_tile(atlas_coord):
+			terrain_source.create_tile(atlas_coord)
 	tile_set.add_source(terrain_source, MINE_TERRAIN_SOURCE_ID)
 
 	var props_source := TileSetAtlasSource.new()
@@ -297,7 +494,10 @@ func _build_mine_tileset() -> TileSet:
 	props_source.texture_region_size = Vector2i(32, 32)
 	for atlas_coord in [
 		MINE_PROP_BRAZIER_TILE,
+		MINE_PROP_SPIKE_PAIR_TILE,
 		MINE_PROP_STALAGMITE_TILE,
+		MINE_PROP_IRON_CRATE_TILE,
+		MINE_PROP_FIRE_GRATE_TILE,
 		MINE_PROP_ROCK_CLUSTER_A_TILE,
 		MINE_PROP_ROCK_CLUSTER_B_TILE,
 		MINE_PROP_BOULDER_TILE,
@@ -305,7 +505,11 @@ func _build_mine_tileset() -> TileSet:
 		MINE_PROP_CRATE_TILE,
 		MINE_PROP_TORCH_TILE,
 	]:
-		props_source.create_tile(atlas_coord)
+		if not props_source.has_tile(atlas_coord):
+			props_source.create_tile(atlas_coord)
+
+	if not props_source.has_tile(MINE_PROP_TALL_STALAGMITE_TILE):
+		props_source.create_tile(MINE_PROP_TALL_STALAGMITE_TILE, MINE_PROP_TALL_STALAGMITE_SIZE)
 	tile_set.add_source(props_source, MINE_PROPS_SOURCE_ID)
 
 	return tile_set
@@ -358,8 +562,7 @@ func _build_world_collision() -> void:
 		world_collision.add_child(collision_shape)
 
 func _wire_town_exit_prompt() -> void:
-	town_exit_dialog.dialog_text = TOWN_EXIT_PROMPT_TEXT
-	town_exit_dialog.hide()
+	_hide_prompt_modal()
 	_town_exit_trigger_armed = false
 	town_exit_trigger.monitoring = false
 	_arm_town_exit_trigger()
@@ -367,21 +570,54 @@ func _wire_town_exit_prompt() -> void:
 	if not town_exit_trigger.body_entered.is_connected(_on_town_exit_trigger_body_entered):
 		town_exit_trigger.body_entered.connect(_on_town_exit_trigger_body_entered)
 
-	if not town_exit_dialog.confirmed.is_connected(_on_town_exit_confirmed):
-		town_exit_dialog.confirmed.connect(_on_town_exit_confirmed)
-
-	if not town_exit_dialog.canceled.is_connected(_on_town_exit_canceled):
-		town_exit_dialog.canceled.connect(_on_town_exit_canceled)
-
 func _wire_mine_exit_prompt() -> void:
-	mine_exit_dialog.dialog_text = MINE_EXIT_PROMPT_TEXT
-	mine_exit_dialog.hide()
+	_hide_prompt_modal()
 
-	if not mine_exit_dialog.confirmed.is_connected(_on_mine_exit_confirmed):
-		mine_exit_dialog.confirmed.connect(_on_mine_exit_confirmed)
+func _get_prompt_modal():
+	var overlay_host: CanvasLayer = _scene_manager().get_overlay_host()
+	if overlay_host == null:
+		return null
 
-	if not mine_exit_dialog.canceled.is_connected(_on_mine_exit_canceled):
-		mine_exit_dialog.canceled.connect(_on_mine_exit_canceled)
+	return overlay_host.get_node_or_null("PromptModal")
+
+func _show_prompt_modal(prompt_id: String, title: String, body: String, confirm_text: String, cancel_text: String) -> void:
+	var prompt_modal = _get_prompt_modal()
+	if prompt_modal == null:
+		return
+
+	prompt_modal.show_prompt(prompt_id, title, body, confirm_text, cancel_text)
+
+func _hide_prompt_modal() -> void:
+	var prompt_modal = _get_prompt_modal()
+	if prompt_modal == null:
+		return
+
+	prompt_modal.hide_prompt()
+
+func _is_prompt_open() -> bool:
+	var prompt_modal = _get_prompt_modal()
+	return prompt_modal != null and prompt_modal.is_open()
+
+func _on_prompt_modal_confirmed(prompt_id: String) -> void:
+	match prompt_id:
+		TOWN_EXIT_PROMPT_ID:
+			_on_town_exit_confirmed()
+		MINE_EXIT_PROMPT_ID:
+			_on_mine_exit_confirmed()
+
+func _on_prompt_modal_canceled(prompt_id: String) -> void:
+	match prompt_id:
+		TOWN_EXIT_PROMPT_ID:
+			_on_town_exit_canceled()
+		MINE_EXIT_PROMPT_ID:
+			_on_mine_exit_canceled()
+
+func _on_overlay_state_changed(_unused: Variant = null) -> void:
+	if _is_prompt_open():
+		_set_debug_panel_suppressed(true)
+	else:
+		_set_debug_panel_suppressed(false)
+	_update_map_overlay_visibility()
 
 func _arm_town_exit_trigger() -> void:
 	if not is_instance_valid(town_exit_trigger):
@@ -455,7 +691,8 @@ func _restore_mine_progress_state() -> void:
 
 	if _player_data().get_flag(MINE_BOSS_RESOLVED_FLAG, false):
 		_player_data().set_flag(MINE_EXIT_UNLOCKED_FLAG, true)
-		_open_mine_exit_gate(false)
+
+	_rebuild_mine_geometry()
 
 func _mine_encounter_progress() -> int:
 	return clampi(int(_player_data().get_flag(MINE_ENCOUNTER_PROGRESS_FLAG, 0)), 0, MINE_ENCOUNTER_RECTS.size())
@@ -487,6 +724,7 @@ func _on_mine_encounter_trigger_body_entered(body: Node, encounter_index: int) -
 		_player_data().set_flag(MINE_BOSS_READY_FLAG, true)
 		_set_mine_status("Boss chamber unlocked. Advance up the top shaft.")
 
+	_rebuild_mine_geometry()
 	_update_mine_hint()
 
 func _on_mine_boss_trigger_body_entered(body: Node) -> void:
@@ -510,7 +748,7 @@ func _on_mine_exit_trigger_body_entered(body: Node) -> void:
 	if body != player:
 		return
 
-	if mine_exit_dialog.visible:
+	if _is_prompt_open():
 		return
 
 	if not _player_data().get_flag(MINE_EXIT_UNLOCKED_FLAG, false):
@@ -518,7 +756,13 @@ func _on_mine_exit_trigger_body_entered(body: Node) -> void:
 		return
 
 	player.velocity = Vector2.ZERO
-	_popup_confirmation_dialog(mine_exit_dialog, MINE_EXIT_PROMPT_TEXT)
+	_show_prompt_modal(
+		MINE_EXIT_PROMPT_ID,
+		MINE_EXIT_PROMPT_TITLE,
+		MINE_EXIT_PROMPT_TEXT,
+		MINE_EXIT_PROMPT_CONFIRM_TEXT,
+		MINE_EXIT_PROMPT_CANCEL_TEXT
+	)
 
 func _on_mine_exit_confirmed() -> void:
 	_player_data().set_flag(MINE_CLEARED_FLAG, true)
@@ -587,32 +831,17 @@ func _layout_map_ui() -> void:
 	_update_map_overlay_visibility()
 
 func _update_map_overlay_visibility() -> void:
-	var show_hint := not _is_hud_open() and not town_exit_dialog.visible and not mine_exit_dialog.visible
+	var show_hint := not _is_hud_open() and not _is_dialogue_active() and not _is_prompt_open()
 	hint_backdrop.visible = show_hint
 	hint_label.visible = show_hint
 
 func _on_viewport_size_changed() -> void:
 	_layout_map_ui()
 
-	if town_exit_dialog.visible:
-		_popup_confirmation_dialog(town_exit_dialog, town_exit_dialog.dialog_text)
-
-	if mine_exit_dialog.visible:
-		_popup_confirmation_dialog(mine_exit_dialog, mine_exit_dialog.dialog_text)
-
-func _dialog_size_for_viewport() -> Vector2i:
-	var viewport_size := get_viewport_rect().size
-	var width := int(clamp(viewport_size.x * 0.76, 280.0, 420.0))
-	var height := int(clamp(viewport_size.y * 0.45, 120.0, 186.0))
-	return Vector2i(width, height)
-
-func _popup_confirmation_dialog(dialog: ConfirmationDialog, dialog_text: String) -> void:
-	dialog.dialog_text = dialog_text
-	dialog.popup_centered_clamped(_dialog_size_for_viewport(), 0.85)
-	_set_debug_panel_suppressed(true)
-	_update_map_overlay_visibility()
-
 func _unhandled_input(event: InputEvent) -> void:
+	if _is_prompt_open():
+		return
+
 	if event.is_action_pressed("toggle_hud"):
 		get_viewport().set_input_as_handled()
 		_toggle_hud()
@@ -659,7 +888,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_scene_manager().change_state("battle")
 
 func _physics_process(delta: float) -> void:
-	if _is_hud_open() or _is_dialogue_active() or town_exit_dialog.visible or mine_exit_dialog.visible:
+	if _is_hud_open() or _is_dialogue_active() or _is_prompt_open():
 		player.velocity = Vector2.ZERO
 		return
 
@@ -712,11 +941,17 @@ func _on_town_exit_trigger_body_entered(body: Node) -> void:
 	if player.global_position.y > map_mid_y:
 		return
 
-	if town_exit_dialog.visible:
+	if _is_prompt_open():
 		return
 
 	player.velocity = Vector2.ZERO
-	_popup_confirmation_dialog(town_exit_dialog, TOWN_EXIT_PROMPT_TEXT)
+	_show_prompt_modal(
+		TOWN_EXIT_PROMPT_ID,
+		TOWN_EXIT_PROMPT_TITLE,
+		TOWN_EXIT_PROMPT_TEXT,
+		TOWN_EXIT_PROMPT_CONFIRM_TEXT,
+		TOWN_EXIT_PROMPT_CANCEL_TEXT
+	)
 
 func _on_town_exit_confirmed() -> void:
 	_set_debug_panel_suppressed(false)

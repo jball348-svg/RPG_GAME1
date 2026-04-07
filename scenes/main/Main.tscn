@@ -8,3 +8,4 @@ script = ExtResource("1_main")
 [node name="StateHost" type="Node" parent="."]
 
 [node name="OverlayHost" type="CanvasLayer" parent="."]
+layer = 20
