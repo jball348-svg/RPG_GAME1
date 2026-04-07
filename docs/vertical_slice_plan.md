@@ -106,7 +106,7 @@ Everything else is production.
 ---
 
 ## Stage 4 — Mine dungeon map
-**Status:** � In progress (Slice Day 4 kickoff)
+**Status:** ✅ Complete (Slice Day 4 resolved)
 
 **Goal:** A dungeon map for the mine. Navigable, atmospheric, with Kobold encounter trigger zones.
 
@@ -120,21 +120,21 @@ Everything else is production.
 
 **Tasks:**
 - [x] Dungeon/cave tileset sourced and available at `assets/art/tilesets/basic caves and dungeons 32x32 standard - v1.0`
-- [ ] Move runtime mine blockout into a TileMap editor-authored map (final Stage 4 map-delivery requirement)
+- [x] Move runtime mine blockout into a TileMap editor-authored map (final Stage 4 map-delivery requirement)
 - [x] Collision on all walls and impassable tiles (runtime blockout pass)
 - [x] Place Kobold encounter trigger zones (3–5 encounters before the boss)
 - [x] Place boss room trigger zone (separate from regular encounters)
 - [x] Place mine exit trigger zone (only accessible after boss room resolved)
-- [ ] Atmospheric details: torch placement, dead ends, visual sense of depth
-- [ ] Persistent overlay sizing/alignment pass completed and merged before Stage 4 sign-off
+- [x] Atmospheric details: torch placement, dead ends, visual sense of depth
+- [x] Persistent overlay sizing/alignment pass completed and merged before Stage 4 sign-off
 
 **Verification:**
-- [ ] Walk through mine blockout — collision works, no shortcuts to boss room
-- [ ] Mine reads as a mine: dark, stone, atmospheric
+- [x] Walk through mine blockout — collision works, no shortcuts to boss room
+- [x] Mine reads as a mine: dark, stone, atmospheric
 - [x] Encounter zones are placed and progression-gated in order
 - [x] Boss room trigger and post-boss exit-gate unlock flow are wired
 - [x] Exit remains blocked until boss room placeholder resolve flag is set
-- [ ] Overlay sizing/alignment is stable in map + cutscene + HUD + dialogue + confirmation popup at `480x270` internal / `1280x720` window
+- [x] Overlay sizing/alignment is stable in map + cutscene + HUD + dialogue + confirmation popup at `480x270` internal / `1280x720` window
 - [x] Headless smoke run passes: `godot --headless --path . --quit-after 4`
 
 **Done state:** The mine exists as a real designed level, and overlay sizing/alignment issues are resolved for Day 4 sign-off.

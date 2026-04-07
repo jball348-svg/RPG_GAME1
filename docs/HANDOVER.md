@@ -189,7 +189,7 @@ Transitions: Map ↔ Battle, Map ↔ Cutscene, HUD overlays map (does not replac
 - [x] Build NPC dialogue system — reusable, supports stat gates and gold gates
 - [x] Place and wire town NPCs (intel NPC, moral choice NPC, bookstore)
 - [x] Build and verify town exit → cutscene → mine start (Stage 3 Day 3)
-- [ ] Build mine dungeon map layout
+- [x] Build mine dungeon map layout
 - [ ] Build real battle system — turn structure, player actions, Kobold enemy type
 - [ ] Implement class abilities for the starting class (one Pure, one Mixed)
 - [ ] Build moral choice scene — Half-Kobold Orc Shaman, recruit vs kill branching
