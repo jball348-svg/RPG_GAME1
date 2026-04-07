@@ -204,11 +204,13 @@ Transitions: Map ↔ Battle, Map ↔ Cutscene, HUD overlays map (does not replac
 - Stage 1 town map pass is stable: blocking collision generation, camera bounds, and north exit confirmation are implemented; exit false-fire-on-load is fixed via delayed arming + top-half guard.
 - Stage 2 is complete: reusable `DialogueManager`, bottom-band `DialogueBox`, physically solid NPCs + interaction zones, and three wired town NPCs with stat/gold/flag-gated dialogue.
 - Debug testing workflow now supports path and gate testing via `1/2` (Pure/Mixed), `3` (Social+Gold), `4` (Intelligence), and `0` (reset stats/gold).
-- Stage 3 Day 3 is resolved and verified: `Map.gd` supports mine-entry variant loading from `kobold_mine`, builds a minimal mine start chamber/corridor from cave tileset assets, and spawns via `MineSpawn` marker handoff.
+- Stage 3 Day 3 is resolved and verified: town exit → cutscene → mine entry handoff is stable, with one-time transition stat ticks (`will.resolve`, `holy.faith`) guarded by `mine_entry_commit_applied`.
 - Town exit confirm applies one-time transition meaning ticks (`will.resolve`, `holy.faith`) guarded by `mine_entry_commit_applied`, visible in debug panel verification.
 - `Cutscene.gd` transition sequence is stable (movement beat → sentry line → fade out) with path tint baseline (Pure gold / Mixed teal) plus class/specialisation accent overlay, then returns to `map` at mine entry location.
-- Overlay/UI alignment pass has been started (cutscene scaling, HUD compact layout, map hint anchoring, exit popup placement), but the issue remains a tracked persistent bug family until a full cross-overlay pass is completed.
-- Stage 4 is now planning-only: mine dungeon implementation has not started yet, and the persistent overlay sizing/alignment issue is an explicit Day 4 close gate.
+- Stage 4 Day 4 kickoff is now in progress: `Map.gd` mine layout has been expanded from entry stub to a larger runtime blockout (entrance chamber, branch rooms, antechamber, boss chamber, post-boss exit corridor), collision pass remains dynamic from blocking layers, and ordered encounter/boss/exit trigger scaffolding is wired via flags (`mine_encounter_progress`, `mine_boss_ready`, `mine_boss_resolved`, `mine_exit_unlocked`, `mine_cleared`).
+- Mine exit is now physically gated until boss placeholder resolve in the boss trigger, with `MineExitDialog` confirmation and a Stage 7-pending placeholder completion path.
+- Overlay/UI alignment pass moved forward with viewport-responsive layout updates across map hint + confirmation dialogs, `HUD.gd`, `DialogueBox.gd`, and `Cutscene.gd`.
+- Stage 4 close-gate remains active: manual cross-overlay verification at `480x270` internal / `1280x720` window and final conversion from runtime mine blockout to TileMap editor-authored layout are still required before Stage 4 sign-off.
 
 ### Production order after vertical slice
 1. Class selection / character creation screen

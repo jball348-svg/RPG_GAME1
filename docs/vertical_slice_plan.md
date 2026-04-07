@@ -106,36 +106,36 @@ Everything else is production.
 ---
 
 ## Stage 4 — Mine dungeon map
-**Status:** 📝 Planned (implementation not started)
+**Status:** � In progress (Slice Day 4 kickoff)
 
 **Goal:** A dungeon map for the mine. Navigable, atmospheric, with Kobold encounter trigger zones.
 
-**Implementation plan (documentation only, no code yet):**
-- [ ] Lock mine layout blueprint (entrance flow, branch order, boss room gate, post-boss exit route)
-- [ ] Build map geometry pass in TileMap editor (blockout first, then detail pass)
-- [ ] Run collision pass on all walls and impassable tiles
-- [ ] Place encounter triggers in progression order (3–5 regular encounters before boss)
-- [ ] Place boss room trigger and post-boss mine exit gate
-- [ ] Atmosphere pass (torches, dead ends, depth cues, room identity)
-- [ ] Resolve persistent overlay sizing/alignment bug across HUD, dialogue, cutscene overlays, map hints, and confirmation dialogs (**required before Day 4 close**)
+**Day 4 kickoff implemented:**
+- [x] Replace mine-entry stub with a larger runtime blockout in `Map.gd` (entrance chamber, west/east branches, antechamber, boss chamber, post-boss exit corridor)
+- [x] Collision pass is active on new mine geometry via existing blocking-layer world-collision build
+- [x] Ordered encounter trigger scaffolding added (4 zones) with progression flags (`mine_encounter_progress`, `mine_boss_ready`)
+- [x] Boss trigger placeholder + mine exit gate unlock flow added (`mine_boss_resolved`, `mine_exit_unlocked`, `mine_cleared`)
+- [x] Responsive mine objective/status hint + viewport-aware confirmation dialog sizing added for map overlays
+- [x] Cross-overlay stability pass started in map/HUD/dialogue/cutscene (remaining manual verification tracked below)
 
 **Tasks:**
 - [x] Dungeon/cave tileset sourced and available at `assets/art/tilesets/basic caves and dungeons 32x32 standard - v1.0`
-- [ ] Design the mine map in TileMap editor: entrance corridor, branching paths, enemy rooms, boss room at the end
-- [ ] Collision on all walls and impassable tiles
-- [ ] Place Kobold encounter trigger zones (3–5 encounters before the boss)
-- [ ] Place boss room trigger zone (separate from regular encounters)
-- [ ] Place mine exit trigger zone (only accessible after boss room resolved)
+- [ ] Move runtime mine blockout into a TileMap editor-authored map (final Stage 4 map-delivery requirement)
+- [x] Collision on all walls and impassable tiles (runtime blockout pass)
+- [x] Place Kobold encounter trigger zones (3–5 encounters before the boss)
+- [x] Place boss room trigger zone (separate from regular encounters)
+- [x] Place mine exit trigger zone (only accessible after boss room resolved)
 - [ ] Atmospheric details: torch placement, dead ends, visual sense of depth
 - [ ] Persistent overlay sizing/alignment pass completed and merged before Stage 4 sign-off
 
 **Verification:**
-- [ ] Walk through mine — collision works, no shortcuts to boss room
+- [ ] Walk through mine blockout — collision works, no shortcuts to boss room
 - [ ] Mine reads as a mine: dark, stone, atmospheric
-- [ ] Encounter zones placed
-- [ ] Boss room is clearly a distinct space
-- [ ] Exit blocked until boss room flag set
+- [x] Encounter zones are placed and progression-gated in order
+- [x] Boss room trigger and post-boss exit-gate unlock flow are wired
+- [x] Exit remains blocked until boss room placeholder resolve flag is set
 - [ ] Overlay sizing/alignment is stable in map + cutscene + HUD + dialogue + confirmation popup at `480x270` internal / `1280x720` window
+- [x] Headless smoke run passes: `godot --headless --path . --quit-after 4`
 
 **Done state:** The mine exists as a real designed level, and overlay sizing/alignment issues are resolved for Day 4 sign-off.
 
@@ -274,7 +274,7 @@ Everything else is production.
 | 1 | Real town map (editor-designed) | ✅ Complete |
 | 2 | NPC dialogue system | ✅ Complete (Slice Day 2) |
 | 3 | Town exit + mine entrance cutscene | ✅ Complete (Slice Day 3 resolved) |
-| 4 | Mine dungeon map | 📝 Planned (implementation not started) |
+| 4 | Mine dungeon map | � In progress (Slice Day 4 kickoff) |
 | 5 | Battle system | ⬜ |
 | 6 | Boss room + moral choice | ⬜ |
 | 7 | Mine exit + area transition | ⬜ |

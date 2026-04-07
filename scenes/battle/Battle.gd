@@ -5,9 +5,6 @@ extends Node2D
 @onready var return_button: Button = $UI/BattlePanel/Margin/Content/ReturnButton
 
 func _ready() -> void:
-	PlayerData.current_location = "spike_battle"
-	PlayerData.current_region = "debug_arena"
-
 	attack_button.pressed.connect(_on_attack_pressed)
 	cast_spell_button.pressed.connect(_on_cast_spell_pressed)
 	return_button.pressed.connect(_on_return_pressed)

@@ -35,9 +35,12 @@ func _ready() -> void:
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	_build_ui()
 	_connect_signals()
+	_rebuild_layout(true)
 	_refresh()
+
+	if not get_viewport().size_changed.is_connected(_on_viewport_size_changed):
+		get_viewport().size_changed.connect(_on_viewport_size_changed)
 
 func is_open() -> bool:
 	return _is_open
@@ -147,6 +150,27 @@ func _add_section(parent: GridContainer, title_text: String) -> Label:
 func _is_compact_layout() -> bool:
 	var viewport_size := get_viewport_rect().size
 	return viewport_size.x <= COMPACT_VIEWPORT_WIDTH or viewport_size.y <= COMPACT_VIEWPORT_HEIGHT
+
+func _rebuild_layout(force: bool = false) -> void:
+	var use_compact := _is_compact_layout()
+	if not force and use_compact == _use_compact_layout:
+		return
+
+	_use_compact_layout = use_compact
+	_status_label = null
+	_identity_label = null
+	_inventory_label = null
+	_stats_label = null
+
+	for child in get_children():
+		child.queue_free()
+
+	_build_ui()
+	if _is_open:
+		_refresh()
+
+func _on_viewport_size_changed() -> void:
+	_rebuild_layout()
 
 func _connect_signals() -> void:
 	SignalBus.stat_changed.connect(_on_stat_changed)

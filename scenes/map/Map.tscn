@@ -144,3 +144,5 @@ offset_bottom = 96.0
 text = "Frontier Hamlet"
 
 [node name="TownExitDialog" type="ConfirmationDialog" parent="UI" unique_id=480808937]
+
+[node name="MineExitDialog" type="ConfirmationDialog" parent="UI"]

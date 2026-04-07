@@ -25,6 +25,7 @@ const MINE_REGION := "kobold_mine"
 const MINE_LOCATION := "mine_entry_chamber"
 
 var _status_label: Label
+var _title_label: Label
 var _dialogue_label: Label
 var _continue_button: Button
 var _dialogue_panel: PanelContainer
@@ -32,6 +33,9 @@ var _player_actor: ColorRect
 var _player_accent: ColorRect
 var _sentry_actor: ColorRect
 var _fade_rect: ColorRect
+var _fog_band: ColorRect
+var _floor_band: ColorRect
+var _last_viewport_size := Vector2.ZERO
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -44,6 +48,10 @@ func _ready() -> void:
 	_apply_player_visuals()
 	_refresh_status()
 	_play_sequence()
+
+	_last_viewport_size = get_viewport_rect().size
+	if not get_viewport().size_changed.is_connected(_on_viewport_size_changed):
+		get_viewport().size_changed.connect(_on_viewport_size_changed)
 
 func _scaled(reference_vector: Vector2) -> Vector2:
 	var viewport_size := get_viewport_rect().size
@@ -64,27 +72,19 @@ func _build_ui() -> void:
 	backdrop.color = Color(0.07, 0.07, 0.10, 1.0)
 	add_child(backdrop)
 
-	var fog_band := ColorRect.new()
-	fog_band.position = Vector2(0.0, 0.0)
-	fog_band.size = Vector2(viewport_size.x, floor_top_y)
-	fog_band.color = Color(0.13, 0.15, 0.24, 1.0)
-	add_child(fog_band)
+	_fog_band = ColorRect.new()
+	_fog_band.color = Color(0.13, 0.15, 0.24, 1.0)
+	add_child(_fog_band)
 
-	var floor := ColorRect.new()
-	floor.position = Vector2(0.0, floor_top_y)
-	floor.size = Vector2(viewport_size.x, viewport_size.y - floor_top_y)
-	floor.color = Color(0.20, 0.17, 0.12, 1.0)
-	add_child(floor)
+	_floor_band = ColorRect.new()
+	_floor_band.color = Color(0.20, 0.17, 0.12, 1.0)
+	add_child(_floor_band)
 
-	var title := Label.new()
-	title.position = _scaled(Vector2(14.0, 10.0))
-	title.size = _scaled(Vector2(300.0, 20.0))
-	title.text = "Mine Entrance Transition"
-	add_child(title)
+	_title_label = Label.new()
+	_title_label.text = "Mine Entrance Transition"
+	add_child(_title_label)
 
 	_status_label = Label.new()
-	_status_label.position = _scaled(Vector2(14.0, 28.0))
-	_status_label.size = _scaled(Vector2(300.0, 56.0))
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	add_child(_status_label)
 
@@ -98,13 +98,14 @@ func _build_ui() -> void:
 	_player_actor.add_child(_player_accent)
 
 	_sentry_actor = ColorRect.new()
-	_sentry_actor.size = _scaled(Vector2(40.0, 64.0))
 	_sentry_actor.color = Color(0.46, 0.43, 0.37, 1.0)
 	add_child(_sentry_actor)
 
 	_dialogue_panel = PanelContainer.new()
-	_dialogue_panel.position = _scaled(Vector2(60.0, 188.0))
-	_dialogue_panel.size = _scaled(Vector2(360.0, 70.0))
+	_dialogue_panel.anchor_left = 0.0
+	_dialogue_panel.anchor_top = 1.0
+	_dialogue_panel.anchor_right = 1.0
+	_dialogue_panel.anchor_bottom = 1.0
 	_dialogue_panel.visible = false
 	add_child(_dialogue_panel)
 
@@ -141,9 +142,51 @@ func _build_ui() -> void:
 	_fade_rect.color = Color(0.0, 0.0, 0.0, 0.0)
 	add_child(_fade_rect)
 
+	_layout_for_viewport()
+
 func _connect_signals() -> void:
 	SignalBus.clock_ticked.connect(_on_clock_ticked)
 	SignalBus.flag_set.connect(_on_flag_changed)
+
+func _on_viewport_size_changed() -> void:
+	var new_size := get_viewport_rect().size
+	if _last_viewport_size != Vector2.ZERO:
+		var ratio := Vector2(
+			new_size.x / max(_last_viewport_size.x, 1.0),
+			new_size.y / max(_last_viewport_size.y, 1.0),
+		)
+		_player_actor.position *= ratio
+		_sentry_actor.position *= ratio
+
+	_last_viewport_size = new_size
+	_layout_for_viewport()
+
+func _layout_for_viewport() -> void:
+	var viewport_size := get_viewport_rect().size
+	var compact_layout := viewport_size.x <= 640.0 or viewport_size.y <= 360.0
+	var floor_top_y := viewport_size.y * 0.58
+
+	_fog_band.position = Vector2.ZERO
+	_fog_band.size = Vector2(viewport_size.x, floor_top_y)
+	_floor_band.position = Vector2(0.0, floor_top_y)
+	_floor_band.size = Vector2(viewport_size.x, viewport_size.y - floor_top_y)
+
+	_title_label.position = _scaled(Vector2(14.0, 10.0))
+	_title_label.size = _scaled(Vector2(300.0, 20.0))
+	_status_label.position = _scaled(Vector2(14.0, 28.0))
+	_status_label.size = _scaled(Vector2(300.0, 56.0))
+
+	_player_actor.size = _scaled(Vector2(36.0, 56.0))
+	_player_accent.position = _scaled(PLAYER_ACCENT_OFFSET)
+	_player_accent.size = _scaled(PLAYER_ACCENT_SIZE)
+	_sentry_actor.size = _scaled(Vector2(40.0, 64.0))
+
+	var horizontal_margin := 24.0 if compact_layout else 60.0
+	var panel_height := _scaled(Vector2(0.0, 84.0 if compact_layout else 70.0)).y
+	_dialogue_panel.offset_left = horizontal_margin
+	_dialogue_panel.offset_right = -horizontal_margin
+	_dialogue_panel.offset_top = -panel_height - 10.0
+	_dialogue_panel.offset_bottom = -10.0
 
 func _reset_sequence() -> void:
 	_player_actor.position = _scaled(PLAYER_START_POS)
