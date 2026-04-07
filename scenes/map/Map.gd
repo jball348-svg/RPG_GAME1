@@ -28,12 +28,19 @@ const TOWN_LOCATION := "starting_town"
 const MINE_REGION := "kobold_mine"
 const MINE_LOCATION := "mine_entry_chamber"
 const MINE_EXIT_LOCATION := "mine_exit_gate"
+const MINE_BATTLE_ENVIRONMENT := "mine"
 const MINE_COMMIT_FLAG := "mine_entry_commit_applied"
 const MINE_ENCOUNTER_PROGRESS_FLAG := "mine_encounter_progress"
 const MINE_BOSS_READY_FLAG := "mine_boss_ready"
 const MINE_BOSS_RESOLVED_FLAG := "mine_boss_resolved"
 const MINE_EXIT_UNLOCKED_FLAG := "mine_exit_unlocked"
 const MINE_CLEARED_FLAG := "mine_cleared"
+const MINE_REGULAR_ENCOUNTER_COUNT := 3
+const BATTLE_KIND_STANDARD := "standard"
+const BATTLE_KIND_BOSS_PLACEHOLDER := "boss_placeholder"
+const BATTLE_KIND_DEBUG := "debug"
+const SUPPRESSED_TRIGGER_ENCOUNTER := "encounter"
+const SUPPRESSED_TRIGGER_BOSS := "boss"
 
 const MINE_MAP_SIZE := Vector2i(42, 30)
 const MINE_ENTRY_SPAWN_CELL := Vector2i(21, 27)
@@ -41,13 +48,11 @@ const MINE_ENCOUNTER_LABELS: PackedStringArray = [
 	"Collapsed Hall",
 	"Western Den",
 	"Eastern Den",
-	"Antechamber",
 ]
 const MINE_ENCOUNTER_RECTS: Array[Rect2i] = [
 	Rect2i(19, 18, 4, 4),
 	Rect2i(6, 10, 4, 4),
 	Rect2i(32, 10, 4, 4),
-	Rect2i(17, 5, 8, 2),
 ]
 const MINE_BOSS_TRIGGER_RECT := Rect2i(16, 1, 10, 3)
 const MINE_EXIT_TRIGGER_RECT := Rect2i(37, 1, 2, 3)
@@ -144,6 +149,11 @@ var _town_tileset: TileSet
 var _mine_trigger_root: Node2D
 var _mine_encounter_areas: Array[Area2D] = []
 var _mine_status_text := ""
+var _incoming_state_payload: Dictionary = {}
+var _mine_boss_area: Area2D
+var _suppressed_mine_trigger_type := ""
+var _suppressed_mine_trigger_index := -1
+var _battle_transition_locked := false
 
 @onready var ground_map: TileMap = $GroundMap
 @onready var world_collision: StaticBody2D = $WorldCollision
@@ -157,6 +167,7 @@ var _mine_status_text := ""
 
 func _ready() -> void:
 	_town_tileset = ground_map.tile_set
+	_incoming_state_payload = _scene_manager().consume_state_payload()
 	_is_mine_start_map = _should_load_mine_start_map()
 
 	if _is_mine_start_map:
@@ -172,6 +183,8 @@ func _ready() -> void:
 
 	if not get_viewport().size_changed.is_connected(_on_viewport_size_changed):
 		get_viewport().size_changed.connect(_on_viewport_size_changed)
+
+	_apply_incoming_state_payload()
 
 func _should_load_mine_start_map() -> bool:
 	return _player_data().current_region == MINE_REGION
@@ -197,21 +210,24 @@ func _connect_overlay_signals() -> void:
 		prompt_modal.closed.connect(_on_overlay_state_changed)
 
 func _setup_town_map() -> void:
-	_player_data().current_location = TOWN_LOCATION
-	_player_data().current_region = FRONTIER_REGION
+	_player_data().current_location = str(_incoming_state_payload.get("return_location", TOWN_LOCATION))
+	_player_data().current_region = str(_incoming_state_payload.get("return_region", FRONTIER_REGION))
 	_mine_status_text = ""
 
 	if _town_tileset != null:
 		ground_map.tile_set = _town_tileset
 
 	hint_label.text = TOWN_HINT_TEXT
-	player.global_position = player_spawn.global_position
+	player.global_position = _resolve_return_position(player_spawn.global_position)
 	_wire_town_exit_prompt()
 
 func _setup_mine_start_map() -> void:
-	if not _player_data().current_location.begins_with("mine_"):
-		_player_data().current_location = MINE_LOCATION
-	_player_data().current_region = MINE_REGION
+	var incoming_location := str(_incoming_state_payload.get("return_location", _player_data().current_location))
+	if incoming_location == "" or not incoming_location.begins_with("mine_"):
+		incoming_location = MINE_LOCATION
+
+	_player_data().current_location = incoming_location
+	_player_data().current_region = str(_incoming_state_payload.get("return_region", MINE_REGION))
 	_mine_status_text = ""
 
 	_disable_town_only_content()
@@ -220,12 +236,15 @@ func _setup_mine_start_map() -> void:
 	_wire_mine_exit_prompt()
 	_restore_mine_progress_state()
 	mine_spawn.position = ground_map.map_to_local(MINE_ENTRY_SPAWN_CELL)
-	player.global_position = mine_spawn.global_position
+	player.global_position = _resolve_return_position(mine_spawn.global_position)
 	_update_mine_hint()
 
 func _disable_town_only_content() -> void:
 	_town_exit_trigger_armed = false
 	_hide_prompt_modal()
+	_battle_transition_locked = false
+	_mine_boss_area = null
+	_clear_suppressed_mine_trigger()
 
 	if is_instance_valid(town_exit_trigger):
 		town_exit_trigger.monitoring = false
@@ -572,6 +591,43 @@ func _wire_town_exit_prompt() -> void:
 func _wire_mine_exit_prompt() -> void:
 	_hide_prompt_modal()
 
+func _apply_incoming_state_payload() -> void:
+	if _incoming_state_payload.is_empty():
+		return
+
+	player.velocity = Vector2.ZERO
+	_apply_incoming_trigger_suppression()
+
+	if _is_mine_start_map:
+		var status_text := str(_incoming_state_payload.get("status_text", ""))
+		if status_text != "":
+			_set_mine_status(status_text)
+
+	if bool(_incoming_state_payload.get("fade_from_black", false)):
+		call_deferred("_play_fade_from_black")
+
+func _apply_incoming_trigger_suppression() -> void:
+	_suppressed_mine_trigger_type = str(_incoming_state_payload.get("suppressed_trigger_type", ""))
+	_suppressed_mine_trigger_index = int(_incoming_state_payload.get("suppressed_trigger_index", -1))
+
+func _clear_suppressed_mine_trigger() -> void:
+	_suppressed_mine_trigger_type = ""
+	_suppressed_mine_trigger_index = -1
+
+func _resolve_return_position(default_position: Vector2) -> Vector2:
+	var return_position = _incoming_state_payload.get("return_position", default_position)
+	if return_position is Vector2:
+		return return_position
+	return default_position
+
+func _play_fade_from_black() -> void:
+	var screen_fader = _scene_manager().get_screen_fader()
+	if screen_fader == null:
+		return
+
+	screen_fader.force_black()
+	screen_fader.fade_from_black(0.35)
+
 func _get_prompt_modal():
 	var overlay_host: CanvasLayer = _scene_manager().get_overlay_host()
 	if overlay_host == null:
@@ -643,17 +699,20 @@ func _setup_mine_triggers() -> void:
 	_mine_trigger_root.name = "MineTriggers"
 	add_child(_mine_trigger_root)
 	_mine_encounter_areas.clear()
+	_mine_boss_area = null
 
-	for encounter_index in range(MINE_ENCOUNTER_RECTS.size()):
+	for encounter_index in range(MINE_REGULAR_ENCOUNTER_COUNT):
 		var area := _create_mine_trigger_area(
 			"EncounterTrigger%d" % (encounter_index + 1),
 			MINE_ENCOUNTER_RECTS[encounter_index]
 		)
 		area.body_entered.connect(_on_mine_encounter_trigger_body_entered.bind(encounter_index))
+		area.body_exited.connect(_on_mine_encounter_trigger_body_exited.bind(encounter_index))
 		_mine_encounter_areas.append(area)
 
-	var boss_area := _create_mine_trigger_area("BossTrigger", MINE_BOSS_TRIGGER_RECT)
-	boss_area.body_entered.connect(_on_mine_boss_trigger_body_entered)
+	_mine_boss_area = _create_mine_trigger_area("BossTrigger", MINE_BOSS_TRIGGER_RECT)
+	_mine_boss_area.body_entered.connect(_on_mine_boss_trigger_body_entered)
+	_mine_boss_area.body_exited.connect(_on_mine_boss_trigger_body_exited)
 
 	var exit_area := _create_mine_trigger_area("MineExitTrigger", MINE_EXIT_TRIGGER_RECT)
 	exit_area.body_entered.connect(_on_mine_exit_trigger_body_entered)
@@ -685,7 +744,7 @@ func _restore_mine_progress_state() -> void:
 		if is_instance_valid(_mine_encounter_areas[encounter_index]):
 			_mine_encounter_areas[encounter_index].monitoring = false
 
-	if progress >= MINE_ENCOUNTER_RECTS.size():
+	if progress >= MINE_REGULAR_ENCOUNTER_COUNT:
 		_player_data().set_flag(MINE_BOSS_READY_FLAG, true)
 
 	if _player_data().get_flag(MINE_BOSS_RESOLVED_FLAG, false):
@@ -694,10 +753,16 @@ func _restore_mine_progress_state() -> void:
 	_rebuild_mine_geometry()
 
 func _mine_encounter_progress() -> int:
-	return clampi(int(_player_data().get_flag(MINE_ENCOUNTER_PROGRESS_FLAG, 0)), 0, MINE_ENCOUNTER_RECTS.size())
+	return clampi(int(_player_data().get_flag(MINE_ENCOUNTER_PROGRESS_FLAG, 0)), 0, MINE_REGULAR_ENCOUNTER_COUNT)
 
 func _on_mine_encounter_trigger_body_entered(body: Node, encounter_index: int) -> void:
 	if body != player:
+		return
+
+	if _battle_transition_locked:
+		return
+
+	if _suppressed_mine_trigger_type == SUPPRESSED_TRIGGER_ENCOUNTER and _suppressed_mine_trigger_index == encounter_index:
 		return
 
 	var progress := _mine_encounter_progress()
@@ -708,26 +773,23 @@ func _on_mine_encounter_trigger_body_entered(body: Node, encounter_index: int) -
 		_set_mine_status("A collapsed branch blocks this route. Clear earlier encounter rooms first.")
 		return
 
-	var new_progress := progress + 1
-	_player_data().set_flag(MINE_ENCOUNTER_PROGRESS_FLAG, new_progress)
-	_set_mine_status("Encounter %d/%d mapped: %s" % [
-		new_progress,
-		MINE_ENCOUNTER_RECTS.size(),
-		MINE_ENCOUNTER_LABELS[encounter_index],
-	])
+	_launch_battle(_build_battle_payload(BATTLE_KIND_STANDARD, encounter_index, SUPPRESSED_TRIGGER_ENCOUNTER))
 
-	if encounter_index < _mine_encounter_areas.size() and is_instance_valid(_mine_encounter_areas[encounter_index]):
-		_mine_encounter_areas[encounter_index].monitoring = false
+func _on_mine_encounter_trigger_body_exited(body: Node, encounter_index: int) -> void:
+	if body != player:
+		return
 
-	if new_progress >= MINE_ENCOUNTER_RECTS.size() and not _player_data().get_flag(MINE_BOSS_READY_FLAG, false):
-		_player_data().set_flag(MINE_BOSS_READY_FLAG, true)
-		_set_mine_status("Boss chamber unlocked. Advance up the top shaft.")
-
-	_rebuild_mine_geometry()
-	_update_mine_hint()
+	if _suppressed_mine_trigger_type == SUPPRESSED_TRIGGER_ENCOUNTER and _suppressed_mine_trigger_index == encounter_index:
+		_clear_suppressed_mine_trigger()
 
 func _on_mine_boss_trigger_body_entered(body: Node) -> void:
 	if body != player:
+		return
+
+	if _battle_transition_locked:
+		return
+
+	if _suppressed_mine_trigger_type == SUPPRESSED_TRIGGER_BOSS:
 		return
 
 	if not _player_data().get_flag(MINE_BOSS_READY_FLAG, false):
@@ -737,11 +799,14 @@ func _on_mine_boss_trigger_body_entered(body: Node) -> void:
 	if _player_data().get_flag(MINE_BOSS_RESOLVED_FLAG, false):
 		return
 
-	_player_data().set_flag(MINE_BOSS_RESOLVED_FLAG, true)
-	_player_data().set_flag(MINE_EXIT_UNLOCKED_FLAG, true)
-	_open_mine_exit_gate()
-	_set_mine_status("Boss room placeholder resolved. Exit tunnel is now open.")
-	_update_mine_hint()
+	_launch_battle(_build_battle_payload(BATTLE_KIND_BOSS_PLACEHOLDER, -1, SUPPRESSED_TRIGGER_BOSS))
+
+func _on_mine_boss_trigger_body_exited(body: Node) -> void:
+	if body != player:
+		return
+
+	if _suppressed_mine_trigger_type == SUPPRESSED_TRIGGER_BOSS:
+		_clear_suppressed_mine_trigger()
 
 func _on_mine_exit_trigger_body_entered(body: Node) -> void:
 	if body != player:
@@ -785,10 +850,10 @@ func _update_mine_hint() -> void:
 
 	var progress := _mine_encounter_progress()
 	var objective := ""
-	if progress < MINE_ENCOUNTER_RECTS.size():
+	if progress < MINE_REGULAR_ENCOUNTER_COUNT:
 		objective = "Objective: Clear encounter %d/%d (%s)." % [
 			progress + 1,
-			MINE_ENCOUNTER_RECTS.size(),
+			MINE_REGULAR_ENCOUNTER_COUNT,
 			MINE_ENCOUNTER_LABELS[progress],
 		]
 	elif not _player_data().get_flag(MINE_BOSS_RESOLVED_FLAG, false):
@@ -852,12 +917,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	if OS.is_debug_build():
 		if event.is_action_pressed("set_path_pure"):
 			get_viewport().set_input_as_handled()
-			_player_data().set_chosen_path("pure")
+			_player_data().set_vertical_slice_debug_profile("pure")
+			_player_data().reset_vertical_slice_battle_resources()
 			return
 
 		if event.is_action_pressed("set_path_mixed"):
 			get_viewport().set_input_as_handled()
-			_player_data().set_chosen_path("mixed")
+			_player_data().set_vertical_slice_debug_profile("mixed")
+			_player_data().reset_vertical_slice_battle_resources()
 			return
 
 		if event.is_action_pressed("debug_stat_bump_social"):
@@ -884,7 +951,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if event.is_action_pressed("debug_battle"):
 		get_viewport().set_input_as_handled()
-		_scene_manager().change_state("battle")
+		_launch_battle(_build_battle_payload(BATTLE_KIND_DEBUG, -1, ""))
 
 func _physics_process(delta: float) -> void:
 	if _is_hud_open() or _is_dialogue_active() or _is_prompt_open():
@@ -988,6 +1055,7 @@ func _reset_debug_stats_and_gold() -> void:
 
 	StatRegistry._recalculate_luck()
 	PlayerData.gold = 0
+	PlayerData.reset_vertical_slice_battle_resources()
 	_player_data().set_flag(MINE_COMMIT_FLAG, false)
 
 func _apply_mine_commit_stats_once() -> void:
@@ -1022,3 +1090,36 @@ func _scene_manager() -> Node:
 
 func _signal_bus() -> Node:
 	return get_node("/root/SignalBus")
+
+func _build_battle_payload(encounter_kind: String, encounter_index: int, suppressed_trigger_type: String) -> Dictionary:
+	return {
+		"encounter_kind": encounter_kind,
+		"encounter_index": encounter_index,
+		"return_region": _player_data().current_region,
+		"return_location": _player_data().current_location,
+		"return_position": player.global_position,
+		"environment_id": MINE_BATTLE_ENVIRONMENT if _is_mine_start_map else "town",
+		"suppressed_trigger_type": suppressed_trigger_type,
+		"suppressed_trigger_index": encounter_index,
+		"fade_from_black": true,
+	}
+
+func _launch_battle(battle_payload: Dictionary) -> void:
+	_launch_battle_async(battle_payload)
+
+func _launch_battle_async(battle_payload: Dictionary) -> void:
+	if _battle_transition_locked:
+		return
+
+	_battle_transition_locked = true
+	player.velocity = Vector2.ZERO
+
+	var screen_fader = _scene_manager().get_screen_fader()
+	if screen_fader != null:
+		var fade_tween: Tween = screen_fader.fade_to_black(0.35)
+		await fade_tween.finished
+
+	if not _scene_manager().change_state("battle", battle_payload):
+		_battle_transition_locked = false
+		if screen_fader != null:
+			screen_fader.fade_from_black(0.35)

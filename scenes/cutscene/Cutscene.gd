@@ -34,7 +34,6 @@ var _dialogue_panel: PanelContainer
 var _player_actor: ColorRect
 var _player_accent: ColorRect
 var _sentry_actor: ColorRect
-var _fade_rect: ColorRect
 var _fog_band: ColorRect
 var _floor_band: ColorRect
 var _last_viewport_size := Vector2.ZERO
@@ -171,11 +170,6 @@ func _build_ui() -> void:
 	_continue_button.pressed.connect(_on_continue_pressed)
 	actions.add_child(_continue_button)
 
-	_fade_rect = ColorRect.new()
-	_fade_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_fade_rect.color = Color(0.0, 0.0, 0.0, 0.0)
-	add_child(_fade_rect)
-
 	_layout_for_viewport()
 
 func _connect_signals() -> void:
@@ -251,7 +245,6 @@ func _reset_sequence() -> void:
 	_dialogue_label.text = ""
 	_dialogue_panel.visible = false
 	_continue_button.disabled = true
-	_fade_rect.color = Color(0.0, 0.0, 0.0, 0.0)
 
 func _apply_player_visuals() -> void:
 	_player_actor.color = PATH_TINT_PURE if PlayerData.is_pure() else PATH_TINT_MIXED
@@ -303,15 +296,25 @@ func _dialogue_for_current_path() -> String:
 
 func _on_continue_pressed() -> void:
 	_continue_button.disabled = true
-
-	var fade_tween := create_tween()
-	fade_tween.tween_property(_fade_rect, "color", Color(0.0, 0.0, 0.0, 1.0), 0.35)
-	fade_tween.finished.connect(_handoff_to_mine_map)
+	_handoff_to_mine_map()
 
 func _handoff_to_mine_map() -> void:
+	_handoff_to_mine_map_async()
+
+func _handoff_to_mine_map_async() -> void:
+	var screen_fader = SceneManager.get_screen_fader()
+	if screen_fader != null:
+		var fade_tween: Tween = screen_fader.fade_to_black(0.35)
+		await fade_tween.finished
+
 	PlayerData.current_location = MINE_LOCATION
 	PlayerData.current_region = MINE_REGION
-	SceneManager.change_state("map")
+	SceneManager.change_state("map", {
+		"fade_from_black": true,
+		"source": "cutscene",
+		"return_region": MINE_REGION,
+		"return_location": MINE_LOCATION,
+	})
 
 func _on_clock_ticked(_time: Dictionary) -> void:
 	_refresh_status()

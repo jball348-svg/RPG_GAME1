@@ -4,6 +4,7 @@ const HUD_SCENE: PackedScene = preload("res://scenes/hud/HUD.tscn")
 const DEBUG_PANEL_SCENE: PackedScene = preload("res://scenes/debug/DebugPanel.tscn")
 const DIALOGUE_BOX_SCENE: PackedScene = preload("res://scenes/ui/DialogueBox.tscn")
 const PROMPT_MODAL_SCENE: PackedScene = preload("res://scenes/ui/PromptModal.tscn")
+const SCREEN_FADER_SCENE: PackedScene = preload("res://scenes/ui/ScreenFader.tscn")
 
 @onready var state_host: Node = $StateHost
 @onready var overlay_host: CanvasLayer = $OverlayHost
@@ -14,6 +15,7 @@ func _ready() -> void:
 	_ensure_debug_panel()
 	_ensure_dialogue_box()
 	_ensure_prompt_modal()
+	_ensure_screen_fader()
 	SceneManager.change_state("map")
 
 func _ensure_spike_hud() -> void:
@@ -51,3 +53,12 @@ func _ensure_prompt_modal() -> void:
 	prompt_modal.name = "PromptModal"
 	prompt_modal.z_index = 40
 	overlay_host.add_child(prompt_modal)
+
+func _ensure_screen_fader() -> void:
+	if overlay_host.get_node_or_null("ScreenFader") != null:
+		return
+
+	var screen_fader: Control = SCREEN_FADER_SCENE.instantiate() as Control
+	screen_fader.name = "ScreenFader"
+	screen_fader.z_index = 100
+	overlay_host.add_child(screen_fader)

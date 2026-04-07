@@ -100,7 +100,7 @@ func _should_be_visible() -> bool:
 	if _externally_suppressed:
 		return false
 
-	if SceneManager.current_state_name != "map":
+	if SceneManager.current_state_name != "map" and SceneManager.current_state_name != "battle":
 		return false
 
 	if DialogueManager.is_active():

@@ -5,6 +5,11 @@
 extends Node
 
 const VALID_PATHS: Array[String] = ["pure", "mixed"]
+const CLASS_FIGHTER := "fighter"
+const CLASS_BATTLEMAGE := "battlemage"
+const HEALTH_POTION_ID := "health_potion"
+const DEFAULT_POTION_COUNT := 2
+const DEFAULT_WEAPON_MODIFIER := 5
 
 # --- Class system ---
 # chosen_class: the player's primary class (e.g. "knight", "mage", "rogue")
@@ -49,6 +54,7 @@ var equipment: Dictionary = {
 # Tracked separately — it's both a stat and a narrative device.
 var age_years: int  = 20
 var age_days: int   = 0
+var current_hp: int = 0
 
 func _ready() -> void:
 	SignalBus.new_day.connect(_on_new_day)
@@ -82,7 +88,14 @@ func get_ghost_flag(flag_name: String, default: Variant = null) -> Variant:
 # --- Convenience ---
 func ensure_spike_defaults() -> void:
 	if chosen_path == "":
-		set_chosen_path("pure")
+		set_vertical_slice_debug_profile("pure")
+
+	if resolve_vertical_slice_class_id() == "":
+		_apply_vertical_slice_class_defaults_for_current_path()
+
+	ensure_vertical_slice_inventory()
+	if current_hp <= 0:
+		restore_hp_full()
 
 func set_chosen_path(path: String) -> void:
 	if not VALID_PATHS.has(path):
@@ -94,6 +107,110 @@ func set_chosen_path(path: String) -> void:
 
 	chosen_path = path
 	SignalBus.flag_set.emit("chosen_path", chosen_path)
+
+func set_vertical_slice_debug_profile(path: String) -> void:
+	if not VALID_PATHS.has(path):
+		push_warning("Invalid debug profile requested: %s" % path)
+		return
+
+	set_chosen_path(path)
+	specialisation = ""
+	mixed_classes.clear()
+
+	if path == "mixed":
+		chosen_class = CLASS_BATTLEMAGE
+	else:
+		chosen_class = CLASS_FIGHTER
+
+func resolve_vertical_slice_class_id() -> String:
+	if chosen_class != "":
+		return chosen_class.to_lower()
+
+	if is_mixed():
+		return CLASS_BATTLEMAGE
+	if is_pure():
+		return CLASS_FIGHTER
+	return ""
+
+func has_battle_magik() -> bool:
+	return resolve_vertical_slice_class_id() == CLASS_BATTLEMAGE
+
+func get_battle_weapon_modifier() -> int:
+	return DEFAULT_WEAPON_MODIFIER
+
+func get_max_hp() -> int:
+	return maxi(50, int(round(StatRegistry.get_stat("physical.endurance") * 10.0)))
+
+func set_current_hp(value: int) -> void:
+	current_hp = clampi(value, 0, get_max_hp())
+
+func restore_hp_full() -> void:
+	current_hp = get_max_hp()
+
+func heal_hp(amount: int) -> int:
+	var before := current_hp
+	set_current_hp(current_hp + max(amount, 0))
+	return current_hp - before
+
+func take_battle_damage(amount: int) -> int:
+	var before := current_hp
+	set_current_hp(current_hp - max(amount, 0))
+	return before - current_hp
+
+func ensure_vertical_slice_inventory() -> void:
+	if get_item_count(HEALTH_POTION_ID) <= 0:
+		set_item_count(HEALTH_POTION_ID, DEFAULT_POTION_COUNT)
+
+func reset_vertical_slice_battle_resources() -> void:
+	set_item_count(HEALTH_POTION_ID, DEFAULT_POTION_COUNT)
+	restore_hp_full()
+
+func get_item_count(item_id: String) -> int:
+	var index := _find_inventory_index(item_id)
+	if index == -1:
+		return 0
+	return int(inventory[index].get("count", 0))
+
+func set_item_count(item_id: String, count: int) -> void:
+	var safe_count: int = maxi(0, count)
+	var index: int = _find_inventory_index(item_id)
+	if safe_count == 0:
+		if index != -1:
+			inventory.remove_at(index)
+		return
+
+	if index == -1:
+		inventory.append({
+			"id": item_id,
+			"count": safe_count,
+		})
+		return
+
+	inventory[index]["count"] = safe_count
+
+func add_item(item_id: String, count: int = 1) -> void:
+	set_item_count(item_id, get_item_count(item_id) + max(count, 0))
+
+func consume_item(item_id: String, count: int = 1) -> bool:
+	var current_count: int = get_item_count(item_id)
+	var amount: int = maxi(count, 0)
+	if amount <= 0 or current_count < amount:
+		return false
+
+	set_item_count(item_id, current_count - amount)
+	return true
+
+func _find_inventory_index(item_id: String) -> int:
+	for index in range(inventory.size()):
+		if str(inventory[index].get("id", "")) == item_id:
+			return index
+	return -1
+
+func _apply_vertical_slice_class_defaults_for_current_path() -> void:
+	if is_mixed():
+		chosen_class = CLASS_BATTLEMAGE
+	else:
+		chosen_class = CLASS_FIGHTER
 
 func is_pure() -> bool:
 	return chosen_path == "pure"

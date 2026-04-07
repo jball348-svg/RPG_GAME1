@@ -64,6 +64,11 @@ var action_modifiers: Dictionary = {
 	"pray":    { "holy.faith": 0.08, "holy.peace": 0.03 },
 	"wait":    { "will.resolve": 0.01 },
 	"swim":    { "physical.endurance": 0.04, "physical.movement": 0.02 },
+	"flee_attempt": { "will.resolve": 0.05 },
+	"take_damage": { "physical.endurance": 0.03 },
+	"shield_bash": { "physical.strength": 0.07, "will.focus": 0.02 },
+	"arcane_strike": { "physical.strength": 0.05, "magik.spellcasting": 0.04 },
+	"battle_victory": { "physical.endurance": 0.08 },
 }
 
 func _ready() -> void:
