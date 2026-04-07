@@ -31,61 +31,77 @@ Everything else is production.
 
 **Known issues (deferred to Stage 9 polish):**
 - Some tree tiles do not block — collision layer assignment incomplete on a subset of props
-- Town exit warning can fire at scene start in edge cases — arm delay mitigates but not fully resolved
 
 ---
 
 ## Stage 2 — NPC dialogue system
-**Status:** 🔄 Current
+**Status:** ✅ Complete (Slice Day 2)
 
 **Goal:** A reusable dialogue system that any NPC in the game can use. Supports stat gates and gold gates.
 
 **Why this matters:** Three NPCs are needed for the core loop (intel NPC, moral choice NPC, bookstore). The system that powers them will power every NPC in the game. Design it once, reusable forever.
 
 **Tasks:**
-- [ ] Build `DialogueManager` autoload — loads dialogue data, manages conversation state, emits signals
-- [ ] Dialogue data format: GDScript Dictionary (or JSON) — each NPC has a dialogue tree with nodes, conditions, branches
-- [ ] Condition types: `stat_gte` (stat path + minimum value), `gold_gte` (minimum gold), `flag_set` (flag name), `pure_path`, `mixed_path`
-- [ ] `interact` input action added to `project.godot` — mapped to `E`
-- [ ] NPC scene: `Area2D` with `CollisionShape2D` interaction zone, `interact` fires dialogue
-- [ ] Dialogue box scene: bottom-third panel, speaker name header, portrait slot (left), text body, advance prompt (`E` or Space)
-- [ ] Write dialogue for the three core loop NPCs:
+- [x] Build `DialogueManager` autoload — loads dialogue data, manages conversation state, emits signals
+- [x] Dialogue data format: GDScript Dictionary (or JSON) — each NPC has a dialogue tree with nodes, conditions, branches
+- [x] Condition types: `stat_gte` (stat path + minimum value), `gold_gte` (minimum gold), `flag_set` (flag name), `pure_path`, `mixed_path`
+- [x] `interact` input action added to `project.godot` — mapped to `E`
+- [x] NPC scene includes interaction zone and solid body collision so NPCs are physically blocking
+- [x] Dialogue box scene: bottom-third panel, speaker header, portrait slot (left), text body, advance prompt (`E` or Space), resized to a smaller footprint
+- [x] Write dialogue for the three core loop NPCs:
   - **Intel NPC** (village elder / guard): base info always; full mine detail gated on `social.charm >= 10` AND `gold >= 20`
-  - **Moral choice NPC** (travelling merchant / wanderer): one-time only, sets flag `shaman_warning_given`, alerts player to the Shaman choice ahead
-  - **Bookstore NPC**: sells Destruction spell if `intelligence.understanding >= 10`; locked dialogue if below threshold
-- [ ] Place the three NPC nodes in `Map.tscn` at appropriate positions
+  - **Moral choice NPC** (travelling merchant / wanderer): one-time warning node sets flag `shaman_warning_given`, then falls back to repeat acknowledgement on revisits
+  - **Bookstore NPC**: unlock node if `intelligence.understanding >= 10`, locked dialogue below threshold, repeat acknowledgement after unlock
+- [x] Place and wire the three NPC nodes in `Map.tscn`
 
 **Verification:**
-- [ ] Press `E` near intel NPC with low Social/gold — gets basic info only
-- [ ] Press `E` near intel NPC with high Social/gold — gets full mine detail
-- [ ] Press `E` near moral choice NPC — dialogue fires once, flag `shaman_warning_given` set, won't repeat
-- [ ] Press `E` near bookstore NPC with low Intelligence — locked message
-- [ ] Press `E` near bookstore NPC with high Intelligence — spell purchase dialogue
-- [ ] Dialogue box renders correctly: speaker name, portrait placeholder, text, advance prompt visible
-- [ ] Clock keeps running during dialogue
-- [ ] Stats relevant to gates visible in debug panel for testing
+- [x] Press `E` near intel NPC with low Social/gold — gets basic info only
+- [x] Press `E` near intel NPC with high Social/gold — gets full mine detail
+- [x] Press `E` near moral choice NPC — warning fires, flag `shaman_warning_given` set, repeat fallback line appears on revisit
+- [x] Press `E` near bookstore NPC with low Intelligence — locked message
+- [x] Press `E` near bookstore NPC with high Intelligence — unlock dialogue, then repeat acknowledgement on revisit
+- [x] Dialogue box renders correctly in the bottom screen band with speaker name, portrait placeholder, text, and advance prompt
+- [x] Clock keeps running during dialogue
+- [x] Stats relevant to gates visible in debug panel for testing (including debug bump controls)
 
 **Done state:** Three wired, conditionally branching NPCs are in the town.
 
 ---
 
 ## Stage 3 — Town exit and mine entrance cutscene
-**Status:** 🔄 Partially done (exit trigger and prompt complete; cutscene content pending)
+**Status:** 🔄 Current (Slice Day 3)
 
-**Goal:** Leaving the town triggers a point-of-no-return prompt. Confirming plays a real cutscene.
+**Goal:** Leaving the town triggers a point-of-no-return prompt, plays a lightweight but clear transition cutscene, and lands the player in the mine start map.
 
-**Remaining tasks:**
-- [ ] Cutscene: player sprite walks toward the mine entrance, class-appropriate animation plays, equipment loadout visible
-- [ ] Cutscene fires `will.resolve` and `holy.faith` stat increments (entering danger willingly)
-- [ ] Cutscene ends → transition to mine map
+**Already complete:**
+- [x] North exit `Area2D` + confirmation prompt wired in town map
+- [x] Exit trigger arm timing and top-half guard prevent popup on scene load
 
-**Verification:**
-- [ ] Walk to town exit → prompt appears
-- [ ] Say no → stay in town, can continue playing
-- [ ] Say yes → cutscene plays, player walks to mine, stat increments visible in debug panel
-- [ ] Smooth transition into mine map at end of cutscene
+**Day 3 implementation plan (do not over-art):**
+1. **Build the mine start map stub (minimum viable):**
+   - Use existing tileset assets in `assets/art/tilesets/basic caves and dungeons 32x32 standard - v1.0` (start with `assets/assets-all.png`)
+   - Create a small mine entrance scene: entry chamber + short walkable corridor + spawn marker
+   - Keep full dungeon layout and encounter spacing for Stage 4
+2. **Rework cutscene into a transition sequence (placeholder quality is fine):**
+   - Keep simple actor blocks/sprites (same spirit as spike cutscene)
+   - Sequence: confirm exit → player movement beat → short sentry/context line → transition out
+3. **Add low-cost personalization in cutscene visuals:**
+   - Path tint baseline: Pure = muted gold, Mixed = muted teal
+   - Class accent tint overlay based on selected class for readable differentiation without full equipment rendering
+4. **Wire state handoff into mine map begin:**
+   - On cutscene end, set mine entry location/region fields in `PlayerData`
+   - Transition to mine map start scene at the entrance spawn marker
+5. **Keep stat meaning on transition:**
+   - Increment `will.resolve` and `holy.faith` once when the player commits to entering danger
 
-**Done state:** Leaving town into the mine is a meaningful, cinematic moment.
+**Day 3 verification checklist:**
+- [ ] Walk to north exit → confirmation popup appears
+- [ ] Cancel → player remains in town with no state break
+- [ ] Confirm → cutscene plays with path/class-reactive player tint
+- [ ] Cutscene completes → mine map loads at entrance spawn
+- [ ] Debug panel shows `will.resolve` and `holy.faith` increments
+
+**Done state:** Town exit → cutscene → mine start is fully playable and stable, with clear path/class flavor and no blocked progression.
 
 ---
 
@@ -95,7 +111,7 @@ Everything else is production.
 **Goal:** A dungeon map for the mine. Navigable, atmospheric, with Kobold encounter trigger zones.
 
 **Tasks:**
-- [ ] Acquire a dungeon/cave tileset — 32×32, CC0, stone walls/floors/torches, matching art direction
+- [x] Dungeon/cave tileset sourced and available at `assets/art/tilesets/basic caves and dungeons 32x32 standard - v1.0`
 - [ ] Design the mine map in TileMap editor: entrance corridor, branching paths, enemy rooms, boss room at the end
 - [ ] Collision on all walls and impassable tiles
 - [ ] Place Kobold encounter trigger zones (3–5 encounters before the boss)
@@ -225,7 +241,7 @@ Everything else is production.
 - [ ] SFX: footstep, attack, spell cast, dialogue advance, menu sounds
 - [ ] Fade to black between major state transitions
 - [ ] UI pass: dialogue box, HUD, battle menu — match art direction
-- [ ] Fix known Stage 1 issues: remaining tree collision, exit trigger edge case
+- [ ] Fix known Stage 1 issues: remaining tree collision
 - [ ] At least one NPC portrait
 - [ ] Game over screen
 - [ ] First external playtester pass
@@ -245,8 +261,8 @@ Everything else is production.
 | Stage | Task | Status |
 |---|---|---|
 | 1 | Real town map (editor-designed) | ✅ Complete |
-| 2 | NPC dialogue system | 🔄 Current |
-| 3 | Town exit + mine entrance cutscene | 🔄 Partial (trigger done, cutscene pending) |
+| 2 | NPC dialogue system | ✅ Complete (Slice Day 2) |
+| 3 | Town exit + mine entrance cutscene | 🔄 Current (Slice Day 3) |
 | 4 | Mine dungeon map | ⬜ |
 | 5 | Battle system | ⬜ |
 | 6 | Boss room + moral choice | ⬜ |

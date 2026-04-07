@@ -174,7 +174,7 @@ Transitions: Map ↔ Battle, Map ↔ Cutscene, HUD overlays map (does not replac
 | `scenes/debug/` | Dev-only overlay — **remove before vertical slice** |
 
 **Dev controls (spike only — remove in vertical slice):**
-`WASD/arrows` move · `B` battle · `H` HUD · `C` cutscene · `1` Pure · `2` Mixed
+`WASD/arrows` move · `B` battle · `H` HUD · `C` cutscene · `1` Pure · `2` Mixed · `3` Social+Gold · `4` Intel · `0` Reset stats
 
 ---
 
@@ -186,8 +186,8 @@ Transitions: Map ↔ Battle, Map ↔ Cutscene, HUD overlays map (does not replac
 
 - [x] Source and integrate real tilesets (outdoor town + dungeon/mine) per `docs/art_direction.md`
 - [x] Replace placeholder map with real tile layout: starting town + mine entrance area
-- [ ] Build NPC dialogue system — reusable, supports stat gates and gold gates
-- [ ] Place and wire town NPCs (intel NPC, moral choice NPC, bookstore)
+- [x] Build NPC dialogue system — reusable, supports stat gates and gold gates
+- [x] Place and wire town NPCs (intel NPC, moral choice NPC, bookstore)
 - [ ] Build mine dungeon map layout
 - [ ] Build real battle system — turn structure, player actions, Kobold enemy type
 - [ ] Implement class abilities for the starting class (one Pure, one Mixed)
@@ -200,10 +200,10 @@ Transitions: Map ↔ Battle, Map ↔ Cutscene, HUD overlays map (does not replac
 
 ### Latest implementation update
 
-- Stage 1 map pass now includes blocking collision generation for impassable town layers, full-width north exit trigger coverage, and camera bounds preserved.
-- Town exit confirmation prompt is wired in `Map.gd`; confirm transitions to `SceneManager.change_state("cutscene")`, cancel keeps player in town.
-- Project display settings are configured for a 480×270 viewport with 1280×720 window override and `viewport` stretch mode.
-- Player map placeholder now uses a tile-sized muted-gold `Sprite2D` square aligned to the existing collision body.
+- Stage 1 town map pass is stable: blocking collision generation, camera bounds, and north exit confirmation are implemented; exit false-fire-on-load is fixed via delayed arming + top-half guard.
+- Stage 2 is complete: reusable `DialogueManager`, bottom-band `DialogueBox`, physically solid NPCs + interaction zones, and three wired town NPCs with stat/gold/flag-gated dialogue.
+- Debug testing workflow now supports path and gate testing via `1/2` (Pure/Mixed), `3` (Social+Gold), `4` (Intelligence), and `0` (reset stats/gold).
+- Stage 3 is now the active focus: town exit → transition cutscene → mine map start handoff.
 
 ### Production order after vertical slice
 1. Class selection / character creation screen
