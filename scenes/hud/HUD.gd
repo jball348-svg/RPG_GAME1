@@ -20,11 +20,15 @@ const EQUIPMENT_ORDER: Array[String] = [
 	"amulet",
 ]
 
+const COMPACT_VIEWPORT_WIDTH := 640.0
+const COMPACT_VIEWPORT_HEIGHT := 360.0
+
 var _status_label: Label
 var _identity_label: Label
 var _inventory_label: Label
 var _stats_label: Label
 var _is_open: bool = false
+var _use_compact_layout: bool = false
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -56,6 +60,11 @@ func _build_ui() -> void:
 	if get_child_count() > 0:
 		return
 
+	_use_compact_layout = _is_compact_layout()
+	var horizontal_margin := 12 if _use_compact_layout else 56
+	var vertical_margin := 10 if _use_compact_layout else 40
+	var section_gap := 8 if _use_compact_layout else 16
+
 	var backdrop := ColorRect.new()
 	backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
 	backdrop.color = Color(0.03, 0.05, 0.07, 0.76)
@@ -63,35 +72,35 @@ func _build_ui() -> void:
 
 	var frame := MarginContainer.new()
 	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
-	frame.add_theme_constant_override("margin_left", 56)
-	frame.add_theme_constant_override("margin_top", 40)
-	frame.add_theme_constant_override("margin_right", 56)
-	frame.add_theme_constant_override("margin_bottom", 40)
+	frame.add_theme_constant_override("margin_left", horizontal_margin)
+	frame.add_theme_constant_override("margin_top", vertical_margin)
+	frame.add_theme_constant_override("margin_right", horizontal_margin)
+	frame.add_theme_constant_override("margin_bottom", vertical_margin)
 	add_child(frame)
 
 	var root := VBoxContainer.new()
 	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	root.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	root.add_theme_constant_override("separation", 16)
+	root.add_theme_constant_override("separation", section_gap)
 	frame.add_child(root)
 
 	var title := Label.new()
-	title.text = "Day 4 HUD Overlay"
+	title.text = "HUD Overlay"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(title)
 
 	var subtitle := Label.new()
-	subtitle.text = "The map stays visible underneath. Movement pauses while the HUD is open, but the clock keeps ticking."
+	subtitle.text = "Map stays visible underneath. Movement pauses while HUD is open, but the clock keeps ticking."
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD
 	root.add_child(subtitle)
 
 	var grid := GridContainer.new()
-	grid.columns = 2
+	grid.columns = 1 if _use_compact_layout else 2
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	grid.add_theme_constant_override("h_separation", 16)
-	grid.add_theme_constant_override("v_separation", 16)
+	grid.add_theme_constant_override("h_separation", section_gap)
+	grid.add_theme_constant_override("v_separation", section_gap)
 	root.add_child(grid)
 
 	_status_label = _add_section(grid, "Clock + Status")
@@ -103,20 +112,23 @@ func _add_section(parent: GridContainer, title_text: String) -> Label:
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	panel.custom_minimum_size = Vector2(360.0, 180.0)
+	panel.custom_minimum_size = Vector2(220.0, 96.0) if _use_compact_layout else Vector2(360.0, 180.0)
 	parent.add_child(panel)
 
+	var panel_margin := 10 if _use_compact_layout else 16
+	var panel_spacing := 6 if _use_compact_layout else 10
+
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 16)
-	margin.add_theme_constant_override("margin_top", 16)
-	margin.add_theme_constant_override("margin_right", 16)
-	margin.add_theme_constant_override("margin_bottom", 16)
+	margin.add_theme_constant_override("margin_left", panel_margin)
+	margin.add_theme_constant_override("margin_top", panel_margin)
+	margin.add_theme_constant_override("margin_right", panel_margin)
+	margin.add_theme_constant_override("margin_bottom", panel_margin)
 	panel.add_child(margin)
 
 	var content := VBoxContainer.new()
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	content.add_theme_constant_override("separation", 10)
+	content.add_theme_constant_override("separation", panel_spacing)
 	margin.add_child(content)
 
 	var title := Label.new()
@@ -131,6 +143,10 @@ func _add_section(parent: GridContainer, title_text: String) -> Label:
 	content.add_child(body)
 
 	return body
+
+func _is_compact_layout() -> bool:
+	var viewport_size := get_viewport_rect().size
+	return viewport_size.x <= COMPACT_VIEWPORT_WIDTH or viewport_size.y <= COMPACT_VIEWPORT_HEIGHT
 
 func _connect_signals() -> void:
 	SignalBus.stat_changed.connect(_on_stat_changed)

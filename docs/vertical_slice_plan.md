@@ -69,7 +69,7 @@ Everything else is production.
 ---
 
 ## Stage 3 — Town exit and mine entrance cutscene
-**Status:** 🔄 Current (Slice Day 3)
+**Status:** ✅ Complete (Slice Day 3 resolved)
 
 **Goal:** Leaving the town triggers a point-of-no-return prompt, plays a lightweight but clear transition cutscene, and lands the player in the mine start map.
 
@@ -78,37 +78,46 @@ Everything else is production.
 - [x] Exit trigger arm timing and top-half guard prevent popup on scene load
 
 **Day 3 implementation plan (do not over-art):**
-1. **Build the mine start map stub (minimum viable):**
-   - Use existing tileset assets in `assets/art/tilesets/basic caves and dungeons 32x32 standard - v1.0` (start with `assets/assets-all.png`)
-   - Create a small mine entrance scene: entry chamber + short walkable corridor + spawn marker
-   - Keep full dungeon layout and encounter spacing for Stage 4
-2. **Rework cutscene into a transition sequence (placeholder quality is fine):**
-   - Keep simple actor blocks/sprites (same spirit as spike cutscene)
-   - Sequence: confirm exit → player movement beat → short sentry/context line → transition out
-3. **Add low-cost personalization in cutscene visuals:**
-   - Path tint baseline: Pure = muted gold, Mixed = muted teal
-   - Class accent tint overlay based on selected class for readable differentiation without full equipment rendering
-4. **Wire state handoff into mine map begin:**
-   - On cutscene end, set mine entry location/region fields in `PlayerData`
-   - Transition to mine map start scene at the entrance spawn marker
-5. **Keep stat meaning on transition:**
-   - Increment `will.resolve` and `holy.faith` once when the player commits to entering danger
+- [x] **Build the mine start map stub (minimum viable):**
+  - Uses existing tileset assets in `assets/art/tilesets/basic caves and dungeons 32x32 standard - v1.0` (`tiles/tiles-all-32x32.png` + `assets/assets-all.png`)
+  - Small mine entrance map variant built in `Map.gd`: entry chamber + short corridor + `MineSpawn` marker handoff
+  - Full dungeon layout and encounter spacing remain Stage 4 scope
+- [x] **Rework cutscene into a transition sequence (placeholder quality is fine):**
+  - Keeps simple actor block visuals
+  - Sequence now: confirm exit → player movement beat → sentry/context line → fade transition out
+- [x] **Add low-cost personalization in cutscene visuals:**
+  - Path tint baseline: Pure = muted gold, Mixed = muted teal
+  - Class accent tint overlay from selected class/specialisation
+- [x] **Wire state handoff into mine map begin:**
+  - On cutscene end, `PlayerData.current_region/current_location` are set to mine entry
+  - Returns to `map` state and spawns at mine entrance marker
+- [x] **Keep stat meaning on transition:**
+  - One-time increment applied on confirm (`will.resolve`, `holy.faith`) guarded by `mine_entry_commit_applied` flag
 
 **Day 3 verification checklist:**
-- [ ] Walk to north exit → confirmation popup appears
-- [ ] Cancel → player remains in town with no state break
-- [ ] Confirm → cutscene plays with path/class-reactive player tint
-- [ ] Cutscene completes → mine map loads at entrance spawn
-- [ ] Debug panel shows `will.resolve` and `holy.faith` increments
+- [x] Walk to north exit → confirmation popup appears
+- [x] Cancel → player remains in town with no state break
+- [x] Confirm → cutscene plays with path/class-reactive player tint
+- [x] Cutscene completes → mine map loads at entrance spawn
+- [x] Debug panel shows `will.resolve` and `holy.faith` increments
 
 **Done state:** Town exit → cutscene → mine start is fully playable and stable, with clear path/class flavor and no blocked progression.
 
 ---
 
 ## Stage 4 — Mine dungeon map
-**Status:** ⬜ Not started
+**Status:** 📝 Planned (implementation not started)
 
 **Goal:** A dungeon map for the mine. Navigable, atmospheric, with Kobold encounter trigger zones.
+
+**Implementation plan (documentation only, no code yet):**
+- [ ] Lock mine layout blueprint (entrance flow, branch order, boss room gate, post-boss exit route)
+- [ ] Build map geometry pass in TileMap editor (blockout first, then detail pass)
+- [ ] Run collision pass on all walls and impassable tiles
+- [ ] Place encounter triggers in progression order (3–5 regular encounters before boss)
+- [ ] Place boss room trigger and post-boss mine exit gate
+- [ ] Atmosphere pass (torches, dead ends, depth cues, room identity)
+- [ ] Resolve persistent overlay sizing/alignment bug across HUD, dialogue, cutscene overlays, map hints, and confirmation dialogs (**required before Day 4 close**)
 
 **Tasks:**
 - [x] Dungeon/cave tileset sourced and available at `assets/art/tilesets/basic caves and dungeons 32x32 standard - v1.0`
@@ -118,6 +127,7 @@ Everything else is production.
 - [ ] Place boss room trigger zone (separate from regular encounters)
 - [ ] Place mine exit trigger zone (only accessible after boss room resolved)
 - [ ] Atmospheric details: torch placement, dead ends, visual sense of depth
+- [ ] Persistent overlay sizing/alignment pass completed and merged before Stage 4 sign-off
 
 **Verification:**
 - [ ] Walk through mine — collision works, no shortcuts to boss room
@@ -125,8 +135,9 @@ Everything else is production.
 - [ ] Encounter zones placed
 - [ ] Boss room is clearly a distinct space
 - [ ] Exit blocked until boss room flag set
+- [ ] Overlay sizing/alignment is stable in map + cutscene + HUD + dialogue + confirmation popup at `480x270` internal / `1280x720` window
 
-**Done state:** The mine exists as a real designed level.
+**Done state:** The mine exists as a real designed level, and overlay sizing/alignment issues are resolved for Day 4 sign-off.
 
 ---
 
@@ -262,8 +273,8 @@ Everything else is production.
 |---|---|---|
 | 1 | Real town map (editor-designed) | ✅ Complete |
 | 2 | NPC dialogue system | ✅ Complete (Slice Day 2) |
-| 3 | Town exit + mine entrance cutscene | 🔄 Current (Slice Day 3) |
-| 4 | Mine dungeon map | ⬜ |
+| 3 | Town exit + mine entrance cutscene | ✅ Complete (Slice Day 3 resolved) |
+| 4 | Mine dungeon map | 📝 Planned (implementation not started) |
 | 5 | Battle system | ⬜ |
 | 6 | Boss room + moral choice | ⬜ |
 | 7 | Mine exit + area transition | ⬜ |

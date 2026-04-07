@@ -91,6 +91,9 @@ shape = SubResource("RectangleShape2D_qfku7")
 [node name="PlayerSpawn" type="Marker2D" parent="." unique_id=162430249]
 position = Vector2(624, 752)
 
+[node name="MineSpawn" type="Marker2D" parent="."]
+position = Vector2(400, 432)
+
 [node name="Player" type="CharacterBody2D" parent="." unique_id=5583337]
 
 [node name="@CollisionShape2D@21" type="CollisionShape2D" parent="Player" unique_id=1885935161]
@@ -123,16 +126,20 @@ npc_name = "Bookstore Keeper"
 [node name="UI" type="CanvasLayer" parent="." unique_id=2101638366]
 
 [node name="HintBackdrop" type="ColorRect" parent="UI" unique_id=626454348]
-offset_left = 252.0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -228.0
 offset_top = 8.0
-offset_right = 476.0
+offset_right = -4.0
 offset_bottom = 102.0
 color = Color(0, 0, 0, 0.45)
 
 [node name="HintLabel" type="Label" parent="UI" unique_id=1596769444]
-offset_left = 260.0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -220.0
 offset_top = 16.0
-offset_right = 468.0
+offset_right = -12.0
 offset_bottom = 96.0
 text = "Frontier Hamlet"
 

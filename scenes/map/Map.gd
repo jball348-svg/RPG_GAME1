@@ -8,29 +8,164 @@ const OVERLAY_BLOCKING_LAYER := 4
 const ROAD_LAYER := 1
 const OVERLAY_BLOCK_BOTTOM_ROWS := 4
 const TOWN_EXIT_PROMPT_TEXT := "You prepare to leave for the mine. There is no turning back. Continue?"
-const HINT_TEXT := "Frontier Hamlet\nMove: WASD / Arrows\nB: Battle   H: HUD\nC: Cutscene   1: Pure   2: Mixed\n3: Social+Gold  4: Intel  0: Reset stats"
+const TOWN_HINT_TEXT := "Frontier Hamlet\nMove: WASD / Arrows\nB: Battle   H: HUD\nC: Cutscene   1: Pure   2: Mixed\n3: Social+Gold  4: Intel  0: Reset stats"
+const MINE_HINT_TEXT := "Kobold Mine Entrance\nMove: WASD / Arrows\nB: Battle   H: HUD\nC: Cutscene   1: Pure   2: Mixed\n3: Social+Gold  4: Intel  0: Reset stats"
+
+const FRONTIER_REGION := "frontier_village"
+const TOWN_LOCATION := "starting_town"
+const MINE_REGION := "kobold_mine"
+const MINE_LOCATION := "mine_entry_chamber"
+const MINE_COMMIT_FLAG := "mine_entry_commit_applied"
+
+const MINE_MAP_SIZE := Vector2i(24, 16)
+const MINE_ENTRY_SPAWN_CELL := Vector2i(12, 13)
+
+const MINE_TERRAIN_SOURCE_ID := 0
+const MINE_PROPS_SOURCE_ID := 1
+const MINE_FLOOR_TILE := Vector2i(6, 0)
+const MINE_FLOOR_VARIANT_TILE := Vector2i(6, 1)
+const MINE_WALL_TILE := Vector2i(0, 0)
+const MINE_PROP_BRAZIER_TILE := Vector2i(0, 0)
+const MINE_PROP_CRATE_TILE := Vector2i(2, 0)
+const MINE_PROP_TORCH_TILE := Vector2i(5, 0)
+
+const MINE_TERRAIN_TEXTURE_PATH := "res://assets/art/tilesets/basic caves and dungeons 32x32 standard - v1.0/tiles/tiles-all-32x32.png"
+const MINE_PROPS_TEXTURE_PATH := "res://assets/art/tilesets/basic caves and dungeons 32x32 standard - v1.0/assets/assets-all.png"
 
 var _distance_since_step: float = 0.0
 var _town_exit_trigger_armed := false
+var _is_mine_start_map := false
+var _town_tileset: TileSet
 
 @onready var ground_map: TileMap = $GroundMap
 @onready var world_collision: StaticBody2D = $WorldCollision
 @onready var player: CharacterBody2D = $Player
 @onready var map_camera: Camera2D = $Player/MapCamera
 @onready var player_spawn: Marker2D = $PlayerSpawn
+@onready var mine_spawn: Marker2D = $MineSpawn
 @onready var town_exit_trigger: Area2D = $TownExitTrigger
 @onready var hint_label: Label = $UI/HintLabel
 @onready var town_exit_dialog: ConfirmationDialog = $UI/TownExitDialog
 
 func _ready() -> void:
-	_player_data().current_location = "starting_town"
-	_player_data().current_region = "frontier_village"
-	hint_label.text = HINT_TEXT
-	player.global_position = player_spawn.global_position
+	_town_tileset = ground_map.tile_set
+	_is_mine_start_map = _should_load_mine_start_map()
+
+	if _is_mine_start_map:
+		_setup_mine_start_map()
+	else:
+		_setup_town_map()
+
 	_build_world_collision()
-	_wire_town_exit_prompt()
 	map_camera.make_current()
 	_configure_map_camera()
+
+func _should_load_mine_start_map() -> bool:
+	return _player_data().current_region == MINE_REGION
+
+func _setup_town_map() -> void:
+	_player_data().current_location = TOWN_LOCATION
+	_player_data().current_region = FRONTIER_REGION
+
+	if _town_tileset != null:
+		ground_map.tile_set = _town_tileset
+
+	hint_label.text = TOWN_HINT_TEXT
+	player.global_position = player_spawn.global_position
+	_wire_town_exit_prompt()
+
+func _setup_mine_start_map() -> void:
+	_player_data().current_location = MINE_LOCATION
+	_player_data().current_region = MINE_REGION
+	hint_label.text = MINE_HINT_TEXT
+
+	_disable_town_only_content()
+	_build_mine_layout()
+	mine_spawn.position = ground_map.map_to_local(MINE_ENTRY_SPAWN_CELL)
+	player.global_position = mine_spawn.global_position
+
+func _disable_town_only_content() -> void:
+	_town_exit_trigger_armed = false
+	town_exit_dialog.hide()
+
+	if is_instance_valid(town_exit_trigger):
+		town_exit_trigger.monitoring = false
+
+	for node_path in ["TownExitTrigger", "Triggers", "IntelNPC", "MoralChoiceNPC", "BookstoreNPC"]:
+		var node := get_node_or_null(node_path)
+		if node != null:
+			node.queue_free()
+
+func _build_mine_layout() -> void:
+	ground_map.tile_set = _build_mine_tileset()
+
+	for layer_index in range(ground_map.get_layers_count()):
+		ground_map.clear_layer(layer_index)
+
+	var walkable_cells := _build_mine_walkable_cells()
+	for y in range(MINE_MAP_SIZE.y):
+		for x in range(MINE_MAP_SIZE.x):
+			var cell := Vector2i(x, y)
+			var floor_tile := MINE_FLOOR_VARIANT_TILE if (x + y) % 3 == 0 else MINE_FLOOR_TILE
+			ground_map.set_cell(0, cell, MINE_TERRAIN_SOURCE_ID, floor_tile)
+
+			if walkable_cells.has(cell):
+				continue
+
+			ground_map.set_cell(2, cell, MINE_TERRAIN_SOURCE_ID, MINE_WALL_TILE)
+
+	_stamp_mine_props()
+
+func _build_mine_walkable_cells() -> Dictionary:
+	var walkable := {}
+	_mark_walkable_rect(walkable, Rect2i(8, 9, 8, 6))
+	_mark_walkable_rect(walkable, Rect2i(11, 4, 2, 5))
+	_mark_walkable_rect(walkable, Rect2i(8, 1, 8, 3))
+	return walkable
+
+func _mark_walkable_rect(walkable: Dictionary, rect: Rect2i) -> void:
+	for y in range(rect.position.y, rect.end.y):
+		for x in range(rect.position.x, rect.end.x):
+			walkable[Vector2i(x, y)] = true
+
+func _stamp_mine_props() -> void:
+	ground_map.set_cell(3, Vector2i(10, 10), MINE_PROPS_SOURCE_ID, MINE_PROP_CRATE_TILE)
+	ground_map.set_cell(3, Vector2i(13, 10), MINE_PROPS_SOURCE_ID, MINE_PROP_CRATE_TILE)
+	ground_map.set_cell(3, Vector2i(10, 3), MINE_PROPS_SOURCE_ID, MINE_PROP_BRAZIER_TILE)
+	ground_map.set_cell(3, Vector2i(13, 3), MINE_PROPS_SOURCE_ID, MINE_PROP_TORCH_TILE)
+
+func _build_mine_tileset() -> TileSet:
+	var tile_set := TileSet.new()
+	tile_set.tile_size = Vector2i(32, 32)
+	var terrain_texture := _load_png_texture(MINE_TERRAIN_TEXTURE_PATH)
+	var props_texture := _load_png_texture(MINE_PROPS_TEXTURE_PATH)
+
+	if terrain_texture == null or props_texture == null:
+		return tile_set
+
+	var terrain_source := TileSetAtlasSource.new()
+	terrain_source.texture = terrain_texture
+	terrain_source.texture_region_size = Vector2i(32, 32)
+	for atlas_coord in [MINE_FLOOR_TILE, MINE_FLOOR_VARIANT_TILE, MINE_WALL_TILE]:
+		terrain_source.create_tile(atlas_coord)
+	tile_set.add_source(terrain_source, MINE_TERRAIN_SOURCE_ID)
+
+	var props_source := TileSetAtlasSource.new()
+	props_source.texture = props_texture
+	props_source.texture_region_size = Vector2i(32, 32)
+	for atlas_coord in [MINE_PROP_BRAZIER_TILE, MINE_PROP_CRATE_TILE, MINE_PROP_TORCH_TILE]:
+		props_source.create_tile(atlas_coord)
+	tile_set.add_source(props_source, MINE_PROPS_SOURCE_ID)
+
+	return tile_set
+
+func _load_png_texture(resource_path: String) -> Texture2D:
+	var image := Image.load_from_file(resource_path)
+	if image == null or image.is_empty():
+		push_error("Failed to load mine texture image: %s" % resource_path)
+		return null
+
+	return ImageTexture.create_from_image(image)
 
 func _build_world_collision() -> void:
 	for child in world_collision.get_children():
@@ -211,9 +346,10 @@ func _on_town_exit_trigger_body_entered(body: Node) -> void:
 		return
 
 	player.velocity = Vector2.ZERO
-	town_exit_dialog.popup_centered()
+	town_exit_dialog.popup_centered_clamped(Vector2i(360, 140), 0.85)
 
 func _on_town_exit_confirmed() -> void:
+	_apply_mine_commit_stats_once()
 	_scene_manager().change_state("cutscene")
 
 func _on_town_exit_canceled() -> void:
@@ -244,6 +380,15 @@ func _reset_debug_stats_and_gold() -> void:
 
 	StatRegistry._recalculate_luck()
 	PlayerData.gold = 0
+	_player_data().set_flag(MINE_COMMIT_FLAG, false)
+
+func _apply_mine_commit_stats_once() -> void:
+	if _player_data().get_flag(MINE_COMMIT_FLAG, false):
+		return
+
+	StatRegistry._increment_stat("will.resolve", 1.0)
+	StatRegistry._increment_stat("holy.faith", 1.0)
+	_player_data().set_flag(MINE_COMMIT_FLAG, true)
 
 func _get_spike_hud():
 	var overlay_host: CanvasLayer = _scene_manager().get_overlay_host()
