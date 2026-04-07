@@ -190,8 +190,8 @@ Transitions: Map ↔ Battle, Map ↔ Cutscene, HUD overlays map (does not replac
 - [x] Place and wire town NPCs (intel NPC, moral choice NPC, bookstore)
 - [x] Build and verify town exit → cutscene → mine start (Stage 3 Day 3)
 - [x] Build mine dungeon map layout
-- [ ] Build real battle system — turn structure, player actions, Kobold enemy type
-- [ ] Implement class abilities for the starting class (one Pure, one Mixed)
+- [x] Build real battle system — turn structure, player actions, Kobold enemy type
+- [x] Implement class abilities for the starting class (one Pure, one Mixed)
 - [ ] Build moral choice scene — Half-Kobold Orc Shaman, recruit vs kill branching
 - [ ] Build mine exit → new area transition
 - [ ] Build class-specific cutscene at mine entrance
@@ -207,10 +207,11 @@ Transitions: Map ↔ Battle, Map ↔ Cutscene, HUD overlays map (does not replac
 - Stage 3 Day 3 is resolved and verified: town exit → cutscene → mine entry handoff is stable, with one-time transition stat ticks (`will.resolve`, `holy.faith`) guarded by `mine_entry_commit_applied`.
 - Town exit confirm applies one-time transition meaning ticks (`will.resolve`, `holy.faith`) guarded by `mine_entry_commit_applied`, visible in debug panel verification.
 - `Cutscene.gd` transition sequence is stable (movement beat → sentry line → fade out) with path tint baseline (Pure gold / Mixed teal) plus class/specialisation accent overlay, then returns to `map` at mine entry location.
-- Stage 4 Day 4 kickoff is now in progress: `Map.gd` mine layout has been expanded from entry stub to a larger runtime blockout (entrance chamber, branch rooms, antechamber, boss chamber, post-boss exit corridor), collision pass remains dynamic from blocking layers, and ordered encounter/boss/exit trigger scaffolding is wired via flags (`mine_encounter_progress`, `mine_boss_ready`, `mine_boss_resolved`, `mine_exit_unlocked`, `mine_cleared`).
-- Mine exit is now physically gated until boss placeholder resolve in the boss trigger, with `MineExitDialog` confirmation and a Stage 7-pending placeholder completion path.
-- Overlay/UI alignment pass moved forward with viewport-responsive layout updates across map hint + confirmation dialogs, `HUD.gd`, `DialogueBox.gd`, and `Cutscene.gd`.
-- Stage 4 close-gate remains active: manual cross-overlay verification at `480x270` internal / `1280x720` window and final conversion from runtime mine blockout to TileMap editor-authored layout are still required before Stage 4 sign-off.
+- Stage 4 is complete: `Map.gd` now runs the editor-authored mine layout with ordered encounter progression, boss-room gating, exit-lock flow, clearer cave blockers/gate clutter, and mine-exit prop removal after unlock via flags (`mine_encounter_progress`, `mine_boss_ready`, `mine_boss_resolved`, `mine_exit_unlocked`, `mine_cleared`).
+- Overlay sizing/alignment is now stable across map hint + confirmation dialogs, `HUD.gd`, `DialogueBox.gd`, and `Cutscene.gd`; the map hint and debug panel also suppress correctly while HUD/dialogue/prompts are active.
+- Stage 5 is complete: `Battle.gd` now delivers the full turn loop, class-specific abilities, mine battle background, loot/game-over resolution, and encounter wiring back into mine progression.
+- Requested Stage 5 art/layout follow-up is merged: Knight battle art uses `assets/art/player/universal-lpc-sprite_male_01_full.png`, Battlemage uses `assets/art/battle/LPC_starhat/sample.png`, Kobold uses `assets/art/battle/LPC imp/attack - vanilla.png`, the player presents facing right, the enemy presents facing left, and Spell/Item submenu panels open above the bottom action bar so they stay on-screen.
+- Current active focus is Stage 6: replace the boss-room placeholder encounter with the Half-Kobold Orc Shaman intro, recruit-or-fight choice, and resolved exit unlock flow.
 
 ### Production order after vertical slice
 1. Class selection / character creation screen

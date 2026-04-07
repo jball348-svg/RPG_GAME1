@@ -2,9 +2,10 @@ extends Node2D
 
 const REFERENCE_VIEWPORT_SIZE := Vector2(480.0, 270.0)
 
-const PLAYER_SPRITE_PATH := "res://assets/art/player/universal-lpc-sprite_male_01_full.png"
-const ENEMY_SPRITE_PATH := "res://assets/art/battle/goblinsword.png"
-const MINE_BACKGROUND_PATH := "res://assets/art/battle/monster2_combat_backgrounds/keep.png"
+const PLAYER_KNIGHT_SPRITE_PATH := "res://assets/art/player/universal-lpc-sprite_male_01_full.png"
+const PLAYER_BATTLEMAGE_SPRITE_PATH := "res://assets/art/battle/LPC_starhat/sample.png"
+const ENEMY_KOBOLD_SPRITE_PATH := "res://assets/art/battle/LPC imp/attack - vanilla.png"
+const MINE_BACKGROUND_PATH := "res://assets/art/battle/monster2_combat_backgrounds/volcano.png"
 
 const UI_PANEL_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/panel_brown.png"
 const UI_INSET_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/panelInset_brown.png"
@@ -26,8 +27,9 @@ const KOBOLD_RESISTANCE := 2
 const KOBOLD_DEFEND_BONUS := 2
 const HEALTH_POTION_HEAL := 20
 
-const PLAYER_REGION := Rect2i(64, 64, 64, 64)
-const ENEMY_REGION := Rect2i(64, 64, 64, 64)
+const KNIGHT_PLAYER_REGION := Rect2i(64, 64, 64, 64)
+const BATTLEMAGE_PLAYER_REGION := Rect2i(50, 45, 50, 45)
+const KOBOLD_ENEMY_REGION := Rect2i(64, 128, 64, 64)
 
 const PLAYER_IDLE_POSITION := Vector2(146.0, 154.0)
 const ENEMY_IDLE_POSITION := Vector2(338.0, 146.0)
@@ -81,6 +83,8 @@ var _player_base_position := Vector2.ZERO
 var _enemy_base_position := Vector2.ZERO
 var _player_base_scale := Vector2.ONE
 var _enemy_base_scale := Vector2.ONE
+var _player_scale_multiplier := 1.4
+var _enemy_scale_multiplier := 1.5
 var _log_lines: Array[String] = []
 var _player_turn_count := 0
 var _ability_cooldown_remaining := 0
@@ -155,13 +159,13 @@ func _build_scene() -> void:
 
 	_player_sprite = Sprite2D.new()
 	_player_sprite.centered = true
-	_player_sprite.texture = _load_cropped_texture(PLAYER_SPRITE_PATH, PLAYER_REGION, _make_fallback_texture(64, 64, Color(0.58, 0.53, 0.47)))
+	_player_sprite.texture = _make_fallback_texture(64, 64, Color(0.58, 0.53, 0.47))
 	_player_sprite.material = _make_flash_material()
 	add_child(_player_sprite)
 
 	_enemy_sprite = Sprite2D.new()
 	_enemy_sprite.centered = true
-	_enemy_sprite.texture = _load_cropped_texture(ENEMY_SPRITE_PATH, ENEMY_REGION, _make_fallback_texture(64, 64, Color(0.45, 0.15, 0.14)))
+	_enemy_sprite.texture = _make_fallback_texture(64, 64, Color(0.45, 0.15, 0.14))
 	_enemy_sprite.material = _make_flash_material()
 	add_child(_enemy_sprite)
 
@@ -385,6 +389,7 @@ func _configure_battle_state() -> void:
 		PlayerData.ensure_spike_defaults()
 		_player_class_id = PlayerData.resolve_vertical_slice_class_id()
 
+	_apply_battle_sprite_art()
 	PlayerData.ensure_vertical_slice_inventory()
 	if PlayerData.current_hp <= 0:
 		PlayerData.restore_hp_full()
@@ -402,11 +407,10 @@ func _layout_scene() -> void:
 	_battle_camera.position = viewport_size * 0.5
 	_player_base_position = _scaled_position(PLAYER_IDLE_POSITION)
 	_enemy_base_position = _scaled_position(ENEMY_IDLE_POSITION)
-	_player_base_scale = Vector2.ONE * minf(_scale_x(1.4), _scale_y(1.4))
-	_enemy_base_scale = Vector2.ONE * minf(_scale_x(1.5), _scale_y(1.5))
+	_player_base_scale = Vector2.ONE * minf(_scale_x(_player_scale_multiplier), _scale_y(_player_scale_multiplier))
+	_enemy_base_scale = Vector2.ONE * minf(_scale_x(_enemy_scale_multiplier), _scale_y(_enemy_scale_multiplier))
 	_player_sprite.scale = _player_base_scale
 	_enemy_sprite.scale = _enemy_base_scale
-	_enemy_sprite.flip_h = true
 
 	_position_hp_widget(_player_name_label.get_parent(), _scaled_position(PLAYER_HP_UI_POSITION))
 	_position_hp_widget(_enemy_name_label.get_parent(), _scaled_position(ENEMY_HP_UI_POSITION))
@@ -421,9 +425,7 @@ func _layout_scene() -> void:
 
 	_main_menu_panel.position = Vector2(_scale_x(28.0), _scale_y(222.0))
 	_main_menu_panel.size = Vector2(_scale_x(424.0), _scale_y(40.0))
-	_submenu_panel.position = _main_menu_panel.position
-	_submenu_panel.size = Vector2(_scale_x(240.0), _scale_y(68.0))
-	_submenu_panel.position.x = (viewport_size.x - _submenu_panel.size.x) * 0.5
+	_layout_submenu_panel(viewport_size)
 
 	_center_banner.position = Vector2(_scale_x(120.0), _scale_y(98.0))
 	_center_banner.size = Vector2(_scale_x(240.0), _scale_y(32.0))
@@ -449,6 +451,47 @@ func _layout_scene() -> void:
 		if child is Button:
 			(child as Button).custom_minimum_size = Vector2(_scale_x(180.0), _scale_y(20.0))
 			(child as Button).add_theme_font_size_override("font_size", int(_scale_font(8.0)))
+
+func _layout_submenu_panel(viewport_size: Vector2) -> void:
+	var button_count := maxi(_submenu_list.get_child_count(), 1)
+	var panel_width := _scale_x(240.0)
+	var button_height := _scale_y(20.0)
+	var vertical_padding := _scale_y(10.0)
+	var separation := _scale_y(6.0)
+	var content_height := (button_height * button_count) + (separation * maxi(0, button_count - 1))
+	var panel_height := (vertical_padding * 2.0) + content_height
+	_submenu_panel.size = Vector2(panel_width, panel_height)
+	_submenu_panel.position.x = (viewport_size.x - panel_width) * 0.5
+	var desired_y := _main_menu_panel.position.y - panel_height - _scale_y(6.0)
+	var min_top := _scale_y(8.0)
+	var max_top := maxf(min_top, viewport_size.y - panel_height - _scale_y(8.0))
+	_submenu_panel.position.y = clampf(desired_y, min_top, max_top)
+
+func _apply_battle_sprite_art() -> void:
+	if _player_class_id == PlayerData.CLASS_BATTLEMAGE:
+		_player_sprite.texture = _load_cropped_texture(
+			PLAYER_BATTLEMAGE_SPRITE_PATH,
+			BATTLEMAGE_PLAYER_REGION,
+			_make_fallback_texture(50, 45, Color(0.21, 0.31, 0.55))
+		)
+		_player_sprite.flip_h = false
+		_player_scale_multiplier = 1.95
+	else:
+		_player_sprite.texture = _load_cropped_texture(
+			PLAYER_KNIGHT_SPRITE_PATH,
+			KNIGHT_PLAYER_REGION,
+			_make_fallback_texture(64, 64, Color(0.58, 0.53, 0.47))
+		)
+		_player_sprite.flip_h = true
+		_player_scale_multiplier = 1.4
+
+	_enemy_sprite.texture = _load_cropped_texture(
+		ENEMY_KOBOLD_SPRITE_PATH,
+		KOBOLD_ENEMY_REGION,
+		_make_fallback_texture(64, 64, Color(0.45, 0.15, 0.14))
+	)
+	_enemy_sprite.flip_h = true
+	_enemy_scale_multiplier = 1.5
 
 func _position_hp_widget(container: Node, top_left: Vector2) -> void:
 	var widget := container as Control
@@ -548,6 +591,7 @@ func _show_submenu(entries: Array[Dictionary]) -> void:
 	back_button.pressed.connect(_show_main_menu)
 	_submenu_list.add_child(back_button)
 
+	_layout_submenu_panel(get_viewport_rect().size)
 	_main_menu_panel.visible = false
 	_submenu_panel.visible = true
 	call_deferred("_focus_first_submenu_button")

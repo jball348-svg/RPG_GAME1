@@ -142,34 +142,44 @@ Everything else is production.
 ---
 
 ## Stage 5 — Battle system
-**Status:** ⬜ Not started
+**Status:** ✅ Complete (Slice Day 5 resolved)
 
 **Goal:** Real turn-based battle. Kobold enemy type. Player class abilities.
 
 **This is the biggest single stage. Budget accordingly.**
 
+**Implemented battle pass:**
+- [x] Knight battle sprite uses `assets/art/player/universal-lpc-sprite_male_01_full.png`
+- [x] Battlemage battle sprite uses `assets/art/battle/LPC_starhat/sample.png`
+- [x] Kobold enemy sprite uses `assets/art/battle/LPC imp/attack - vanilla.png`
+- [x] Player presentation faces right and enemy presentation faces left in battle
+- [x] Spell/Item submenu auto-sizes and opens above the bottom battle menu so options stay on-screen
+
 **Tasks:**
-- [ ] Battle scene redesign: player party (left), enemies (right), action menu (bottom)
-- [ ] Turn order: player turn → enemy turn, repeat until resolved
-- [ ] Player action menu: Attack, Spell (if Magik class), Use Item, Flee
-- [ ] Kobold enemy: HP, attack damage, simple AI
-- [ ] One Pure class and one Mixed class with distinct working abilities
-- [ ] Damage: Physical.Strength + weapon modifier vs enemy defence
-- [ ] Spell damage: Magik.Spellcasting + spell power vs enemy resistance
-- [ ] Victory: loot roll → return to map at correct position
-- [ ] Defeat: game over screen
-- [ ] Stat increments on every action
-- [ ] Battle backgrounds: static image per environment
-- [ ] Wire encounter trigger zones from Stage 4
+- [x] Battle scene redesign: player party (left), enemies (right), action menu (bottom)
+- [x] Turn order: player turn → enemy turn, repeat until resolved
+- [x] Player action menu: Attack, Spell (if Magik class), Use Item, Flee
+- [x] Kobold enemy: HP, attack damage, simple AI
+- [x] One Pure class and one Mixed class with distinct working abilities
+- [x] Damage: Physical.Strength + weapon modifier vs enemy defence
+- [x] Spell damage: Magik.Spellcasting + spell power vs enemy resistance
+- [x] Victory: loot roll → return to map at correct position
+- [x] Defeat: game over screen
+- [x] Stat increments on every action
+- [x] Battle backgrounds: static image per environment
+- [x] Wire encounter trigger zones from Stage 4
 
 **Verification:**
-- [ ] Trigger encounter → battle launches
-- [ ] Attack, Cast Spell, Flee all work
-- [ ] Kobold attacks back
-- [ ] Victory → loot → back to mine map
-- [ ] Defeat → game over
-- [ ] Stats increment (debug panel confirms)
-- [ ] Pure and Mixed classes feel distinct
+- [x] Trigger encounter → battle launches
+- [x] Attack, Cast Spell, Flee all work
+- [x] Kobold attacks back
+- [x] Victory → loot → back to mine map
+- [x] Defeat → game over
+- [x] Stats increment (debug panel confirms)
+- [x] Pure and Mixed classes feel distinct
+- [x] Requested LPC knight, battlemage, and kobold battle art are wired into `Battle.gd`
+- [x] Spell and Item submenu panels remain fully visible at the slice battle viewport
+- [x] Headless smoke run passes: `godot --headless --path . --quit-after 4`
 
 **Done state:** The mine has real, functional combat.
 
@@ -188,13 +198,39 @@ Everything else is production.
 - [ ] Mine exit unlocks after either branch
 - [ ] Pure/Mixed path affects Shaman's opening line
 
+**Implementation plan:**
+1. **Replace the Stage 6 placeholder handoff**
+   - Update `scenes/map/Map.gd` so `_on_mine_boss_trigger_body_entered()` stops routing straight into `BATTLE_KIND_BOSS_PLACEHOLDER` once Stage 6 work starts.
+   - Reuse the existing `SceneManager` payload flow and send the player into `cutscene` first with a sequence identifier such as `shaman_intro` plus return-region/location/suppressed-trigger data.
+   - Keep the current boss-trigger suppression behavior so re-entry into the room does not immediately retrigger while the branch is unresolved.
+2. **Make `Cutscene.gd` payload-driven for multiple sequences**
+   - Refactor the current mine-entry cutscene logic behind a `cutscene_id` or similar payload key so the scene can support both `mine_entry` and `shaman_intro` without duplicating a second state scene.
+   - Add Shaman-specific actor staging, camera beats, and a path-reactive opening line that branches on `PlayerData.is_pure()` / `PlayerData.is_mixed()`.
+   - Add a simple two-choice UI at the end of the intro beat: `Recruit` and `Fight`.
+3. **Implement the recruit branch in map/cutscene state, not battle**
+   - On recruit, set `shaman_recruited = true`, `mine_boss_resolved = true`, and `mine_exit_unlocked = true` via `PlayerData.set_flag()`.
+   - Apply the intended Mixed reward and Pure consequence immediately after the choice: stat bumps for Mixed-facing resolution, plus the ghost/reputation decrement flagging needed for later world reactivity.
+   - Return the player to `map` at a safe post-boss-room position with a status payload so `Map.gd` can refresh the mine hint, gate visuals, and suppressed-trigger state.
+4. **Replace the boss placeholder in `Battle.gd` with a real boss encounter kind**
+   - Add a new encounter kind for the kill path instead of overloading `BATTLE_KIND_STANDARD`.
+   - Give the Shaman battle its own HP, damage, resistance/defence tuning, intro log line, and victory resolution path.
+   - On victory, set `shaman_killed = true`, `world_remembers_shaman_killed = true`, `mine_boss_resolved = true`, and `mine_exit_unlocked = true`, then return to map with loot/status text.
+5. **Resolve aftermath state in `Map.gd`**
+   - Keep `_restore_mine_progress_state()` as the authoritative place that opens the exit gate after `mine_boss_resolved` is set.
+   - Update mine objective text so the sequence becomes: clear encounters → boss room → exit trigger.
+   - Ensure the boss room no longer retriggers after either recruit or kill and that exit prompt behavior stays unchanged once unlocked.
+6. **Verification order for the Stage 6 pass**
+   - Test the intro line as Pure and Mixed using the existing debug path toggles.
+   - Run the recruit path end to end: boss trigger → intro → recruit → map return → exit unlock.
+   - Run the kill path end to end: boss trigger → intro → boss battle → victory → map return → exit unlock.
+   - Re-enter the boss room after resolution and confirm no repeat trigger.
+   - Finish with `godot --headless --path . --quit-after 4` plus one manual mine-to-exit playthrough.
+
 **Verification:**
 - [ ] Recruit path works end to end
 - [ ] Kill path works end to end
 - [ ] Pure and Mixed players get different opening dialogue
 - [ ] Ghost flags set correctly
-
-**Done state:** The moral choice works and has real mechanical consequences.
 
 ---
 
@@ -274,8 +310,8 @@ Everything else is production.
 | 1 | Real town map (editor-designed) | ✅ Complete |
 | 2 | NPC dialogue system | ✅ Complete (Slice Day 2) |
 | 3 | Town exit + mine entrance cutscene | ✅ Complete (Slice Day 3 resolved) |
-| 4 | Mine dungeon map | � In progress (Slice Day 4 kickoff) |
-| 5 | Battle system | ⬜ |
+| 4 | Mine dungeon map | ✅ Complete (Slice Day 4 resolved) |
+| 5 | Battle system | ✅ Complete (Slice Day 5 resolved) |
 | 6 | Boss room + moral choice | ⬜ |
 | 7 | Mine exit + area transition | ⬜ |
 | 8 | Save system | ⬜ |
