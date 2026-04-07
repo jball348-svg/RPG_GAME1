@@ -175,21 +175,21 @@ Everything else is production.
    - Any sound/music (Stage 10 scope)
 
 **Verification:**
-- [ ] Enter boss trigger zone → Shaman intro dialogue fires via `Cutscene.gd` with `cutscene_id = "shaman_intro"`
-- [ ] Pure player gets Pure-specific opening line
-- [ ] Mixed player gets Mixed-specific opening line
+- [x] Enter boss trigger zone → Shaman intro dialogue fires via `Cutscene.gd` with `cutscene_id = "shaman_intro"`
+- [x] Pure player gets Pure-specific opening line
+- [x] Mixed player gets Mixed-specific opening line
 - [ ] `shaman_warning_given` flag set → Shaman references the warning
-- [ ] "Speak with the Shaman" → recruit flags set, stat boosts applied (`social.charm`, `magik.attunement`), mine exit unlocks, returns to map
-- [ ] "Fight" → boss battle launches with Shaman HP 60 and correct stats
-- [ ] Shaman Hex debuff reduces player attack next turn (log confirms, debug panel confirms stat recalc)
-- [ ] Shaman Heal fires (once only), recovers HP, removed from rotation after use
+- [x] "Speak with the Shaman" → recruit flags set, stat boosts applied (`social.charm`, `magik.attunement`), mine exit unlocks, returns to map
+- [x] "Fight" → boss battle launches with Shaman HP 60 and correct stats
+- [x] Shaman Hex debuff reduces player attack next turn (log confirms, debug panel confirms stat recalc)
+- [x] Shaman Heal fires (once only), recovers HP, removed from rotation after use
 - [ ] Boss victory → kill flags + ghost flags set, 25 gold + `shaman_talisman` awarded, mine exit unlocks
-- [ ] Ghost flags correct for all 4 permutations: Pure+recruit, Pure+kill, Mixed+recruit, Mixed+kill
-- [ ] `mine_boss_resolved` and `mine_exit_unlocked` set after either branch
-- [ ] Boss trigger does not re-fire on map return (suppressed_trigger wired correctly)
-- [ ] Stats increment during boss fight (debug panel confirms)
-- [ ] Clock continues running throughout
-- [ ] Headless smoke run passes: `godot --headless --path . --quit-after 4`
+- [x] Ghost flags correct for all 4 permutations: Pure+recruit, Pure+kill, Mixed+recruit, Mixed+kill
+- [x] `mine_boss_resolved` and `mine_exit_unlocked` set after either branch
+- [x] Boss trigger does not re-fire on map return (suppressed_trigger wired correctly)
+- [x] Stats increment during boss fight (debug panel confirms)
+- [x] Clock continues running throughout
+- [x] Headless smoke run passes: `godot --headless --path . --quit-after 4`
 
 **Done state:** The moral choice works and has real mechanical and flag consequences. The allegory is embodied in a single scene.
 
@@ -216,10 +216,10 @@ Everything else is production.
 
 ---
 
-## Stage 8 — Save system
+## Stage 8 — Save system + Broader functionality shoppinglist
 **Status:** ⬜ Not started
 
-**Goal:** Full save and load. Every state that matters is persisted.
+**Goal:** Full save and load. Every state that matters is persisted. Implement POC/MVP features that will be present in game, such as a character/boss picture for dialogue, class specific map sprites, absolute MVP (spike style) implementation of 'Alignment' with a matrix such as is in d&d and baldurs gate (like this assets/art/Mood Board/bg3-alignment-chart-v0-lb31w8gqv26c1.webp), absolute MVP (spike style) implementation of player HUD - 'player' card with stats, 'equipment' card with helm, armour, weapon, boots, spellbook (for mage) / knight abilities (for knight), quest tab, map tab. Some of this (like map tab) can be placeholder. Absolute MVP (spike style) implementation of equipment loading on/off of player sprite
 
 **Tasks:**
 - [ ] `SaveManager` autoload: `save_game()`, `load_game()`, `has_save()`

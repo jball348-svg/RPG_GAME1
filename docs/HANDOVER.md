@@ -192,7 +192,7 @@ Transitions: Map ↔ Battle, Map ↔ Cutscene, HUD overlays map (does not replac
 - [x] Build mine dungeon map layout
 - [x] Build real battle system — turn structure, player actions, Kobold enemy type
 - [x] Implement class abilities for the starting class (one Pure, one Mixed)
-- [ ] Build moral choice scene — Half-Kobold Orc Shaman, recruit vs kill branching
+- [x] Build moral choice scene — Half-Kobold Orc Shaman, recruit vs kill branching
 - [ ] Build mine exit → new area transition
 - [ ] Build class-specific cutscene at mine entrance
 - [ ] Implement save/load (full stat + quest state + clock + location)
