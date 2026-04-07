@@ -5,7 +5,7 @@ You need 6 pieces for the vertical slice. All prompts are written for Suno or Ud
 Use: Looping ambient track for the starting town. Should feel lived-in, slightly weary, not triumphant.
 Suno/Udio prompt:
 
-Medieval fantasy town theme, melancholic folk, acoustic instruments only, lute and soft woodwind lead, slow tempo, 80 BPM, minor key with occasional lift, world-weary but not hopeless, loopable, no percussion except subtle hand drum, no choir, no epic swell, sparse and intimate, reminiscent of early Baldur's Gate ambient music
+Chiptune, 8bit, video game, Medieval fantasy town theme, melancholic folk, acoustic instruments only, lute and soft woodwind lead, slow tempo, 80 BPM, minor key with occasional lift, world-weary but not hopeless, loopable, no percussion except subtle hand drum, no choir, no epic swell, sparse and intimate, reminiscent of early Baldur's Gate ambient music
 
 Gemini/MusicFX prompt:
 
@@ -16,7 +16,7 @@ Slow melancholic medieval folk, lute and flute, minor key, ambient RPG town, no 
 Use: Looping tension piece for the mine map. Not full action — unease and dread, not combat.
 Suno/Udio prompt:
 
-Dark dungeon ambient music, low droning strings, sparse plucked notes, tension without action, no melody just atmosphere, distant echoing percussive hits like dripping water or creaking wood, minor key, very slow tempo, 50–60 BPM, medieval dark fantasy, cave atmosphere, loopable, reminiscent of Diablo 1 dungeon music, no choir, no brass
+Chiptune, 8bit, video game, Dark dungeon ambient music, low droning strings, sparse plucked notes, tension without action, no melody just atmosphere, distant echoing percussive hits like dripping water or creaking wood, minor key, very slow tempo, 50–60 BPM, medieval dark fantasy, cave atmosphere, loopable, reminiscent of Diablo 1 dungeon music, no choir, no brass
 
 Gemini/MusicFX prompt:
 
@@ -27,7 +27,7 @@ Dark dungeon atmosphere, low drone, sparse strings, tension, no melody, cave amb
 Use: Looping combat track for all regular Kobold encounters. Energetic but not heroic — gritty, urgent.
 Suno/Udio prompt:
 
-Turn-based RPG battle music, medieval fantasy combat, driving rhythm, urgent but not heroic, minor key, strings and drums lead, 120–130 BPM, short loop 60–90 seconds, gritty and grounded, no electric guitar, no choir, no triumphant brass, reminiscent of classic JRPG battle themes but grittier and more European medieval, tense and focused
+Chiptune, 8bit, video game, Turn-based RPG battle music, medieval fantasy combat, driving rhythm, urgent but not heroic, minor key, strings and drums lead, 120–130 BPM, short loop 60–90 seconds, gritty and grounded, no electric guitar, no choir, no triumphant brass, reminiscent of classic JRPG battle themes but grittier and more European medieval, tense and focused
 
 Gemini/MusicFX prompt:
 
@@ -38,7 +38,7 @@ Medieval fantasy battle, driving drums and strings, minor key, urgent, 120 BPM, 
 Use: Boss battle against the Half-Kobold Orc Shaman. Needs weight and moral ambiguity — this is not a villain theme, it's a confrontation theme.
 Suno/Udio prompt:
 
-RPG boss battle theme, morally ambiguous, heavy and deliberate, not triumphant or villainous, low brass and taiko drums, slow tempo 90–100 BPM, world music influence with African or tribal percussion, building intensity, minor key with unusual harmonic intervals to suggest wrongness or tragedy, no choir, no electric instruments, tension and sadness in equal measure, this is a fight that should not have to happen
+Chiptune, 8bit, video game, RPG boss battle theme, morally ambiguous, heavy and deliberate, not triumphant or villainous, low brass and taiko drums, slow tempo 90–100 BPM, world music influence with African or tribal percussion, building intensity, minor key with unusual harmonic intervals to suggest wrongness or tragedy, no choir, no electric instruments, tension and sadness in equal measure, this is a fight that should not have to happen
 
 Gemini/MusicFX prompt:
 
@@ -49,7 +49,7 @@ RPG boss battle, tribal drums, low brass, slow and heavy, minor key, tragic and 
 Use: A short piece (15–30 seconds, does not need to loop) that plays when the recruit/fight choice panel appears. It should stop the player in their tracks.
 Suno/Udio prompt:
 
-Short cinematic sting for a moral choice moment, solo piano, 15–20 seconds, single held chord that resolves ambiguously, neither hopeful nor despairing, just weight and stillness, no percussion, no strings, no build, just a single piano statement, like the game is waiting for you to decide
+Chiptune, 8bit, video game, Short cinematic sting for a moral choice moment, solo piano, 15–20 seconds, single held chord that resolves ambiguously, neither hopeful nor despairing, just weight and stillness, no percussion, no strings, no build, just a single piano statement, like the game is waiting for you to decide
 
 Gemini/MusicFX prompt:
 
@@ -60,7 +60,7 @@ Solo piano, single chord, 15 seconds, ambiguous, still, no resolution, cinematic
 Use: Plays on the exit cutscene when the core loop completes (Stage 7). Also seeds the main theme you'll develop for production. Should feel earned, not euphoric.
 Suno/Udio prompt:
 
-Medieval fantasy RPG main theme, bittersweet and earned, orchestral, strings lead with lute countermelody, starts quiet and builds to a restrained swell, minor key that shifts to major at the peak but without full resolution, 90 BPM, cinematic, no electric instruments, no choir until the very final bar if at all, reminiscent of a journey beginning rather than ending, like leaving something behind to face something harder
+Chiptune, 8bit, video game, Medieval fantasy RPG main theme, bittersweet and earned, orchestral, strings lead with lute countermelody, starts quiet and builds to a restrained swell, minor key that shifts to major at the peak but without full resolution, 90 BPM, cinematic, no electric instruments, no choir until the very final bar if at all, reminiscent of a journey beginning rather than ending, like leaving something behind to face something harder
 
 Gemini/MusicFX prompt:
 

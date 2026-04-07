@@ -208,6 +208,10 @@ Everything else is production.
 - Use LPC spritesheet assets already in the project — crop a top-down walking frame.
 - Pure/Mixed path tint accent (gold/teal) should remain on top.
 
+### NPC sprites
+- NPCs currently appears as a generic coloured square on the map.
+- Replace with a random 32×32 sprite from LPC spritesheet assets already in project
+
 ### Alignment system — spike
 - Implement a minimal D&D-style alignment matrix (Law–Chaos axis, Good–Evil axis = 9-cell grid).
 - Reference: `assets/art/Mood Board/bg3-alignment-chart-v0-lb31w8gqv26c1.webp`
