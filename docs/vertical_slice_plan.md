@@ -29,7 +29,7 @@ Everything else is production.
 - Viewport set to 480×270 internal / 1280×720 window, stretch mode `viewport`, aspect `keep`
 - Player placeholder upgraded to gold 32×32 square sprite
 
-**Known issues (deferred to Stage 9 polish):**
+**Known issues (deferred to Stage 10 polish):**
 - Some tree tiles do not block — collision layer assignment incomplete on a subset of props
 
 ---
@@ -54,15 +54,7 @@ Everything else is production.
   - **Bookstore NPC**: unlock node if `intelligence.understanding >= 10`, locked dialogue below threshold, repeat acknowledgement after unlock
 - [x] Place and wire the three NPC nodes in `Map.tscn`
 
-**Verification:**
-- [x] Press `E` near intel NPC with low Social/gold — gets basic info only
-- [x] Press `E` near intel NPC with high Social/gold — gets full mine detail
-- [x] Press `E` near moral choice NPC — warning fires, flag `shaman_warning_given` set, repeat fallback line appears on revisit
-- [x] Press `E` near bookstore NPC with low Intelligence — locked message
-- [x] Press `E` near bookstore NPC with high Intelligence — unlock dialogue, then repeat acknowledgement on revisit
-- [x] Dialogue box renders correctly in the bottom screen band with speaker name, portrait placeholder, text, and advance prompt
-- [x] Clock keeps running during dialogue
-- [x] Stats relevant to gates visible in debug panel for testing (including debug bump controls)
+**Verification:** All checks passed.
 
 **Done state:** Three wired, conditionally branching NPCs are in the town.
 
@@ -73,33 +65,7 @@ Everything else is production.
 
 **Goal:** Leaving the town triggers a point-of-no-return prompt, plays a lightweight but clear transition cutscene, and lands the player in the mine start map.
 
-**Already complete:**
-- [x] North exit `Area2D` + confirmation prompt wired in town map
-- [x] Exit trigger arm timing and top-half guard prevent popup on scene load
-
-**Day 3 implementation plan (do not over-art):**
-- [x] **Build the mine start map stub (minimum viable):**
-  - Uses existing tileset assets in `assets/art/tilesets/basic caves and dungeons 32x32 standard - v1.0` (`tiles/tiles-all-32x32.png` + `assets/assets-all.png`)
-  - Small mine entrance map variant built in `Map.gd`: entry chamber + short corridor + `MineSpawn` marker handoff
-  - Full dungeon layout and encounter spacing remain Stage 4 scope
-- [x] **Rework cutscene into a transition sequence (placeholder quality is fine):**
-  - Keeps simple actor block visuals
-  - Sequence now: confirm exit → player movement beat → sentry/context line → fade transition out
-- [x] **Add low-cost personalization in cutscene visuals:**
-  - Path tint baseline: Pure = muted gold, Mixed = muted teal
-  - Class accent tint overlay from selected class/specialisation
-- [x] **Wire state handoff into mine map begin:**
-  - On cutscene end, `PlayerData.current_region/current_location` are set to mine entry
-  - Returns to `map` state and spawns at mine entrance marker
-- [x] **Keep stat meaning on transition:**
-  - One-time increment applied on confirm (`will.resolve`, `holy.faith`) guarded by `mine_entry_commit_applied` flag
-
-**Day 3 verification checklist:**
-- [x] Walk to north exit → confirmation popup appears
-- [x] Cancel → player remains in town with no state break
-- [x] Confirm → cutscene plays with path/class-reactive player tint
-- [x] Cutscene completes → mine map loads at entrance spawn
-- [x] Debug panel shows `will.resolve` and `holy.faith` increments
+**Verification:** All checks passed.
 
 **Done state:** Town exit → cutscene → mine start is fully playable and stable, with clear path/class flavor and no blocked progression.
 
@@ -110,32 +76,7 @@ Everything else is production.
 
 **Goal:** A dungeon map for the mine. Navigable, atmospheric, with Kobold encounter trigger zones.
 
-**Day 4 kickoff implemented:**
-- [x] Replace mine-entry stub with a larger runtime blockout in `Map.gd` (entrance chamber, west/east branches, antechamber, boss chamber, post-boss exit corridor)
-- [x] Collision pass is active on new mine geometry via existing blocking-layer world-collision build
-- [x] Ordered encounter trigger scaffolding added (4 zones) with progression flags (`mine_encounter_progress`, `mine_boss_ready`)
-- [x] Boss trigger placeholder + mine exit gate unlock flow added (`mine_boss_resolved`, `mine_exit_unlocked`, `mine_cleared`)
-- [x] Responsive mine objective/status hint + viewport-aware confirmation dialog sizing added for map overlays
-- [x] Cross-overlay stability pass started in map/HUD/dialogue/cutscene (remaining manual verification tracked below)
-
-**Tasks:**
-- [x] Dungeon/cave tileset sourced and available at `assets/art/tilesets/basic caves and dungeons 32x32 standard - v1.0`
-- [x] Move runtime mine blockout into a TileMap editor-authored map (final Stage 4 map-delivery requirement)
-- [x] Collision on all walls and impassable tiles (runtime blockout pass)
-- [x] Place Kobold encounter trigger zones (3–5 encounters before the boss)
-- [x] Place boss room trigger zone (separate from regular encounters)
-- [x] Place mine exit trigger zone (only accessible after boss room resolved)
-- [x] Atmospheric details: torch placement, dead ends, visual sense of depth
-- [x] Persistent overlay sizing/alignment pass completed and merged before Stage 4 sign-off
-
-**Verification:**
-- [x] Walk through mine blockout — collision works, no shortcuts to boss room
-- [x] Mine reads as a mine: dark, stone, atmospheric
-- [x] Encounter zones are placed and progression-gated in order
-- [x] Boss room trigger and post-boss exit-gate unlock flow are wired
-- [x] Exit remains blocked until boss room placeholder resolve flag is set
-- [x] Overlay sizing/alignment is stable in map + cutscene + HUD + dialogue + confirmation popup at `480x270` internal / `1280x720` window
-- [x] Headless smoke run passes: `godot --headless --path . --quit-after 4`
+**Verification:** All checks passed.
 
 **Done state:** The mine exists as a real designed level, and overlay sizing/alignment issues are resolved for Day 4 sign-off.
 
@@ -146,91 +87,111 @@ Everything else is production.
 
 **Goal:** Real turn-based battle. Kobold enemy type. Player class abilities.
 
-**This is the biggest single stage. Budget accordingly.**
+**What was built:**
+- Full `Battle.gd` turn-based system (~42KB): player turn → enemy turn alternation
+- Player actions: Attack, Spell (Battlemage only), Item (Health Potion), Flee, class Ability
+- Fighter class: +2 strength passive, Shield Bash ability (damage + Stagger, 4-turn cooldown)
+- Battlemage class: Arcane Strike (physical + Magik dual damage, 3-turn cooldown), reduced Flamebolt power
+- Kobold enemy: HP 30, attack 6, defence 3, resistance 2, 80/20 attack/defend AI, Staggered state support
+- HitFlash.gdshader: colour flash on hit; screen shake via Camera2D offset tween on heavy hits
+- Sprite bob idle animation via `_process`
+- Real art assets wired: LPC knight, LPC battlemage, LPC imp, volcano background, Kenney UI
+- HP bars (gradient fill, numeric readout), battle log (4-line rolling), turn indicator
+- Victory, defeat, and boss-placeholder sequences all functional
+- Responsive layout scaling from 480×270 reference
+- `suppressed_trigger_type` + `suppressed_trigger_index` passed back to map to prevent re-trigger
 
-**Implemented battle pass:**
-- [x] Knight battle sprite uses `assets/art/player/universal-lpc-sprite_male_01_full.png`
-- [x] Battlemage battle sprite uses `assets/art/battle/LPC_starhat/sample.png`
-- [x] Kobold enemy sprite uses `assets/art/battle/LPC imp/attack - vanilla.png`
-- [x] Player presentation faces right and enemy presentation faces left in battle
-- [x] Spell/Item submenu auto-sizes and opens above the bottom battle menu so options stay on-screen
+**Verification:** All checks passed.
 
-**Tasks:**
-- [x] Battle scene redesign: player party (left), enemies (right), action menu (bottom)
-- [x] Turn order: player turn → enemy turn, repeat until resolved
-- [x] Player action menu: Attack, Spell (if Magik class), Use Item, Flee
-- [x] Kobold enemy: HP, attack damage, simple AI
-- [x] One Pure class and one Mixed class with distinct working abilities
-- [x] Damage: Physical.Strength + weapon modifier vs enemy defence
-- [x] Spell damage: Magik.Spellcasting + spell power vs enemy resistance
-- [x] Victory: loot roll → return to map at correct position
-- [x] Defeat: game over screen
-- [x] Stat increments on every action
-- [x] Battle backgrounds: static image per environment
-- [x] Wire encounter trigger zones from Stage 4
-
-**Verification:**
-- [x] Trigger encounter → battle launches
-- [x] Attack, Cast Spell, Flee all work
-- [x] Kobold attacks back
-- [x] Victory → loot → back to mine map
-- [x] Defeat → game over
-- [x] Stats increment (debug panel confirms)
-- [x] Pure and Mixed classes feel distinct
-- [x] Requested LPC knight, battlemage, and kobold battle art are wired into `Battle.gd`
-- [x] Spell and Item submenu panels remain fully visible at the slice battle viewport
-- [x] Headless smoke run passes: `godot --headless --path . --quit-after 4`
-
-**Done state:** The mine has real, functional combat.
+**Done state:** The mine has real, functional, class-differentiated combat.
 
 ---
 
 ## Stage 6 — Boss room and moral choice
 **Status:** ⬜ Not started
 
-**Goal:** The Half-Kobold Orc Shaman encounter. The moral choice. Branching outcomes.
+**Goal:** The Half-Kobold Orc Shaman encounter. The moral choice. Branching outcomes. This is the allegory made mechanical — the central premise of the game embodied in a single scene.
 
-**Tasks:**
-- [ ] Boss room trigger → cutscene: Shaman emerges, addresses player
-- [ ] Dialogue presents choice: recruit or fight
-- [ ] Recruit branch: `shaman_recruited = true`, Mixed stat boosts, companion follows, Pure ghost rep decrements
-- [ ] Fight branch: boss battle, `shaman_killed = true`, loot, `world_remembers_shaman_killed = true` ghost flag
-- [ ] Mine exit unlocks after either branch
-- [ ] Pure/Mixed path affects Shaman's opening line
+**Design notes:**
+- The Shaman is a Half-Kobold Orc — mixed-race, liminal, belonging to neither Pure nor Mixed faction fully. He is the living embodiment of the game's allegory.
+- Pure players face the Shaman as a symbol of what they fear. Mixed players face him as a mirror.
+- The recruit/kill choice has no "correct" answer. Both paths have costs and rewards. The ghost flags ensure the world remembers.
+- The moral weight must come through in the Shaman's dialogue. Treat the writing carefully — it is load-bearing.
+
+**Flags to add to `PlayerData.gd`:**
+- `shaman_recruited` (bool flag) — set on recruit path
+- `shaman_killed` (bool flag) — set on kill path
+- Ghost flags: `world_remembers_shaman_killed`, `world_remembers_shaman_spared`, `pure_rep_shaman_mercy`, `mixed_betrayed_own`
 
 **Implementation plan:**
-1. **Replace the Stage 6 placeholder handoff**
-   - Update `scenes/map/Map.gd` so `_on_mine_boss_trigger_body_entered()` stops routing straight into `BATTLE_KIND_BOSS_PLACEHOLDER` once Stage 6 work starts.
-   - Reuse the existing `SceneManager` payload flow and send the player into `cutscene` first with a sequence identifier such as `shaman_intro` plus return-region/location/suppressed-trigger data.
-   - Keep the current boss-trigger suppression behavior so re-entry into the room does not immediately retrigger while the branch is unresolved.
+1. **Replace the Stage 6 placeholder handoff in `Map.gd`**
+   - `_on_mine_boss_trigger_body_entered()` currently routes to `BATTLE_KIND_BOSS_PLACEHOLDER`.
+   - Replace this with a `cutscene` state payload using `cutscene_id = "shaman_intro"` plus return-region/location/suppressed-trigger data.
+   - Keep boss-trigger suppression so re-entry into the room does not retrigger while the branch is unresolved.
+
 2. **Make `Cutscene.gd` payload-driven for multiple sequences**
-   - Refactor the current mine-entry cutscene logic behind a `cutscene_id` or similar payload key so the scene can support both `mine_entry` and `shaman_intro` without duplicating a second state scene.
-   - Add Shaman-specific actor staging, camera beats, and a path-reactive opening line that branches on `PlayerData.is_pure()` / `PlayerData.is_mixed()`.
-   - Add a simple two-choice UI at the end of the intro beat: `Recruit` and `Fight`.
-3. **Implement the recruit branch in map/cutscene state, not battle**
-   - On recruit, set `shaman_recruited = true`, `mine_boss_resolved = true`, and `mine_exit_unlocked = true` via `PlayerData.set_flag()`.
-   - Apply the intended Mixed reward and Pure consequence immediately after the choice: stat bumps for Mixed-facing resolution, plus the ghost/reputation decrement flagging needed for later world reactivity.
-   - Return the player to `map` at a safe post-boss-room position with a status payload so `Map.gd` can refresh the mine hint, gate visuals, and suppressed-trigger state.
-4. **Replace the boss placeholder in `Battle.gd` with a real boss encounter kind**
-   - Add a new encounter kind for the kill path instead of overloading `BATTLE_KIND_STANDARD`.
-   - Give the Shaman battle its own HP, damage, resistance/defence tuning, intro log line, and victory resolution path.
-   - On victory, set `shaman_killed = true`, `world_remembers_shaman_killed = true`, `mine_boss_resolved = true`, and `mine_exit_unlocked = true`, then return to map with loot/status text.
-5. **Resolve aftermath state in `Map.gd`**
-   - Keep `_restore_mine_progress_state()` as the authoritative place that opens the exit gate after `mine_boss_resolved` is set.
-   - Update mine objective text so the sequence becomes: clear encounters → boss room → exit trigger.
-   - Ensure the boss room no longer retriggers after either recruit or kill and that exit prompt behavior stays unchanged once unlocked.
-6. **Verification order for the Stage 6 pass**
-   - Test the intro line as Pure and Mixed using the existing debug path toggles.
-   - Run the recruit path end to end: boss trigger → intro → recruit → map return → exit unlock.
-   - Run the kill path end to end: boss trigger → intro → boss battle → victory → map return → exit unlock.
-   - Re-enter the boss room after resolution and confirm no repeat trigger.
-   - Finish with `godot --headless --path . --quit-after 4` plus one manual mine-to-exit playthrough.
+   - Refactor current mine-entry cutscene logic behind a `cutscene_id` key so one scene handles both `mine_entry` and `shaman_intro`.
+   - Add Shaman actor staging (distinct coloured sprite — deep purple 64×80 if no art asset available), camera beats, and path-reactive opening line:
+     - Pure: *"Another pureblood who fears what they cannot name."*
+     - Mixed: *"You carry both bloods. I see the war in you."*
+     - Bonus (if `shaman_warning_given` flag is set): append *"Someone warned you. And still you came."*
+   - Add a two-button choice panel at the end of the intro beat: **"Speak with the Shaman"** (recruit) and **"Fight"** (fight).
+
+3. **Recruit branch (handled in cutscene/map state, not Battle.gd)**
+   - Set flags: `shaman_recruited = true`, `mine_boss_resolved = true`, `mine_exit_unlocked = true`
+   - Apply stat boosts: `social.charm +3`, `magik.attunement +2` via `StatRegistry`
+   - Set ghost flags:
+     - `world_remembers_shaman_spared = true` (always)
+     - If Pure path: also `pure_rep_shaman_mercy = true` (Pure player showed mercy — significant)
+   - Return player to map with status text: *"The Shaman lowers his staff. The chamber is quiet."*
+   - No combat. No loot. The cost to Pure is reputational (ghost flag), the gain to Mixed is mechanical (stat boost).
+
+4. **Fight branch — real boss encounter in `Battle.gd`**
+   - Add `BATTLE_KIND_BOSS_SHAMAN` encounter kind constant.
+   - Replace `_run_boss_placeholder_sequence()` with a proper boss flow that checks for this kind.
+   - **Shaman stats:** HP 60, attack 9, defence 4, resistance 4
+   - **Shaman AI (weighted rotation, resets each turn):**
+     - 60%: Attack (physical, flat 9 damage before player defence)
+     - 25%: Hex — debuff player, -2 to their next attack roll (apply a `player_hexed` flag, consume on next player attack)
+     - 15%: Heal — recover 10 HP (usable ONCE per battle; after use, remove from rotation permanently)
+   - **Boss intro log line:** *"The Shaman steps forward. He does not look afraid."*
+   - **On victory:**
+     - Set flags: `shaman_killed = true`, `mine_boss_resolved = true`, `mine_exit_unlocked = true`
+     - Set ghost flags: `world_remembers_shaman_killed = true`
+     - If Mixed path: also `mixed_betrayed_own = true` (Mixed player who killed a half-breed — weight this)
+     - Loot: 25 gold + add item `shaman_talisman` to inventory (display in loot panel as *"Shaman's Talisman"*)
+     - Return to map with status text: *"The Shaman falls. The mine is silent."*
+   - **Hex mechanic in `Battle.gd`**: add `_player_hexed: bool` var, set on Hex turn, consume (-2 to attack) on next player physical attack, log it.
+
+5. **Resolve aftermath in `Map.gd`**
+   - `_restore_mine_progress_state()` already opens the exit gate when `mine_boss_resolved` is set — no change needed there.
+   - Update mine objective text sequence: clear encounters → boss room unlocked → exit trigger.
+   - Confirm boss room trigger does not re-fire after either branch resolves.
+
+6. **What NOT to build in this stage:**
+   - Companion follow mechanic (recruit = flag only for VS; companion system is post-VS production)
+   - Shaman appearing on the map or in the exit cutscene (Stage 7 scope)
+   - Multiple fight phases for the boss
+   - Any sound/music (Stage 10 scope)
 
 **Verification:**
-- [ ] Recruit path works end to end
-- [ ] Kill path works end to end
-- [ ] Pure and Mixed players get different opening dialogue
-- [ ] Ghost flags set correctly
+- [ ] Enter boss trigger zone → Shaman intro dialogue fires via `Cutscene.gd` with `cutscene_id = "shaman_intro"`
+- [ ] Pure player gets Pure-specific opening line
+- [ ] Mixed player gets Mixed-specific opening line
+- [ ] `shaman_warning_given` flag set → Shaman references the warning
+- [ ] "Speak with the Shaman" → recruit flags set, stat boosts applied (`social.charm`, `magik.attunement`), mine exit unlocks, returns to map
+- [ ] "Fight" → boss battle launches with Shaman HP 60 and correct stats
+- [ ] Shaman Hex debuff reduces player attack next turn (log confirms, debug panel confirms stat recalc)
+- [ ] Shaman Heal fires (once only), recovers HP, removed from rotation after use
+- [ ] Boss victory → kill flags + ghost flags set, 25 gold + `shaman_talisman` awarded, mine exit unlocks
+- [ ] Ghost flags correct for all 4 permutations: Pure+recruit, Pure+kill, Mixed+recruit, Mixed+kill
+- [ ] `mine_boss_resolved` and `mine_exit_unlocked` set after either branch
+- [ ] Boss trigger does not re-fire on map return (suppressed_trigger wired correctly)
+- [ ] Stats increment during boss fight (debug panel confirms)
+- [ ] Clock continues running throughout
+- [ ] Headless smoke run passes: `godot --headless --path . --quit-after 4`
+
+**Done state:** The moral choice works and has real mechanical and flag consequences. The allegory is embodied in a single scene.
 
 ---
 
@@ -243,7 +204,7 @@ Everything else is production.
 - [ ] Mine exit trigger → cutscene: player emerges into new region
 - [ ] New region map stub: road, distant mountains, signpost
 - [ ] Quest flags: `mine_cleared = true`, `main_quest_path_open = true`
-- [ ] Shaman companion appears in exit cutscene if recruited
+- [ ] Shaman companion appears in exit cutscene if `shaman_recruited` flag is set
 
 **Verification:**
 - [ ] Exit → cutscene → new area
@@ -262,7 +223,7 @@ Everything else is production.
 
 **Tasks:**
 - [ ] `SaveManager` autoload: `save_game()`, `load_game()`, `has_save()`
-- [ ] Saves: full StatRegistry.stats, PlayerData, GameClock time, location, quest flags
+- [ ] Saves: full StatRegistry.stats, PlayerData (including all flags + ghost flags), GameClock time, location, quest flags
 - [ ] Save file: `user://save_game.json`
 - [ ] Auto-save triggers: map entry, dialogue complete, battle victory, moral choice resolved
 - [ ] On launch: load if save exists, else boot to new game defaults
@@ -271,12 +232,40 @@ Everything else is production.
 - [ ] Play 5 mins, quit, relaunch — all state restored
 - [ ] Clock resumes from saved time
 - [ ] Ghost flags persist
+- [ ] Shaman branch outcome persists correctly across save/load
 
 **Done state:** Progress is never lost.
 
 ---
 
-## Stage 9 — Polish and playtester pass
+## Stage 9 — Final feature checklist (developer sign-off)
+**Status:** ⬜ Not started
+
+**Goal:** Before polish begins, John plays through the complete loop and confirms every feature is working and directionally correct. No code changes unless something is broken or fundamentally wrong. This is a personal review, not an iteration sprint.
+
+**Checklist:**
+- [ ] Complete core loop start to finish without using debug controls: Town → Leave → Cutscene → Mine → 3 encounters → Boss choice → Exit
+- [ ] Fighter path feels distinct and satisfying in combat — Shield Bash has impact
+- [ ] Battlemage path feels distinct and satisfying — versatility is legible
+- [ ] Recruit branch feels like a real moral choice, not a soft option
+- [ ] Kill branch feels like a real moral choice, not the "easy" path
+- [ ] Pure opening line from the Shaman lands as intended allegory
+- [ ] Mixed opening line from the Shaman lands as intended allegory
+- [ ] Kobold encounters feel appropriately challenging — not trivial, not punishing
+- [ ] Boss fight is clearly harder than regular encounters
+- [ ] Stat increments are visible and feel meaningful (check debug panel at end of run)
+- [ ] All flags correct: `shaman_recruited`/`shaman_killed` and all ghost flags set as expected
+- [ ] Clock is running throughout — time passes in the mine
+- [ ] HUD overlay is readable and not obstructing gameplay
+- [ ] All transitions feel smooth enough for a playtester (town exit, mine entry, battle in/out, mine exit)
+- [ ] No progression blockers or softlocks found
+- [ ] Anything that feels wrong or missing is logged as a note for Stage 10 or production
+
+**Done state:** John is happy with the game as an unpolished experience. Stage 10 polish can begin.
+
+---
+
+## Stage 10 — Polish and playtester pass
 **Status:** ⬜ Not started
 
 **Goal:** Loop complete. Make it good enough to put in front of a real person.
@@ -286,7 +275,7 @@ Everything else is production.
 - [ ] Remove debug panel from release build
 - [ ] Audio: ambient town, ambient mine, battle music, victory sting
 - [ ] SFX: footstep, attack, spell cast, dialogue advance, menu sounds
-- [ ] Fade to black between major state transitions
+- [ ] Fade to black between all major state transitions
 - [ ] UI pass: dialogue box, HUD, battle menu — match art direction
 - [ ] Fix known Stage 1 issues: remaining tree collision
 - [ ] At least one NPC portrait
@@ -315,7 +304,8 @@ Everything else is production.
 | 6 | Boss room + moral choice | ⬜ |
 | 7 | Mine exit + area transition | ⬜ |
 | 8 | Save system | ⬜ |
-| 9 | Polish + playtester pass | ⬜ |
+| 9 | Final feature checklist (developer sign-off) | ⬜ |
+| 10 | Polish + playtester pass | ⬜ |
 
 ---
 
