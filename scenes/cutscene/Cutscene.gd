@@ -40,9 +40,10 @@ var _floor_band: ColorRect
 var _last_viewport_size := Vector2.ZERO
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_preset(Control.PRESET_TOP_LEFT)
 	PlayerData.current_location = "town_north_gate_cutscene"
 	PlayerData.current_region = "frontier_village"
+	_sync_root_to_viewport()
 
 	_build_ui()
 	_connect_signals()
@@ -181,6 +182,12 @@ func _connect_signals() -> void:
 	SignalBus.clock_ticked.connect(_on_clock_ticked)
 	SignalBus.flag_set.connect(_on_flag_changed)
 
+func _sync_root_to_viewport() -> void:
+	var viewport_size := get_viewport_rect().size
+	position = Vector2.ZERO
+	size = viewport_size
+	custom_minimum_size = viewport_size
+
 func _on_viewport_size_changed() -> void:
 	var new_size := get_viewport_rect().size
 	if _last_viewport_size != Vector2.ZERO:
@@ -192,6 +199,7 @@ func _on_viewport_size_changed() -> void:
 		_sentry_actor.position *= ratio
 
 	_last_viewport_size = new_size
+	_sync_root_to_viewport()
 	_layout_for_viewport()
 
 func _layout_for_viewport() -> void:

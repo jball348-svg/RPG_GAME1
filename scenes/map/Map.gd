@@ -75,7 +75,8 @@ const MINE_TOP_SHAFT_BLOCKER_CELLS: Array[Vector2i] = [
 ]
 
 const MINE_TERRAIN_SOURCE_ID := 0
-const MINE_PROPS_SOURCE_ID := 1
+const MINE_WALL_SOURCE_ID := 1
+const MINE_PROPS_SOURCE_ID := 2
 const MINE_ROCK_FILL_TILES: Array[Vector2i] = [
 	Vector2i(6, 0),
 	Vector2i(7, 0),
@@ -89,43 +90,35 @@ const MINE_FLOOR_TILES: Array[Vector2i] = [
 	Vector2i(2, 3),
 ]
 const MINE_WALL_FILL_TILES: Array[Vector2i] = [
-	Vector2i(1, 2),
-	Vector2i(2, 2),
-	Vector2i(3, 2),
-	Vector2i(4, 2),
-	Vector2i(1, 3),
-	Vector2i(2, 3),
-	Vector2i(3, 3),
-	Vector2i(4, 3),
+	Vector2i(0, 1),
+	Vector2i(1, 1),
+	Vector2i(2, 1),
+	Vector2i(3, 1),
 ]
 const MINE_WALL_TOP_TILES: Array[Vector2i] = [
+	Vector2i(0, 0),
 	Vector2i(1, 0),
 	Vector2i(2, 0),
 	Vector2i(3, 0),
-	Vector2i(4, 0),
 ]
 const MINE_WALL_BOTTOM_TILES: Array[Vector2i] = [
-	Vector2i(1, 5),
-	Vector2i(2, 5),
-	Vector2i(3, 5),
-	Vector2i(4, 5),
+	Vector2i(0, 1),
+	Vector2i(1, 1),
+	Vector2i(2, 1),
+	Vector2i(3, 1),
 ]
 const MINE_WALL_LEFT_TILES: Array[Vector2i] = [
+	Vector2i(0, 0),
 	Vector2i(0, 1),
-	Vector2i(0, 2),
-	Vector2i(0, 3),
-	Vector2i(0, 4),
 ]
 const MINE_WALL_RIGHT_TILES: Array[Vector2i] = [
-	Vector2i(5, 1),
-	Vector2i(5, 2),
-	Vector2i(5, 3),
-	Vector2i(5, 4),
+	Vector2i(3, 0),
+	Vector2i(3, 1),
 ]
 const MINE_WALL_TOP_LEFT_TILE := Vector2i(0, 0)
-const MINE_WALL_TOP_RIGHT_TILE := Vector2i(5, 0)
-const MINE_WALL_BOTTOM_LEFT_TILE := Vector2i(0, 5)
-const MINE_WALL_BOTTOM_RIGHT_TILE := Vector2i(5, 5)
+const MINE_WALL_TOP_RIGHT_TILE := Vector2i(3, 0)
+const MINE_WALL_BOTTOM_LEFT_TILE := Vector2i(0, 1)
+const MINE_WALL_BOTTOM_RIGHT_TILE := Vector2i(3, 1)
 const MINE_PROP_BRAZIER_TILE := Vector2i(0, 0)
 const MINE_PROP_SPIKE_PAIR_TILE := Vector2i(1, 0)
 const MINE_PROP_STALAGMITE_TILE := Vector2i(2, 1)
@@ -141,6 +134,7 @@ const MINE_PROP_TALL_STALAGMITE_TILE := Vector2i(0, 1)
 const MINE_PROP_TALL_STALAGMITE_SIZE := Vector2i(1, 2)
 
 const MINE_TERRAIN_TEXTURE_PATH := "res://assets/art/tilesets/basic caves and dungeons 32x32 standard - v1.0/tiles/tiles-all-32x32.png"
+const MINE_WALL_TEXTURE_PATH := "res://assets/art/tilesets/basic caves and dungeons 32x32 standard - v1.0/tiles/wall-tiles-32x32.png"
 const MINE_PROPS_TEXTURE_PATH := "res://assets/art/tilesets/basic caves and dungeons 32x32 standard - v1.0/assets/assets-all.png"
 
 var _distance_since_step: float = 0.0
@@ -264,7 +258,7 @@ func _build_mine_layout() -> void:
 
 			var boundary_tile := _mine_wall_tile_for(cell, walkable_cells)
 			if boundary_tile.x >= 0:
-				ground_map.set_cell(2, cell, MINE_TERRAIN_SOURCE_ID, boundary_tile)
+				ground_map.set_cell(2, cell, MINE_WALL_SOURCE_ID, boundary_tile)
 
 	_stamp_mine_props()
 	_apply_mine_sequence_blockers()
@@ -439,7 +433,7 @@ func _apply_mine_sequence_blockers() -> void:
 
 func _stamp_mine_blocker(cells: Array[Vector2i], prop_specs: Array[Dictionary]) -> void:
 	for cell in cells:
-		ground_map.set_cell(2, cell, MINE_TERRAIN_SOURCE_ID, _variant_tile_for(cell, MINE_WALL_FILL_TILES))
+		ground_map.set_cell(2, cell, MINE_WALL_SOURCE_ID, _variant_tile_for(cell, MINE_WALL_FILL_TILES))
 
 	for spec in prop_specs:
 		var atlas_coord: Vector2i = spec["tile"]
@@ -451,7 +445,7 @@ func _apply_mine_exit_gate_blocker() -> void:
 		return
 
 	for cell in MINE_EXIT_GATE_CELLS:
-		ground_map.set_cell(2, cell, MINE_TERRAIN_SOURCE_ID, _variant_tile_for(cell, MINE_WALL_FILL_TILES))
+		ground_map.set_cell(2, cell, MINE_WALL_SOURCE_ID, _variant_tile_for(cell, MINE_WALL_FILL_TILES))
 
 	ground_map.set_cell(3, Vector2i(34, 2), MINE_PROPS_SOURCE_ID, MINE_PROP_FIRE_GRATE_TILE)
 	ground_map.set_cell(3, Vector2i(35, 2), MINE_PROPS_SOURCE_ID, MINE_PROP_IRON_CRATE_TILE)
@@ -466,23 +460,32 @@ func _build_mine_tileset() -> TileSet:
 	var tile_set := TileSet.new()
 	tile_set.tile_size = Vector2i(32, 32)
 	var terrain_texture := _load_png_texture(MINE_TERRAIN_TEXTURE_PATH)
+	var wall_texture := _load_png_texture(MINE_WALL_TEXTURE_PATH)
 	var props_texture := _load_png_texture(MINE_PROPS_TEXTURE_PATH)
 
-	if terrain_texture == null or props_texture == null:
+	if terrain_texture == null or wall_texture == null or props_texture == null:
 		return tile_set
 
 	var terrain_source := TileSetAtlasSource.new()
 	terrain_source.texture = terrain_texture
 	terrain_source.texture_region_size = Vector2i(32, 32)
-	for atlas_coord in MINE_ROCK_FILL_TILES + MINE_FLOOR_TILES + MINE_WALL_FILL_TILES + MINE_WALL_TOP_TILES + MINE_WALL_BOTTOM_TILES + MINE_WALL_LEFT_TILES + MINE_WALL_RIGHT_TILES + [
+	for atlas_coord in MINE_ROCK_FILL_TILES + MINE_FLOOR_TILES:
+		if not terrain_source.has_tile(atlas_coord):
+			terrain_source.create_tile(atlas_coord)
+	tile_set.add_source(terrain_source, MINE_TERRAIN_SOURCE_ID)
+
+	var wall_source := TileSetAtlasSource.new()
+	wall_source.texture = wall_texture
+	wall_source.texture_region_size = Vector2i(32, 32)
+	for atlas_coord in MINE_WALL_FILL_TILES + MINE_WALL_TOP_TILES + MINE_WALL_BOTTOM_TILES + MINE_WALL_LEFT_TILES + MINE_WALL_RIGHT_TILES + [
 		MINE_WALL_TOP_LEFT_TILE,
 		MINE_WALL_TOP_RIGHT_TILE,
 		MINE_WALL_BOTTOM_LEFT_TILE,
 		MINE_WALL_BOTTOM_RIGHT_TILE,
 	]:
-		if not terrain_source.has_tile(atlas_coord):
-			terrain_source.create_tile(atlas_coord)
-	tile_set.add_source(terrain_source, MINE_TERRAIN_SOURCE_ID)
+		if not wall_source.has_tile(atlas_coord):
+			wall_source.create_tile(atlas_coord)
+	tile_set.add_source(wall_source, MINE_WALL_SOURCE_ID)
 
 	var props_source := TileSetAtlasSource.new()
 	props_source.texture = props_texture
