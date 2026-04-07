@@ -3,7 +3,8 @@ extends Node2D
 const MOVE_SPEED := 180.0
 const STEP_DISTANCE := 24.0
 const PLAYER_HALF_EXTENTS := Vector2(10.0, 10.0)
-const BLOCKING_TILE_LAYERS: Array[int] = [2, 3]
+const DEFAULT_BLOCKING_TILE_LAYERS: Array[int] = [2, 3]
+const MINE_BLOCKING_TILE_LAYERS: Array[int] = [2]
 const OVERLAY_BLOCKING_LAYER := 4
 const ROAD_LAYER := 1
 const OVERLAY_BLOCK_BOTTOM_ROWS := 4
@@ -75,13 +76,17 @@ const MINE_TOP_SHAFT_BLOCKER_CELLS: Array[Vector2i] = [
 
 const MINE_TERRAIN_SOURCE_ID := 0
 const MINE_PROPS_SOURCE_ID := 1
-const MINE_FLOOR_TILES: Array[Vector2i] = [
+const MINE_ROCK_FILL_TILES: Array[Vector2i] = [
 	Vector2i(6, 0),
 	Vector2i(7, 0),
 	Vector2i(6, 1),
 	Vector2i(7, 1),
-	Vector2i(6, 2),
-	Vector2i(7, 2),
+]
+const MINE_FLOOR_TILES: Array[Vector2i] = [
+	Vector2i(1, 2),
+	Vector2i(2, 2),
+	Vector2i(1, 3),
+	Vector2i(2, 3),
 ]
 const MINE_WALL_FILL_TILES: Array[Vector2i] = [
 	Vector2i(1, 2),
@@ -251,12 +256,15 @@ func _build_mine_layout() -> void:
 	for y in range(MINE_MAP_SIZE.y):
 		for x in range(MINE_MAP_SIZE.x):
 			var cell := Vector2i(x, y)
-			ground_map.set_cell(0, cell, MINE_TERRAIN_SOURCE_ID, _mine_floor_tile_for(cell))
+			ground_map.set_cell(0, cell, MINE_TERRAIN_SOURCE_ID, _mine_rock_tile_for(cell))
 
 			if walkable_cells.has(cell):
+				ground_map.set_cell(0, cell, MINE_TERRAIN_SOURCE_ID, _mine_floor_tile_for(cell))
 				continue
 
-			ground_map.set_cell(2, cell, MINE_TERRAIN_SOURCE_ID, _mine_wall_tile_for(cell, walkable_cells))
+			var boundary_tile := _mine_wall_tile_for(cell, walkable_cells)
+			if boundary_tile.x >= 0:
+				ground_map.set_cell(2, cell, MINE_TERRAIN_SOURCE_ID, boundary_tile)
 
 	_stamp_mine_props()
 	_apply_mine_sequence_blockers()
@@ -299,6 +307,9 @@ func _hash_index(cell: Vector2i, item_count: int) -> int:
 func _variant_tile_for(cell: Vector2i, variants: Array[Vector2i]) -> Vector2i:
 	return variants[_hash_index(cell, variants.size())]
 
+func _mine_rock_tile_for(cell: Vector2i) -> Vector2i:
+	return _variant_tile_for(cell, MINE_ROCK_FILL_TILES)
+
 func _mine_floor_tile_for(cell: Vector2i) -> Vector2i:
 	return _variant_tile_for(cell, MINE_FLOOR_TILES)
 
@@ -307,6 +318,10 @@ func _mine_wall_tile_for(cell: Vector2i, walkable_cells: Dictionary) -> Vector2i
 	var down := walkable_cells.has(cell + Vector2i.DOWN)
 	var left := walkable_cells.has(cell + Vector2i.LEFT)
 	var right := walkable_cells.has(cell + Vector2i.RIGHT)
+	var touches_walkable := up or down or left or right
+
+	if not touches_walkable:
+		return Vector2i(-1, -1)
 
 	if down and right and not up and not left:
 		return MINE_WALL_TOP_LEFT_TILE
@@ -324,26 +339,6 @@ func _mine_wall_tile_for(cell: Vector2i, walkable_cells: Dictionary) -> Vector2i
 		return _variant_tile_for(cell, MINE_WALL_LEFT_TILES)
 	if left and not right:
 		return _variant_tile_for(cell, MINE_WALL_RIGHT_TILES)
-
-	var walkable_neighbors := 0
-	if up:
-		walkable_neighbors += 1
-	if down:
-		walkable_neighbors += 1
-	if left:
-		walkable_neighbors += 1
-	if right:
-		walkable_neighbors += 1
-
-	if walkable_neighbors >= 2:
-		if down:
-			return _variant_tile_for(cell, MINE_WALL_TOP_TILES)
-		if up:
-			return _variant_tile_for(cell, MINE_WALL_BOTTOM_TILES)
-		if right:
-			return _variant_tile_for(cell, MINE_WALL_LEFT_TILES)
-		if left:
-			return _variant_tile_for(cell, MINE_WALL_RIGHT_TILES)
 
 	return _variant_tile_for(cell, MINE_WALL_FILL_TILES)
 
@@ -479,7 +474,7 @@ func _build_mine_tileset() -> TileSet:
 	var terrain_source := TileSetAtlasSource.new()
 	terrain_source.texture = terrain_texture
 	terrain_source.texture_region_size = Vector2i(32, 32)
-	for atlas_coord in MINE_FLOOR_TILES + MINE_WALL_FILL_TILES + MINE_WALL_TOP_TILES + MINE_WALL_BOTTOM_TILES + MINE_WALL_LEFT_TILES + MINE_WALL_RIGHT_TILES + [
+	for atlas_coord in MINE_ROCK_FILL_TILES + MINE_FLOOR_TILES + MINE_WALL_FILL_TILES + MINE_WALL_TOP_TILES + MINE_WALL_BOTTOM_TILES + MINE_WALL_LEFT_TILES + MINE_WALL_RIGHT_TILES + [
 		MINE_WALL_TOP_LEFT_TILE,
 		MINE_WALL_TOP_RIGHT_TILE,
 		MINE_WALL_BOTTOM_LEFT_TILE,
@@ -532,8 +527,9 @@ func _build_world_collision() -> void:
 	var tile_size_vector := Vector2(tile_size.x, tile_size.y)
 	var half_tile := tile_size_vector * 0.5
 	var blocked_cells := {}
+	var blocking_tile_layers: Array[int] = MINE_BLOCKING_TILE_LAYERS if _is_mine_start_map else DEFAULT_BLOCKING_TILE_LAYERS
 
-	for layer_index in BLOCKING_TILE_LAYERS:
+	for layer_index in blocking_tile_layers:
 		for cell in ground_map.get_used_cells(layer_index):
 			if ground_map.get_cell_source_id(layer_index, cell) == -1:
 				continue

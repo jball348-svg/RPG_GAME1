@@ -27,6 +27,7 @@ const MINE_LOCATION := "mine_entry_chamber"
 var _status_label: Label
 var _title_label: Label
 var _info_panel: PanelContainer
+var _speaker_label: Label
 var _dialogue_label: Label
 var _continue_button: Button
 var _dialogue_panel: PanelContainer
@@ -65,9 +66,6 @@ func _build_ui() -> void:
 	if get_child_count() > 0:
 		return
 
-	var viewport_size := get_viewport_rect().size
-	var floor_top_y := viewport_size.y * 0.58
-
 	var backdrop := ColorRect.new()
 	backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
 	backdrop.color = Color(0.07, 0.07, 0.10, 1.0)
@@ -82,10 +80,13 @@ func _build_ui() -> void:
 	add_child(_floor_band)
 
 	_info_panel = PanelContainer.new()
+	_info_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_info_panel)
 
 	var info_margin := MarginContainer.new()
 	info_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	info_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	info_margin.add_theme_constant_override("margin_left", 8)
 	info_margin.add_theme_constant_override("margin_top", 6)
 	info_margin.add_theme_constant_override("margin_right", 8)
@@ -93,15 +94,20 @@ func _build_ui() -> void:
 	_info_panel.add_child(info_margin)
 
 	var info_content := VBoxContainer.new()
-	info_content.set_anchors_preset(Control.PRESET_FULL_RECT)
+	info_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	info_content.add_theme_constant_override("separation", 4)
 	info_margin.add_child(info_content)
 
 	_title_label = Label.new()
 	_title_label.text = "Mine Entrance Transition"
+	_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_title_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	info_content.add_child(_title_label)
 
 	_status_label = Label.new()
+	_status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_status_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	info_content.add_child(_status_label)
 
@@ -128,6 +134,8 @@ func _build_ui() -> void:
 
 	var margin := MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	margin.add_theme_constant_override("margin_left", 8)
 	margin.add_theme_constant_override("margin_top", 6)
 	margin.add_theme_constant_override("margin_right", 8)
@@ -135,27 +143,32 @@ func _build_ui() -> void:
 	_dialogue_panel.add_child(margin)
 
 	var content := VBoxContainer.new()
-	content.set_anchors_preset(Control.PRESET_FULL_RECT)
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content.add_theme_constant_override("separation", 4)
 	margin.add_child(content)
 
-	var speaker := Label.new()
-	speaker.text = "Gate Sentry"
-	speaker.add_theme_font_size_override("font_size", 9)
-	content.add_child(speaker)
+	_speaker_label = Label.new()
+	_speaker_label.text = "Gate Sentry"
+	_speaker_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.add_child(_speaker_label)
 
 	_dialogue_label = Label.new()
+	_dialogue_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_dialogue_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	_dialogue_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_dialogue_label.add_theme_font_size_override("font_size", 8)
 	content.add_child(_dialogue_label)
+
+	var actions := HBoxContainer.new()
+	actions.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	actions.alignment = BoxContainer.ALIGNMENT_END
+	content.add_child(actions)
 
 	_continue_button = Button.new()
 	_continue_button.text = "Enter Mine"
 	_continue_button.disabled = true
-	_continue_button.add_theme_font_size_override("font_size", 8)
 	_continue_button.pressed.connect(_on_continue_pressed)
-	content.add_child(_continue_button)
+	actions.add_child(_continue_button)
 
 	_fade_rect = ColorRect.new()
 	_fade_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -195,26 +208,34 @@ func _layout_for_viewport() -> void:
 	_info_panel.anchor_top = 0.0
 	_info_panel.anchor_right = 0.0
 	_info_panel.anchor_bottom = 0.0
-	_info_panel.offset_left = 10.0
-	_info_panel.offset_top = 10.0
-	_info_panel.offset_right = clampf(viewport_size.x * 0.5, 196.0, 248.0)
-	_info_panel.offset_bottom = 66.0 if compact_layout else 74.0
-	_title_label.add_theme_font_size_override("font_size", 9 if compact_layout else 10)
-	_status_label.add_theme_font_size_override("font_size", 8 if compact_layout else 9)
+	var info_margin := 10.0 if compact_layout else 12.0
+	var info_width := clampf(viewport_size.x * (0.43 if compact_layout else 0.34), 188.0, 248.0)
+	var info_height := 84.0 if compact_layout else 92.0
+	_info_panel.offset_left = info_margin
+	_info_panel.offset_top = info_margin
+	_info_panel.offset_right = info_margin + info_width
+	_info_panel.offset_bottom = info_margin + info_height
+	_info_panel.custom_minimum_size = Vector2(info_width, info_height)
+	_title_label.add_theme_font_size_override("font_size", 8 if compact_layout else 9)
+	_status_label.add_theme_font_size_override("font_size", 7 if compact_layout else 8)
 
 	_player_actor.size = _scaled(Vector2(36.0, 56.0))
 	_player_accent.position = _scaled(PLAYER_ACCENT_OFFSET)
 	_player_accent.size = _scaled(PLAYER_ACCENT_SIZE)
 	_sentry_actor.size = _scaled(Vector2(40.0, 64.0))
 
-	var horizontal_margin := 24.0 if compact_layout else 60.0
-	var panel_height := _scaled(Vector2(0.0, 84.0 if compact_layout else 70.0)).y
+	var horizontal_margin := 16.0 if compact_layout else 40.0
+	var bottom_margin := 10.0 if compact_layout else 12.0
+	var panel_height := 92.0 if compact_layout else 84.0
 	_dialogue_panel.offset_left = horizontal_margin
 	_dialogue_panel.offset_right = -horizontal_margin
-	_dialogue_panel.offset_top = -panel_height - 10.0
-	_dialogue_panel.offset_bottom = -10.0
-	_dialogue_label.add_theme_font_size_override("font_size", 8 if compact_layout else 9)
-	_continue_button.add_theme_font_size_override("font_size", 8 if compact_layout else 9)
+	_dialogue_panel.offset_top = -panel_height - bottom_margin
+	_dialogue_panel.offset_bottom = -bottom_margin
+	_dialogue_panel.custom_minimum_size = Vector2(0.0, panel_height)
+	_speaker_label.add_theme_font_size_override("font_size", 8 if compact_layout else 9)
+	_dialogue_label.add_theme_font_size_override("font_size", 7 if compact_layout else 8)
+	_continue_button.add_theme_font_size_override("font_size", 7 if compact_layout else 8)
+	_continue_button.custom_minimum_size = Vector2(84.0 if compact_layout else 96.0, 0.0)
 
 func _reset_sequence() -> void:
 	_player_actor.position = _scaled(PLAYER_START_POS)
