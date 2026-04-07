@@ -64,4 +64,4 @@ Prove four things before building the game.
 - [x] Re-run the battle proof with `B`, `Attack`, `Cast Spell`, and `Return to Map`; confirm HUD stays hidden outside map
 - [x] If all checks pass, mark the remaining two success criteria green and close the technical spike
 
-Al spike activity and tests passed, completed clean. Spike finished successfully
+All spike activity and tests passed, completed clean. Spike finished successfully

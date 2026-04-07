@@ -19,12 +19,15 @@ const SKILL_ORDER: Dictionary = {
 }
 
 var _content_label: RichTextLabel
+var _externally_suppressed := false
 
 func _ready() -> void:
+	z_index = 5
 	_apply_layout()
 
 	_build_panel()
 	_connect_signals()
+	_refresh_visibility()
 	_refresh()
 
 func _apply_layout() -> void:
@@ -61,6 +64,8 @@ func _connect_signals() -> void:
 	SignalBus.clock_ticked.connect(_on_clock_ticked)
 	SignalBus.flag_set.connect(_on_flag_changed)
 	SignalBus.state_changed.connect(_on_state_changed)
+	SignalBus.dialogue_started.connect(_on_dialogue_started)
+	SignalBus.dialogue_ended.connect(_on_dialogue_ended)
 
 func _on_stat_changed(_stat_path: String, _new_value: float) -> void:
 	_refresh()
@@ -72,7 +77,44 @@ func _on_flag_changed(_flag_name: String, _value: Variant) -> void:
 	_refresh()
 
 func _on_state_changed(_from_state: String, _to_state: String) -> void:
+	_refresh_visibility()
 	_refresh()
+
+func _on_dialogue_started(_npc_id: String) -> void:
+	_refresh_visibility()
+
+func _on_dialogue_ended(_npc_id: String) -> void:
+	_refresh_visibility()
+
+func refresh_visibility() -> void:
+	_refresh_visibility()
+
+func set_suppressed(suppressed: bool) -> void:
+	_externally_suppressed = suppressed
+	_refresh_visibility()
+
+func _refresh_visibility() -> void:
+	visible = _should_be_visible()
+
+func _should_be_visible() -> bool:
+	if _externally_suppressed:
+		return false
+
+	if SceneManager.current_state_name != "map":
+		return false
+
+	if DialogueManager.is_active():
+		return false
+
+	var overlay_host := SceneManager.get_overlay_host()
+	if overlay_host == null:
+		return true
+
+	var hud = overlay_host.get_node_or_null("SpikeHUD")
+	if hud != null and hud.is_open():
+		return false
+
+	return true
 
 func _refresh() -> void:
 	if _content_label == null:

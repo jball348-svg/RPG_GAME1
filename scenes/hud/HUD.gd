@@ -27,6 +27,7 @@ var _status_label: Label
 var _identity_label: Label
 var _inventory_label: Label
 var _stats_label: Label
+var _scroll_container: ScrollContainer
 var _is_open: bool = false
 var _use_compact_layout: bool = false
 
@@ -55,6 +56,7 @@ func set_open(open: bool) -> void:
 	_is_open = open
 	visible = _is_open
 	mouse_filter = Control.MOUSE_FILTER_STOP if _is_open else Control.MOUSE_FILTER_IGNORE
+	_refresh_debug_panel_visibility()
 
 	if _is_open:
 		_refresh()
@@ -64,9 +66,9 @@ func _build_ui() -> void:
 		return
 
 	_use_compact_layout = _is_compact_layout()
-	var horizontal_margin := 12 if _use_compact_layout else 56
-	var vertical_margin := 10 if _use_compact_layout else 40
-	var section_gap := 8 if _use_compact_layout else 16
+	var horizontal_margin := 8 if _use_compact_layout else 56
+	var vertical_margin := 8 if _use_compact_layout else 40
+	var section_gap := 6 if _use_compact_layout else 16
 
 	var backdrop := ColorRect.new()
 	backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -81,27 +83,36 @@ func _build_ui() -> void:
 	frame.add_theme_constant_override("margin_bottom", vertical_margin)
 	add_child(frame)
 
+	_scroll_container = ScrollContainer.new()
+	_scroll_container.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_scroll_container.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_scroll_container.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	frame.add_child(_scroll_container)
+
 	var root := VBoxContainer.new()
 	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	root.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	root.add_theme_constant_override("separation", section_gap)
-	frame.add_child(root)
+	root.custom_minimum_size = Vector2(0.0, 0.0)
+	_scroll_container.add_child(root)
 
 	var title := Label.new()
 	title.text = "HUD Overlay"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 9 if _use_compact_layout else 12)
 	root.add_child(title)
 
 	var subtitle := Label.new()
 	subtitle.text = "Map stays visible underneath. Movement pauses while HUD is open, but the clock keeps ticking."
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD
+	subtitle.add_theme_font_size_override("font_size", 8 if _use_compact_layout else 10)
 	root.add_child(subtitle)
 
 	var grid := GridContainer.new()
 	grid.columns = 1 if _use_compact_layout else 2
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	grid.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	grid.add_theme_constant_override("h_separation", section_gap)
 	grid.add_theme_constant_override("v_separation", section_gap)
 	root.add_child(grid)
@@ -114,12 +125,12 @@ func _build_ui() -> void:
 func _add_section(parent: GridContainer, title_text: String) -> Label:
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	panel.custom_minimum_size = Vector2(220.0, 96.0) if _use_compact_layout else Vector2(360.0, 180.0)
+	panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	panel.custom_minimum_size = Vector2(0.0, 84.0) if _use_compact_layout else Vector2(360.0, 180.0)
 	parent.add_child(panel)
 
-	var panel_margin := 10 if _use_compact_layout else 16
-	var panel_spacing := 6 if _use_compact_layout else 10
+	var panel_margin := 8 if _use_compact_layout else 16
+	var panel_spacing := 4 if _use_compact_layout else 10
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", panel_margin)
@@ -136,6 +147,7 @@ func _add_section(parent: GridContainer, title_text: String) -> Label:
 
 	var title := Label.new()
 	title.text = title_text
+	title.add_theme_font_size_override("font_size", 8 if _use_compact_layout else 10)
 	content.add_child(title)
 
 	var body := Label.new()
@@ -143,6 +155,7 @@ func _add_section(parent: GridContainer, title_text: String) -> Label:
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD
 	body.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	body.add_theme_font_size_override("font_size", 8 if _use_compact_layout else 9)
 	content.add_child(body)
 
 	return body
@@ -161,6 +174,7 @@ func _rebuild_layout(force: bool = false) -> void:
 	_identity_label = null
 	_inventory_label = null
 	_stats_label = null
+	_scroll_container = null
 
 	for child in get_children():
 		child.queue_free()
@@ -171,6 +185,7 @@ func _rebuild_layout(force: bool = false) -> void:
 
 func _on_viewport_size_changed() -> void:
 	_rebuild_layout()
+	_refresh_debug_panel_visibility()
 
 func _connect_signals() -> void:
 	SignalBus.stat_changed.connect(_on_stat_changed)
@@ -192,6 +207,7 @@ func _on_state_changed(_from_state: String, to_state: String) -> void:
 		set_open(false)
 		return
 
+	_refresh_debug_panel_visibility()
 	_refresh()
 
 func _refresh() -> void:
@@ -243,3 +259,12 @@ func _build_stats_text() -> String:
 
 func _display_value(value: String, fallback: String) -> String:
 	return fallback if value == "" else value
+
+func _refresh_debug_panel_visibility() -> void:
+	var overlay_host := SceneManager.get_overlay_host()
+	if overlay_host == null:
+		return
+
+	var debug_panel = overlay_host.get_node_or_null("DebugPanel")
+	if debug_panel != null and debug_panel.has_method("refresh_visibility"):
+		debug_panel.refresh_visibility()

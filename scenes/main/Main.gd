@@ -20,6 +20,7 @@ func _ensure_spike_hud() -> void:
 
 	var hud: Control = HUD_SCENE.instantiate() as Control
 	hud.name = "SpikeHUD"
+	hud.z_index = 20
 	overlay_host.add_child(hud)
 
 func _ensure_debug_panel() -> void:
@@ -28,6 +29,7 @@ func _ensure_debug_panel() -> void:
 
 	var debug_panel: Control = DEBUG_PANEL_SCENE.instantiate() as Control
 	debug_panel.name = "DebugPanel"
+	debug_panel.z_index = 5
 	overlay_host.add_child(debug_panel)
 
 func _ensure_dialogue_box() -> void:
@@ -36,4 +38,5 @@ func _ensure_dialogue_box() -> void:
 
 	var dialogue_box: Control = DIALOGUE_BOX_SCENE.instantiate() as Control
 	dialogue_box.name = "DialogueBox"
+	dialogue_box.z_index = 30
 	overlay_host.add_child(dialogue_box)
