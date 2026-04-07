@@ -41,6 +41,8 @@ const BATTLE_KIND_BOSS_PLACEHOLDER := "boss_placeholder"
 const BATTLE_KIND_DEBUG := "debug"
 const SUPPRESSED_TRIGGER_ENCOUNTER := "encounter"
 const SUPPRESSED_TRIGGER_BOSS := "boss"
+const CUTSCENE_ID_MINE_ENTRY := "mine_entry"
+const CUTSCENE_ID_SHAMAN_INTRO := "shaman_intro"
 
 const MINE_MAP_SIZE := Vector2i(42, 30)
 const MINE_ENTRY_SPAWN_CELL := Vector2i(21, 27)
@@ -799,7 +801,15 @@ func _on_mine_boss_trigger_body_entered(body: Node) -> void:
 	if _player_data().get_flag(MINE_BOSS_RESOLVED_FLAG, false):
 		return
 
-	_launch_battle(_build_battle_payload(BATTLE_KIND_BOSS_PLACEHOLDER, -1, SUPPRESSED_TRIGGER_BOSS))
+	player.velocity = Vector2.ZERO
+	_scene_manager().change_state("cutscene", {
+		"cutscene_id": CUTSCENE_ID_SHAMAN_INTRO,
+		"return_region": _player_data().current_region,
+		"return_location": _player_data().current_location,
+		"return_position": player.global_position,
+		"suppressed_trigger_type": SUPPRESSED_TRIGGER_BOSS,
+		"suppressed_trigger_index": 0,
+	})
 
 func _on_mine_boss_trigger_body_exited(body: Node) -> void:
 	if body != player:
@@ -946,7 +956,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if event.is_action_pressed("debug_cutscene"):
 		get_viewport().set_input_as_handled()
-		_scene_manager().change_state("cutscene")
+		_scene_manager().change_state("cutscene", {
+			"cutscene_id": CUTSCENE_ID_MINE_ENTRY,
+		})
 		return
 
 	if event.is_action_pressed("debug_battle"):
@@ -1022,7 +1034,9 @@ func _on_town_exit_trigger_body_entered(body: Node) -> void:
 func _on_town_exit_confirmed() -> void:
 	_set_debug_panel_suppressed(false)
 	_apply_mine_commit_stats_once()
-	_scene_manager().change_state("cutscene")
+	_scene_manager().change_state("cutscene", {
+		"cutscene_id": CUTSCENE_ID_MINE_ENTRY,
+	})
 
 func _on_town_exit_canceled() -> void:
 	player.velocity = Vector2.ZERO

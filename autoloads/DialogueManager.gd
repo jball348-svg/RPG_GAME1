@@ -43,6 +43,45 @@ var dialogue_trees: Dictionary = {
 			"next": -1,
 		},
 	],
+	"shaman_intro_cutscene": [
+		{
+			"speaker": "The Shaman",
+			"text": "Another pureblood who fears what they cannot name.",
+			"portrait": "",
+			"conditions": [
+				{"type": "pure_path"},
+			],
+			"fallback": 1,
+			"next": 2,
+		},
+		{
+			"speaker": "The Shaman",
+			"text": "You carry both bloods. I see the war in you.",
+			"portrait": "",
+			"conditions": [
+				{"type": "mixed_path"},
+			],
+			"next": 2,
+		},
+		{
+			"speaker": "The Shaman",
+			"text": "Someone warned you. And still you came.",
+			"portrait": "",
+			"conditions": [
+				{"type": "flag_set", "flag": "shaman_warning_given"},
+			],
+			"next": -1,
+		},
+	],
+	"shaman_recruit_resolution": [
+		{
+			"speaker": "The Shaman",
+			"text": "The Shaman nods. No words. The chamber opens.",
+			"portrait": "",
+			"conditions": [],
+			"next": -1,
+		},
+	],
 	"bookstore_npc": [
 		{
 			"speaker": "Bookstore Keeper",

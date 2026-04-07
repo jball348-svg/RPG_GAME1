@@ -5,6 +5,7 @@ const REFERENCE_VIEWPORT_SIZE := Vector2(480.0, 270.0)
 const PLAYER_KNIGHT_SPRITE_PATH := "res://assets/art/player/universal-lpc-sprite_male_01_full.png"
 const PLAYER_BATTLEMAGE_SPRITE_PATH := "res://assets/art/battle/LPC_starhat/sample.png"
 const ENEMY_KOBOLD_SPRITE_PATH := "res://assets/art/battle/LPC imp/attack - vanilla.png"
+const ENEMY_SHAMAN_SPRITE_PATH := "res://assets/art/battle/goblinsword.png"
 const MINE_BACKGROUND_PATH := "res://assets/art/battle/monster2_combat_backgrounds/volcano.png"
 
 const UI_PANEL_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/panel_brown.png"
@@ -15,23 +16,40 @@ const UI_BUTTON_DISABLED_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg
 
 const BATTLE_KIND_STANDARD := "standard"
 const BATTLE_KIND_BOSS_PLACEHOLDER := "boss_placeholder"
+const BATTLE_KIND_BOSS_SHAMAN := "boss_shaman"
 const BATTLE_KIND_DEBUG := "debug"
 
 const MINE_ENCOUNTER_PROGRESS_FLAG := "mine_encounter_progress"
 const MINE_BOSS_READY_FLAG := "mine_boss_ready"
+const MINE_BOSS_RESOLVED_FLAG := "mine_boss_resolved"
+const MINE_EXIT_UNLOCKED_FLAG := "mine_exit_unlocked"
+const SHAMAN_KILLED_FLAG := "shaman_killed"
 
 const KOBOLD_MAX_HP := 30
 const KOBOLD_ATTACK_DAMAGE := 6
 const KOBOLD_DEFENCE := 3
 const KOBOLD_RESISTANCE := 2
 const KOBOLD_DEFEND_BONUS := 2
+const SHAMAN_MAX_HP := 54
+const SHAMAN_ATTACK_DAMAGE := 8
+const SHAMAN_DEFENCE := 4
+const SHAMAN_RESISTANCE := 3
+const SHAMAN_HEAL_AMOUNT := 16
+const SHAMAN_HEAL_THRESHOLD_RATIO := 0.4
+const SHAMAN_HEX_DAMAGE := 4
+const SHAMAN_HEX_PENALTY := 2
+const SHAMAN_HEX_TURNS := 2
+const SHAMAN_GOLD_REWARD_MIN := 18
+const SHAMAN_GOLD_REWARD_MAX := 26
 const HEALTH_POTION_HEAL := 20
 
 const KNIGHT_PLAYER_REGION := Rect2i(64, 64, 64, 64)
 const BATTLEMAGE_PLAYER_REGION := Rect2i(50, 135, 50, 45)
 const KOBOLD_ENEMY_REGION := Rect2i(64, 128, 64, 64)
+const SHAMAN_ENEMY_REGION := Rect2i(0, 0, 64, 64)
 const PLAYER_TARGET_HEIGHT := 88.0
 const ENEMY_TARGET_HEIGHT := 78.0
+const SHAMAN_TARGET_HEIGHT := 88.0
 const BATTLE_CONTENT_Y_OFFSET := -18.0
 
 const PLAYER_IDLE_POSITION := Vector2(146.0, 154.0)
@@ -92,31 +110,45 @@ var _log_lines: Array[String] = []
 var _player_turn_count := 0
 var _ability_cooldown_remaining := 0
 var _enemy_hp := KOBOLD_MAX_HP
+var _enemy_max_hp := KOBOLD_MAX_HP
+var _enemy_attack_damage := KOBOLD_ATTACK_DAMAGE
+var _enemy_defence := KOBOLD_DEFENCE
+var _enemy_resistance := KOBOLD_RESISTANCE
+var _enemy_defend_bonus := KOBOLD_DEFEND_BONUS
+var _enemy_display_name := "Kobold"
+var _enemy_intro_log := "A kobold rushes from the dark."
 var _enemy_defend_active := false
 var _enemy_staggered := false
 var _input_locked := true
 var _battle_over := false
 var _boss_placeholder_mode := false
+var _shaman_boss_mode := false
+var _shaman_heal_used := false
+var _player_hex_turns_remaining := 0
 var _bob_time := 0.0
 var _player_class_id := ""
 var _last_viewport_size := Vector2.ZERO
 
 func _ready() -> void:
-	randomize()
-	_context = SceneManager.consume_state_payload()
-	_load_ui_textures()
-	_build_scene()
-	_configure_battle_state()
-	_layout_scene()
-	_refresh_all_ui()
+    randomize()
+    _context = SceneManager.consume_state_payload()
+    _load_ui_textures()
+    _build_scene()
+    _configure_battle_state()
+    _layout_scene()
+    _refresh_all_ui()
 
-	if not get_viewport().size_changed.is_connected(_on_viewport_size_changed):
-		get_viewport().size_changed.connect(_on_viewport_size_changed)
+    if not get_viewport().size_changed.is_connected(_on_viewport_size_changed):
+        get_viewport().size_changed.connect(_on_viewport_size_changed)
 
-	call_deferred("_start_battle_flow")
+    call_deferred("_start_battle_flow")
 
 func _process(delta: float) -> void:
-	_bob_time += delta
+    _bob_time += delta
+    if is_instance_valid(_player_sprite):
+        _player_sprite.position = _player_base_position + Vector2(0.0, sin(_bob_time * 2.8) * _scale_y(3.0))
+    if is_instance_valid(_enemy_sprite) and not _battle_over:
+        _enemy_sprite.position = _enemy_base_position + Vector2(0.0, sin(_bob_time * 3.0 + 0.8) * _scale_y(2.5))
 	if is_instance_valid(_player_sprite):
 		_player_sprite.position = _player_base_position + Vector2(0.0, sin(_bob_time * 2.8) * _scale_y(3.0))
 	if is_instance_valid(_enemy_sprite) and not _battle_over:
