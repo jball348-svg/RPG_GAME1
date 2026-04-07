@@ -28,8 +28,11 @@ const KOBOLD_DEFEND_BONUS := 2
 const HEALTH_POTION_HEAL := 20
 
 const KNIGHT_PLAYER_REGION := Rect2i(64, 64, 64, 64)
-const BATTLEMAGE_PLAYER_REGION := Rect2i(50, 45, 50, 45)
+const BATTLEMAGE_PLAYER_REGION := Rect2i(50, 135, 50, 45)
 const KOBOLD_ENEMY_REGION := Rect2i(64, 128, 64, 64)
+const PLAYER_TARGET_HEIGHT := 88.0
+const ENEMY_TARGET_HEIGHT := 78.0
+const BATTLE_CONTENT_Y_OFFSET := -18.0
 
 const PLAYER_IDLE_POSITION := Vector2(146.0, 154.0)
 const ENEMY_IDLE_POSITION := Vector2(338.0, 146.0)
@@ -122,8 +125,8 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	var viewport_size := get_viewport_rect().size
 	if _background_texture != null:
-		draw_texture_rect(_background_texture, Rect2(Vector2.ZERO, viewport_size), false)
-		draw_rect(Rect2(Vector2.ZERO, viewport_size), Color(0.08, 0.07, 0.08, 0.35), true)
+		draw_texture_rect(_background_texture, Rect2(Vector2.ZERO, viewport_size), true)
+		draw_rect(Rect2(Vector2.ZERO, viewport_size), Color(0.08, 0.07, 0.08, 0.18), true)
 	else:
 		draw_rect(Rect2(Vector2.ZERO, viewport_size), Color(0.11, 0.12, 0.13), true)
 		draw_rect(Rect2(Vector2(0.0, 0.0), Vector2(viewport_size.x, viewport_size.y * 0.6)), Color(0.18, 0.18, 0.19, 0.85), true)
@@ -169,7 +172,7 @@ func _build_scene() -> void:
 	_enemy_sprite.material = _make_flash_material()
 	add_child(_enemy_sprite)
 
-	_background_texture = load(MINE_BACKGROUND_PATH) as Texture2D if _environment_id() == "mine" else null
+	_background_texture = _load_texture(MINE_BACKGROUND_PATH) if _environment_id() == "mine" else null
 
 	var ui_layer := CanvasLayer.new()
 	ui_layer.layer = 5
@@ -403,40 +406,41 @@ func _layout_scene() -> void:
 	var viewport_size := get_viewport_rect().size
 	_last_viewport_size = viewport_size
 	queue_redraw()
+	var content_offset := Vector2(0.0, _scale_y(BATTLE_CONTENT_Y_OFFSET))
 
 	_battle_camera.position = viewport_size * 0.5
-	_player_base_position = _scaled_position(PLAYER_IDLE_POSITION)
-	_enemy_base_position = _scaled_position(ENEMY_IDLE_POSITION)
+	_player_base_position = _scaled_position(PLAYER_IDLE_POSITION) + content_offset
+	_enemy_base_position = _scaled_position(ENEMY_IDLE_POSITION) + content_offset
 	_player_base_scale = Vector2.ONE * minf(_scale_x(_player_scale_multiplier), _scale_y(_player_scale_multiplier))
 	_enemy_base_scale = Vector2.ONE * minf(_scale_x(_enemy_scale_multiplier), _scale_y(_enemy_scale_multiplier))
 	_player_sprite.scale = _player_base_scale
 	_enemy_sprite.scale = _enemy_base_scale
 
-	_position_hp_widget(_player_name_label.get_parent(), _scaled_position(PLAYER_HP_UI_POSITION))
-	_position_hp_widget(_enemy_name_label.get_parent(), _scaled_position(ENEMY_HP_UI_POSITION))
+	_position_hp_widget(_player_name_label.get_parent(), _scaled_position(PLAYER_HP_UI_POSITION) + content_offset)
+	_position_hp_widget(_enemy_name_label.get_parent(), _scaled_position(ENEMY_HP_UI_POSITION) + content_offset)
 
 	var turn_width := _scale_x(140.0)
-	_turn_label.position = Vector2((viewport_size.x - turn_width) * 0.5, _scale_y(180.0))
+	_turn_label.position = Vector2((viewport_size.x - turn_width) * 0.5, _scale_y(180.0 + BATTLE_CONTENT_Y_OFFSET))
 	_turn_label.size = Vector2(turn_width, _scale_y(18.0))
 
 	var log_panel := _ui_root.get_node("LogPanel") as PanelContainer
-	log_panel.position = Vector2(_scale_x(42.0), _scale_y(190.0))
+	log_panel.position = Vector2(_scale_x(42.0), _scale_y(190.0 + BATTLE_CONTENT_Y_OFFSET))
 	log_panel.size = Vector2(_scale_x(396.0), _scale_y(48.0))
 
 	_main_menu_panel.position = Vector2(_scale_x(28.0), _scale_y(222.0))
 	_main_menu_panel.size = Vector2(_scale_x(424.0), _scale_y(40.0))
 	_layout_submenu_panel(viewport_size)
 
-	_center_banner.position = Vector2(_scale_x(120.0), _scale_y(98.0))
+	_center_banner.position = Vector2(_scale_x(120.0), _scale_y(98.0 + BATTLE_CONTENT_Y_OFFSET))
 	_center_banner.size = Vector2(_scale_x(240.0), _scale_y(32.0))
 
-	_loot_panel.position = Vector2(_scale_x(126.0), _scale_y(116.0))
+	_loot_panel.position = Vector2(_scale_x(126.0), _scale_y(116.0 + BATTLE_CONTENT_Y_OFFSET))
 	_loot_panel.size = Vector2(_scale_x(228.0), _scale_y(52.0))
 
-	_boss_placeholder_panel.position = Vector2(_scale_x(110.0), _scale_y(110.0))
+	_boss_placeholder_panel.position = Vector2(_scale_x(110.0), _scale_y(110.0 + BATTLE_CONTENT_Y_OFFSET))
 	_boss_placeholder_panel.size = Vector2(_scale_x(260.0), _scale_y(52.0))
 
-	_game_over_panel.position = Vector2(_scale_x(108.0), _scale_y(92.0))
+	_game_over_panel.position = Vector2(_scale_x(108.0), _scale_y(92.0 + BATTLE_CONTENT_Y_OFFSET))
 	_game_over_panel.size = Vector2(_scale_x(264.0), _scale_y(86.0))
 
 	_try_again_button.custom_minimum_size = Vector2(_scale_x(92.0), _scale_y(26.0))
@@ -472,10 +476,12 @@ func _apply_battle_sprite_art() -> void:
 		_player_sprite.texture = _load_cropped_texture(
 			PLAYER_BATTLEMAGE_SPRITE_PATH,
 			BATTLEMAGE_PLAYER_REGION,
-			_make_fallback_texture(50, 45, Color(0.21, 0.31, 0.55))
+			_make_fallback_texture(32, 40, Color(0.21, 0.31, 0.55)),
+			true,
+			false
 		)
 		_player_sprite.flip_h = false
-		_player_scale_multiplier = 1.95
+		_player_scale_multiplier = _reference_scale_for_height(_player_sprite.texture, PLAYER_TARGET_HEIGHT, 2.0)
 	else:
 		_player_sprite.texture = _load_cropped_texture(
 			PLAYER_KNIGHT_SPRITE_PATH,
@@ -483,7 +489,7 @@ func _apply_battle_sprite_art() -> void:
 			_make_fallback_texture(64, 64, Color(0.58, 0.53, 0.47))
 		)
 		_player_sprite.flip_h = true
-		_player_scale_multiplier = 1.4
+		_player_scale_multiplier = _reference_scale_for_height(_player_sprite.texture, PLAYER_TARGET_HEIGHT, 1.4)
 
 	_enemy_sprite.texture = _load_cropped_texture(
 		ENEMY_KOBOLD_SPRITE_PATH,
@@ -491,7 +497,7 @@ func _apply_battle_sprite_art() -> void:
 		_make_fallback_texture(64, 64, Color(0.45, 0.15, 0.14))
 	)
 	_enemy_sprite.flip_h = true
-	_enemy_scale_multiplier = 1.5
+	_enemy_scale_multiplier = _reference_scale_for_height(_enemy_sprite.texture, ENEMY_TARGET_HEIGHT, 1.5)
 
 func _position_hp_widget(container: Node, top_left: Vector2) -> void:
 	var widget := container as Control
@@ -1022,7 +1028,14 @@ func _shake_camera(intensity: float) -> void:
 		)
 	shake_tween.tween_property(_battle_camera, "offset", Vector2.ZERO, 0.05)
 
-func _load_cropped_texture(resource_path: String, region: Rect2i, fallback: Texture2D) -> Texture2D:
+func _load_texture(resource_path: String) -> Texture2D:
+	var image := Image.load_from_file(resource_path)
+	if image == null or image.is_empty():
+		return null
+
+	return ImageTexture.create_from_image(image)
+
+func _load_cropped_texture(resource_path: String, region: Rect2i, fallback: Texture2D, transparent_black: bool = false, trim_to_visible_bounds: bool = false) -> Texture2D:
 	var image := Image.load_from_file(resource_path)
 	if image == null or image.is_empty():
 		return fallback
@@ -1031,7 +1044,49 @@ func _load_cropped_texture(resource_path: String, region: Rect2i, fallback: Text
 	if cropped == null or cropped.is_empty():
 		return fallback
 
+	if transparent_black:
+		_clear_black_background(cropped)
+
+	if trim_to_visible_bounds:
+		cropped = _trim_visible_image(cropped)
+		if cropped == null or cropped.is_empty():
+			return fallback
+
 	return ImageTexture.create_from_image(cropped)
+
+func _clear_black_background(image: Image) -> void:
+	image.convert(Image.FORMAT_RGBA8)
+	for y in range(image.get_height()):
+		for x in range(image.get_width()):
+			var pixel := image.get_pixel(x, y)
+			if pixel.a > 0.0 and pixel.r <= 0.01 and pixel.g <= 0.01 and pixel.b <= 0.01:
+				image.set_pixel(x, y, Color(pixel.r, pixel.g, pixel.b, 0.0))
+
+func _trim_visible_image(image: Image) -> Image:
+	var min_x := image.get_width()
+	var min_y := image.get_height()
+	var max_x := -1
+	var max_y := -1
+
+	for y in range(image.get_height()):
+		for x in range(image.get_width()):
+			if image.get_pixel(x, y).a <= 0.0:
+				continue
+			min_x = mini(min_x, x)
+			min_y = mini(min_y, y)
+			max_x = maxi(max_x, x)
+			max_y = maxi(max_y, y)
+
+	if max_x < 0 or max_y < 0:
+		return image
+
+	return image.get_region(Rect2i(min_x, min_y, (max_x - min_x) + 1, (max_y - min_y) + 1))
+
+func _reference_scale_for_height(texture: Texture2D, target_height: float, fallback_scale: float) -> float:
+	if texture == null or texture.get_height() <= 0:
+		return fallback_scale
+
+	return target_height / float(texture.get_height())
 
 func _make_fallback_texture(width: int, height: int, color: Color) -> Texture2D:
 	var image := Image.create(width, height, false, Image.FORMAT_RGBA8)
