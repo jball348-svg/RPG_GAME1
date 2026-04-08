@@ -144,6 +144,17 @@ Everything else is production.
 
 **Done state:** The moral choice works and has real mechanical and flag consequences.
 
+## Stage 6.5 — Dev 'cheatcode'
+**Status:** ⬜ Not started
+
+**Tasks:**
+- scope to be set
+
+**Verification:**
+- scope to be set
+
+**Done state:** Player can skip battles to victory status by pressing 'P' during battle on their turn
+
 ---
 
 ## Stage 7 — Mine exit and area transition
@@ -246,6 +257,10 @@ The HUD overlay exists but is minimal. Implement the following tabs at spike qua
 - Static placeholder image or a blank panel with the text "Map — coming soon."
 - This is intentionally deferred. It just needs to exist as a tab.
 
+**Leveling Systen: - spike**
+- scope coming soon
+
+
 ### Equipment rendering on battle sprite — spike
 - `Battle.gd` already has a layered sprite slot system in mind (base body + armour layer + weapon layer per `docs/HANDOVER.md`).
 - Implement the minimum: if a weapon is equipped in `PlayerData.equipment["weapon"]`, modify the player's battle sprite or add a visible weapon overlay.
@@ -261,6 +276,7 @@ The HUD overlay exists but is minimal. Implement the following tabs at spike qua
 - [ ] Spellbook slot shows for Battlemage, Shield slot shows for Fighter
 - [ ] HUD quest tab shows active objective text that updates with `mine_encounter_progress`
 - [ ] HUD map tab exists and shows placeholder
+- [ ] Level system shows level and exp
 - [ ] Equipping a weapon in `PlayerData.equipment["weapon"]` produces a visible change in the battle sprite
 
 **Done state:** The game has enough visual and systemic presence for a meaningful developer review in Stage 9.
