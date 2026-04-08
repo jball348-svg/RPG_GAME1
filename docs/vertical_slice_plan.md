@@ -1,7 +1,6 @@
 # Vertical Slice Plan — RPG_GAME1
 > Same structure as the technical spike: define the goal, build the minimum to prove it, verify, lock, move on.
 > Do not start the next stage until the current one passes its verification check.
-> Each stage is a Cascade/Claude session (or a few). Some take one sitting, some take several.
 
 ---
 
@@ -15,166 +14,109 @@ Everything else is production.
 
 ---
 
-## Stage 1 — Real town map (editor-designed)
+## Stage 1 — Real town map
 **Status:** ✅ Complete
 
-**Goal:** A town map designed in Godot's TileMap editor, not assembled in GDScript at runtime.
-
-**What was built:**
-- Real TileMap-authored starting town (Frontier Hamlet) using sourced CC0 outdoor tileset
-- Runtime tile generation removed — map data lives in `Map.tscn`
-- Collision built dynamically from tile layer data via `_build_world_collision()` in `Map.gd`
-- `TownExitTrigger` Area2D at north edge — fires confirmation dialogue, deferred arm prevents false trigger on load
-- Camera follows player, bounded to map rect via `get_used_rect()`
-- Viewport set to 480×270 internal / 1280×720 window, stretch mode `viewport`, aspect `keep`
-- Player placeholder upgraded to gold 32×32 square sprite
-
-**Known issues (deferred to Stage 11 polish):**
-- Some tree tiles do not block — collision layer assignment incomplete on a subset of props
+TileMap-authored starting town. Collision, camera bounds, north exit trigger. Viewport 480×270 / 1280×720.
 
 ---
 
 ## Stage 2 — NPC dialogue system
-**Status:** ✅ Complete (Slice Day 2)
+**Status:** ✅ Complete
 
-**Goal:** A reusable dialogue system that any NPC in the game can use. Supports stat gates and gold gates.
-
-**Tasks:**
-- [x] Build `DialogueManager` autoload — loads dialogue data, manages conversation state, emits signals
-- [x] Dialogue data format: GDScript Dictionary — each NPC has a dialogue tree with nodes, conditions, branches
-- [x] Condition types: `stat_gte`, `gold_gte`, `flag_set`, `pure_path`, `mixed_path`
-- [x] `interact` input action mapped to `E`
-- [x] NPC scene includes interaction zone and solid body collision
-- [x] Dialogue box: bottom-third panel, speaker header, portrait slot, text body, advance prompt
-- [x] Three core loop NPCs wired: intel NPC, moral choice NPC, bookstore NPC
-
-**Verification:** All checks passed.
-
-**Done state:** Three wired, conditionally branching NPCs are in the town.
+Reusable `DialogueManager` autoload. Condition types: `stat_gte`, `gold_gte`, `flag_set`, `pure_path`, `mixed_path`. Three wired core-loop NPCs: intel, moral choice, bookstore.
 
 ---
 
 ## Stage 3 — Town exit and mine entrance cutscene
-**Status:** ✅ Complete (Slice Day 3 resolved)
+**Status:** ✅ Complete
 
-**Goal:** Leaving the town triggers a point-of-no-return prompt, plays a transition cutscene, and lands the player in the mine.
-
-**Verification:** All checks passed.
-
-**Done state:** Town exit → cutscene → mine start is fully playable and stable.
+Point-of-no-return prompt → path/class-tinted cutscene → mine spawn. One-time stat ticks on confirm.
 
 ---
 
 ## Stage 4 — Mine dungeon map
-**Status:** ✅ Complete (Slice Day 4 resolved)
+**Status:** ✅ Complete
 
-**Goal:** A dungeon map for the mine. Navigable, atmospheric, with Kobold encounter trigger zones.
-
-**Verification:** All checks passed.
-
-**Done state:** The mine exists as a real designed level with working encounter and exit gate flow.
+Editor-authored cave map. Ordered encounter zones (4), boss-room gate, exit lock. Progression flags: `mine_encounter_progress`, `mine_boss_ready`, `mine_boss_resolved`, `mine_exit_unlocked`, `mine_cleared`.
 
 ---
 
 ## Stage 5 — Battle system
-**Status:** ✅ Complete (Slice Day 5 resolved)
+**Status:** ✅ Complete
 
-**Goal:** Real turn-based battle. Kobold enemy type. Player class abilities.
-
-**What was built:**
-- Full `Battle.gd` turn-based system: player turn → enemy turn alternation
-- Player actions: Attack, Spell (Battlemage only), Item (Health Potion), Flee, class Ability
-- Fighter: +2 strength passive, Shield Bash (damage + Stagger, 4-turn cooldown)
-- Battlemage: Arcane Strike (physical + Magik dual damage, 3-turn cooldown), reduced Flamebolt power
-- Kobold: HP 30, attack 6, defence 3, resistance 2, 80/20 attack/defend AI
-- HitFlash.gdshader, screen shake, sprite bob, responsive layout
-- Real art: LPC knight, LPC battlemage, LPC imp, volcano background, Kenney UI
-- Victory, defeat, and boss-placeholder sequences all functional
-
-**Verification:** All checks passed.
-
-**Done state:** The mine has real, functional, class-differentiated combat.
+Full turn-based `Battle.gd`. Actions: Attack, Spell, Item, Flee, Ability. Fighter (Shield Bash) and Battlemage (Arcane Strike/Flamebolt) feel distinct. Kobold enemy. HP bars, battle log, screen shake, hit flash shader, sprite bob. Loot and game-over resolution. Responsive layout. Suppressed-trigger return to map.
 
 ---
 
 ## Stage 6 — Boss room and moral choice
-**Status:** 🔄 In progress
+**Status:** 🔄 In progress (2 checks outstanding)
 
-**Goal:** The Half-Kobold Orc Shaman encounter. The moral choice. Branching outcomes. This is the allegory made mechanical.
+Half-Kobold Orc Shaman. Cutscene-driven intro via `cutscene_id = "shaman_intro"`. Two branches: recruit (stat boosts, no combat) or fight (`BATTLE_KIND_BOSS_SHAMAN`, HP 60). Ghost flags set for all 4 path/choice permutations. Exit gate unlocks after either branch.
 
-**Design notes:**
-- The Shaman is Half-Kobold Orc — liminal, belonging fully to neither faction. He is the living embodiment of the allegory.
-- Pure players face him as a symbol of what they fear. Mixed players face him as a mirror.
-- No correct answer. Both paths have costs and rewards. Ghost flags ensure the world remembers.
-- The writing is load-bearing. Treat it carefully.
-
-**Flags to add to `PlayerData.gd`:**
-- `shaman_recruited`, `shaman_killed` (bool flags)
-- Ghost flags: `world_remembers_shaman_killed`, `world_remembers_shaman_spared`, `pure_rep_shaman_mercy`, `mixed_betrayed_own`
-
-**Implementation plan:**
-1. Replace `BATTLE_KIND_BOSS_PLACEHOLDER` in `Map.gd` with a `cutscene` payload (`cutscene_id = "shaman_intro"`)
-2. Refactor `Cutscene.gd` to be payload-driven (`cutscene_id` key routes `mine_entry` vs `shaman_intro`)
-3. Shaman intro: path-reactive opening line, optional warning reference, two-button choice panel
-4. Recruit branch: flags + stat boosts (`social.charm +3`, `magik.attunement +2`) + ghost flags, no combat
-5. Fight branch: `BATTLE_KIND_BOSS_SHAMAN` — HP 60, attack 9, defence 4, resistance 4; Hex/Heal AI; kill flags + loot on victory
-6. Verify aftermath: exit gate opens, boss trigger suppressed on return
-
-**Shaman dialogue:**
-- Pure: *"Another pureblood who fears what they cannot name."*
-- Mixed: *"You carry both bloods. I see the war in you."*
-- If `shaman_warning_given`: append *"Someone warned you. And still you came."*
-
-**Verification:**
-- [x] Boss trigger → Shaman intro fires via `Cutscene.gd` with `cutscene_id = "shaman_intro"`
-- [x] Pure player gets Pure-specific opening line
-- [x] Mixed player gets Mixed-specific opening line
+**Remaining:**
 - [ ] `shaman_warning_given` flag → Shaman references the warning
-- [x] Recruit → flags set, stat boosts applied, mine exit unlocks, returns to map
-- [x] Fight → boss battle launches with correct stats
-- [x] Shaman Hex debuff reduces player attack next turn
-- [x] Shaman Heal fires once only, removed from rotation after use
 - [ ] Boss victory → kill flags + ghost flags set, 25 gold + `shaman_talisman` awarded, mine exit unlocks
-- [x] Ghost flags correct for all 4 permutations (Pure+recruit, Pure+kill, Mixed+recruit, Mixed+kill)
-- [x] `mine_boss_resolved` and `mine_exit_unlocked` set after either branch
-- [x] Boss trigger does not re-fire on map return
-- [x] Stats increment during boss fight
-- [x] Clock continues running throughout
-- [x] Headless smoke run passes
 
-**Done state:** The moral choice works and has real mechanical and flag consequences.
+**Done state:** Moral choice works with real mechanical and flag consequences.
 
-## Stage 6.5 — Dev 'cheatcode'
+---
+
+## Stage 6.5 — Dev skip / scene-load cheat
 **Status:** ⬜ Not started
 
-**Tasks:**
-- scope to be set
+**Goal:** Make playtesting and development faster. Two tools: a battle skip key, and a scene-load shortcut to spawn the player at any map location without replaying the full loop.
+
+### Battle skip (key: P)
+- During battle, on the player's turn, pressing `P` immediately triggers the victory sequence as if the enemy was killed by a normal attack.
+- Runs the full `_run_victory_sequence()` path — loot rolls, flag increments, stat events, return to map — so it stress-tests the resolution flow, not just exits the scene.
+- Only active when `OS.is_debug_build()` is true. Invisible in release builds.
+- Log line on use: `"[DEV] Battle skipped."`
+
+### Scene/location loader (key: L)
+- Pressing `L` on the map opens a small dev overlay panel (same pattern as existing debug overlay).
+- Panel shows a list of named spawn points — at minimum:
+  - `town_start` — player spawns at town entrance
+  - `mine_entry` — player spawns at mine entrance with `mine_entry_commit_applied` set
+  - `mine_mid` — player spawns past encounter zones 1–2 with `mine_encounter_progress = 2`
+  - `mine_boss_ready` — player spawns in antechamber with all encounters cleared and `mine_boss_ready = true`
+  - `post_boss` — player spawns in post-boss corridor with `mine_boss_resolved = true` and `mine_exit_unlocked = true`
+- Selecting a spawn point sets the relevant flags, moves the player to that position, and closes the panel.
+- Only active when `OS.is_debug_build()` is true.
+- Add a note in `HANDOVER.md` dev controls section listing `P` and `L`.
 
 **Verification:**
-- scope to be set
+- [ ] Press `P` during battle → victory sequence runs in full, returns to map with loot
+- [ ] Press `P` during boss fight → Shaman victory resolution runs (flags set, loot awarded)
+- [ ] Press `L` on map → spawn panel opens
+- [ ] Each spawn point lands player at correct location with correct flags pre-set
+- [ ] Neither `P` nor `L` is accessible in a non-debug build
 
-**Done state:** Player can skip battles to victory status by pressing 'P' during battle on their turn
+**Done state:** Developer can reach any point in the loop in under 30 seconds.
 
 ---
 
 ## Stage 7 — Mine exit and area transition
 **Status:** ⬜ Not started
 
-**Goal:** Leaving the mine reveals a new area. The main quest path opens.
+**Goal:** Leaving the mine reveals a new area. The core loop completes.
 
 **Tasks:**
-- [ ] Mine exit trigger → cutscene: player emerges into new region
-- [ ] New region map stub: road, distant mountains, signpost
+- [ ] Mine exit trigger → cutscene: player emerges into daylight / new region
+- [ ] New region map stub: road, distant mountains, signpost — TileMap-authored, minimum viable
 - [ ] Quest flags: `mine_cleared = true`, `main_quest_path_open = true`
-- [ ] Shaman companion appears in exit cutscene if `shaman_recruited` flag is set
+- [ ] Shaman companion sprite appears alongside player in exit cutscene if `shaman_recruited = true`
+- [ ] Cutscene returns player to new region map stub at a defined spawn point
 
 **Verification:**
-- [ ] Exit → cutscene → new area
-- [ ] Quest flags set
-- [ ] Companion present if recruited
-- [ ] New area feels like arrival
+- [ ] Walk to exit trigger → cutscene fires
+- [ ] Shaman appears in cutscene if recruited, absent if killed
+- [ ] New region map loads at correct spawn
+- [ ] `mine_cleared` and `main_quest_path_open` flags set
+- [ ] New area reads as outside — daylight, open space, different tileset to mine
+- [ ] Headless smoke run passes
 
-**Done state:** The core loop completes.
+**Done state:** The core loop completes end to end.
 
 ---
 
@@ -185,7 +127,7 @@ Everything else is production.
 
 **Tasks:**
 - [ ] `SaveManager` autoload: `save_game()`, `load_game()`, `has_save()`
-- [ ] Saves: full `StatRegistry.stats`, `PlayerData` (flags + ghost flags), `GameClock` time, location, quest flags
+- [ ] Saves: full `StatRegistry.stats`, `PlayerData` (all flags + ghost flags + inventory + equipment + level/XP), `GameClock` time, location, quest flags
 - [ ] Save file: `user://save_game.json`
 - [ ] Auto-save triggers: map entry, dialogue complete, battle victory, moral choice resolved
 - [ ] On launch: load if save exists, else boot to new game defaults
@@ -194,7 +136,8 @@ Everything else is production.
 - [ ] Play 5 mins, quit, relaunch — all state restored
 - [ ] Clock resumes from saved time
 - [ ] Ghost flags persist
-- [ ] Shaman branch outcome persists correctly across save/load
+- [ ] Shaman branch outcome persists correctly
+- [ ] Level and XP persist
 
 **Done state:** Progress is never lost.
 
@@ -203,109 +146,134 @@ Everything else is production.
 ## Stage 8b — MVP feature pass
 **Status:** ⬜ Not started
 
-**Goal:** Before the developer review pass, implement a set of MVP/spike-quality features that need to exist in the game — even if placeholder, rough, or incomplete — so Stage 9 can assess the full experience. Nothing here needs to be polished. It needs to be present and functional enough to evaluate.
+**Goal:** Implement a set of spike-quality features that must exist in the game before the developer review. Nothing needs to be polished — just present and functional enough to evaluate.
 
-**Features:**
+---
 
 ### Dialogue portraits
-- NPC dialogue box currently has a portrait slot but no image.
-- Source or generate a static portrait image for at least one NPC (the Shaman is the priority — he's the most dramatically important character in the VS).
-- Portrait does not need to be final art. A cropped CC0 image or a generated image is fine.
-- Wire it into the dialogue box portrait slot for that NPC.
+- Portrait slot in `DialogueBox` exists but is empty.
+- Source or generate one portrait image — priority is the Shaman (most dramatically important character).
+- Wire it into the dialogue box portrait slot for the Shaman's `shaman_intro` cutscene.
+- Any resolution is fine; it will be replaced in production.
 
 ### Class-specific map sprites
-- Player currently appears as a generic coloured square on the map.
-- Replace with a class-specific 32×32 sprite: one for Fighter (Pure), one for Battlemage (Mixed).
-- Use LPC spritesheet assets already in the project — crop a top-down walking frame.
-- Pure/Mixed path tint accent (gold/teal) should remain on top.
+- Player is currently a coloured square.
+- Replace with a class-specific 32×32 top-down sprite: Fighter (Pure), Battlemage (Mixed).
+- Use LPC spritesheet assets already in the project. Crop a top-down walking frame.
+- Keep Pure/Mixed path tint accent (gold/teal) on top.
 
-### NPC sprites
-- NPCs currently appears as a generic coloured square on the map.
-- Replace with a random 32×32 sprite from LPC spritesheet assets already in project
+### NPC map sprites
+- NPCs are currently coloured squares.
+- Replace with a 32×32 NPC sprite from LPC assets already in the project.
+- Does not need to be unique per NPC — one generic humanoid sprite for all town NPCs is fine.
 
 ### Alignment system — spike
-- Implement a minimal D&D-style alignment matrix (Law–Chaos axis, Good–Evil axis = 9-cell grid).
-- Reference: `assets/art/Mood Board/bg3-alignment-chart-v0-lb31w8gqv26c1.webp`
-- Player's position on the grid is derived from existing flags and ghost flags — no new input required from the player.
-- Example derivations (establish the full mapping in code):
-  - `pure_rep_shaman_mercy = true` → shifts toward Good
-  - `mixed_betrayed_own = true` → shifts toward Evil
-  - `shaman_recruited` → shifts toward Chaotic
-  - `shaman_killed` (Pure path) → shifts toward Lawful
-- Display: shown as a highlighted cell in the HUD stats tab. Label only (e.g. "Lawful Good"). No animation needed.
-- This is a spike. The derivation logic will be expanded in production.
+- D&D-style 3×3 alignment matrix: Law–Neutral–Chaos (x-axis) × Good–Neutral–Evil (y-axis).
+- Player position is derived from existing flags and ghost flags. No new player input.
+- Flag-to-alignment derivation rules (establish in a new `AlignmentSystem.gd` or inline in `PlayerData.gd`):
+  - `pure_rep_shaman_mercy = true` → +Good
+  - `mixed_betrayed_own = true` → +Evil
+  - `shaman_recruited = true` → +Chaotic
+  - `shaman_killed = true` on Pure path → +Lawful
+  - Default starting position: True Neutral
+- Display: alignment label only in HUD Stats tab (e.g. "Lawful Good"). No grid visualisation needed for spike.
+- Reference mood board: `assets/art/Mood Board/bg3-alignment-chart-v0-lb31w8gqv26c1.webp`
+- Derivation logic will be expanded in production.
+
+### Levelling system — spike
+The game needs a levelling loop. This spike establishes the mechanic and architecture; values and balance are placeholders.
+
+**Data (add to `PlayerData.gd`):**
+- `level: int = 1`
+- `xp: int = 0`
+- `xp_to_next_level: int = 100` (flat threshold for spike — proper curve in production)
+- `unspent_stat_points: int = 0`
+
+**XP gain:**
+- On battle victory, award XP based on enemy type: Kobold = 30 XP, Shaman = 80 XP.
+- Show XP gain in the loot panel: e.g. `"Victory!\nGold: 12\nXP: +30"`.
+- After loot panel, check if `xp >= xp_to_next_level`.
+
+**Level-up flow:**
+- If threshold met: set `level += 1`, `xp -= xp_to_next_level`, `unspent_stat_points += 3`, emit `SignalBus.level_up.emit(level)`.
+- Show a `"Level Up!"` banner (same centre-screen banner used for `"Victory!"`), hold 1.5s.
+- After banner: transition to HUD Stats tab directly (use existing `SceneManager` HUD open pattern).
+- On the Stats tab, if `unspent_stat_points > 0`, show a `"+ 1"` button next to each of the 6 top-level stats. Pressing it increments that stat by 1 (via `StatRegistry`), decrements `unspent_stat_points` by 1, and disables all `+` buttons when `unspent_stat_points` reaches 0.
+- No animation, no confirm screen — just the buttons. Player presses 3 times total and closes HUD.
+- Stats allocated here do not need to materially affect combat in the spike. The architecture matters, not the balance.
+
+**HUD Stats tab additions:**
+- Add `Level: X` and `XP: X / 100` to the top of the Stats tab.
+- Show `"X points to spend"` indicator when `unspent_stat_points > 0`.
 
 ### HUD — MVP pass
-The HUD overlay exists but is minimal. Implement the following tabs at spike quality:
 
-**Stats tab (already partially exists):**
-- Show all 6 top-level stats with their current values.
-- Show the player's alignment label (from alignment system above).
-- Show current gold.
+**Stats tab:**
+- All 6 top-level stats with current values
+- `Level`, `XP / XP_to_next`, unspent points indicator (if any)
+- Alignment label
+- Current gold
 
 **Equipment tab:**
-- Six slots displayed as labelled boxes: Helm, Armour, Weapon, Boots, Offhand, Accessory.
-- For spellbook/ability slot: show "Spellbook" if Battlemage, "Shield" if Fighter.
-- Slots show item name if equipped, "Empty" if not.
-- No drag-and-drop. No equip/unequip in this stage — display only.
+- Seven labelled slots: Helm, Armour, Weapon, Boots, Offhand, Accessory, and one class slot ("Spellbook" for Battlemage, "Shield" for Fighter)
+- Show item name if equipped, "Empty" if not
+- Display only — no equip/unequip interaction in this stage
 
 **Quest tab:**
-- Static placeholder. Show current quest name ("Into the Mine") and one line of objective text derived from `mine_encounter_progress` and `mine_boss_resolved` flags.
-- No full quest log system — just the active objective display.
+- Show active quest name ("Into the Mine") and one objective line derived from `mine_encounter_progress` and `mine_boss_resolved`
+- No full quest log — just the current objective
 
 **Map tab:**
-- Static placeholder image or a blank panel with the text "Map — coming soon."
-- This is intentionally deferred. It just needs to exist as a tab.
-
-**Leveling Systen: - spike**
-- scope coming soon
-
+- Blank panel, text: "Map — coming soon"
+- Must exist as a tab; content is deferred
 
 ### Equipment rendering on battle sprite — spike
-- `Battle.gd` already has a layered sprite slot system in mind (base body + armour layer + weapon layer per `docs/HANDOVER.md`).
-- Implement the minimum: if a weapon is equipped in `PlayerData.equipment["weapon"]`, modify the player's battle sprite or add a visible weapon overlay.
-- Does not need to be a full compositing system. A single conditional texture swap or overlay is sufficient.
-- This proves the architecture before production builds it out properly.
+- If `PlayerData.equipment["weapon"]` is non-empty, apply a visible change to the player's battle sprite (conditional texture swap or overlay layer).
+- Does not need to be a full compositing system. One conditional is enough.
+- Proves the architecture before production builds it out.
 
 **Verification:**
-- [ ] Shaman dialogue box shows a portrait image
+- [ ] Shaman dialogue/cutscene shows a portrait image
 - [ ] Fighter and Battlemage have distinct 32×32 top-down map sprites
-- [ ] Alignment label displays correctly in HUD stats tab for both Pure and Mixed paths
-- [ ] Alignment shifts correctly when relevant flags are set (test with debug toggles)
-- [ ] HUD equipment tab shows all six slots, correctly populated or labelled "Empty"
-- [ ] Spellbook slot shows for Battlemage, Shield slot shows for Fighter
-- [ ] HUD quest tab shows active objective text that updates with `mine_encounter_progress`
-- [ ] HUD map tab exists and shows placeholder
-- [ ] Level system shows level and exp
-- [ ] Equipping a weapon in `PlayerData.equipment["weapon"]` produces a visible change in the battle sprite
+- [ ] Town NPCs have a sprite instead of a coloured square
+- [ ] Alignment label displays correctly in HUD Stats tab
+- [ ] Alignment shifts with relevant flags (test with debug path toggle)
+- [ ] Battle victory shows XP gain in loot panel
+- [ ] Level-up banner fires when XP threshold is met
+- [ ] HUD Stats tab opens after level-up with `+` buttons visible
+- [ ] Pressing `+` three times spends all points; buttons disable
+- [ ] `Level` and `XP` display correctly in HUD Stats tab
+- [ ] HUD Equipment tab shows all slots, populated or "Empty"
+- [ ] HUD Quest tab shows current objective
+- [ ] HUD Map tab exists with placeholder text
+- [ ] Equipping a weapon produces a visible change in the battle sprite
 
-**Done state:** The game has enough visual and systemic presence for a meaningful developer review in Stage 9.
+**Done state:** The game has enough visual and systemic presence for a meaningful developer review.
 
 ---
 
 ## Stage 9 — Final feature checklist (developer sign-off)
 **Status:** ⬜ Not started
 
-**Goal:** Before polish begins, John plays through the complete loop and confirms every feature is working and directionally correct. No code changes unless something is broken or fundamentally wrong. This is a personal review, not an iteration sprint.
+**Goal:** John plays through the complete loop and confirms every feature is working and directionally correct. No code changes unless something is broken or fundamentally wrong.
 
 **Checklist:**
-- [ ] Complete core loop start to finish without debug controls: Town → Leave → Cutscene → Mine → 3 encounters → Boss choice → Exit
-- [ ] Fighter path feels distinct and satisfying — Shield Bash has impact
-- [ ] Battlemage path feels distinct and satisfying — versatility is legible
-- [ ] Recruit branch feels like a real moral choice, not a soft option
-- [ ] Kill branch feels like a real moral choice, not the "easy" path
-- [ ] Pure and Mixed Shaman opening lines land as intended allegory
-- [ ] Kobold encounters feel appropriately challenging — not trivial, not punishing
+- [ ] Complete core loop without debug controls: Town → Leave → Cutscene → Mine → 3 encounters → Boss choice → Exit
+- [ ] Fighter path feels distinct — Shield Bash has impact
+- [ ] Battlemage path feels distinct — versatility is legible
+- [ ] Recruit and kill branches both feel like real moral choices
+- [ ] Shaman dialogue lands as intended allegory for both Pure and Mixed
+- [ ] Kobold encounters feel appropriately challenging
 - [ ] Boss fight is clearly harder than regular encounters
-- [ ] Stat increments feel meaningful (check debug panel at end of run)
+- [ ] Level-up flow feels rewarding — stat allocation is legible
 - [ ] Alignment label reflects the choices made
-- [ ] All flags correct: `shaman_recruited`/`shaman_killed` and ghost flags as expected
+- [ ] All flags correct: `shaman_recruited`/`shaman_killed`, ghost flags, `mine_cleared`
 - [ ] HUD is readable and not obstructing gameplay
 - [ ] All transitions feel smooth enough for a playtester
 - [ ] No progression blockers or softlocks
-- [ ] Anything wrong or missing is logged as a note for Stage 10 or production
+- [ ] Notes logged for Stage 10 or production
 
-**Done state:** John is happy with the game as an unpolished experience. Stage 10 polish can begin.
+**Done state:** John is satisfied with the unpolished experience. Stage 10 can begin.
 
 ---
 
@@ -315,20 +283,19 @@ The HUD overlay exists but is minimal. Implement the following tabs at spike qua
 **Goal:** Make the loop good enough to put in front of a real person.
 
 **Tasks:**
-- [ ] Remove spike dev controls (B, H, C, 1, 2)
-- [ ] Remove debug panel from release build
+- [ ] Remove dev controls (`P`, `L`, `B`, `H`, `C`, `1`, `2`) from non-debug builds (already gated by `OS.is_debug_build()` — verify)
+- [ ] Remove debug overlay panel from release build
 - [ ] Audio: ambient town, ambient mine, battle music, victory sting, moral choice sting
 - [ ] SFX: footstep, attack, spell cast, dialogue advance, menu sounds
-- [ ] Fade to black between all major state transitions
-- [ ] UI pass: dialogue box, HUD, battle menu — match art direction
-- [ ] Fix known Stage 1 issues: remaining tree collision
-- [ ] NPC portrait(s) — at minimum the Shaman
+- [ ] UI pass: dialogue box, HUD tabs, battle menu — match art direction
+- [ ] Fix known tree collision issues from Stage 1
+- [ ] Final portrait pass — Shaman at minimum
 - [ ] Game over screen
 - [ ] First external playtester pass
 
 **Verification:**
 - [ ] Unknown player completes loop without help
-- [ ] No debug text in normal play
+- [ ] No debug text or controls visible in normal play
 - [ ] Audio throughout
 - [ ] Smooth transitions
 
@@ -340,25 +307,24 @@ The HUD overlay exists but is minimal. Implement the following tabs at spike qua
 
 | Stage | Task | Status |
 |---|---|---|
-| 1 | Real town map (editor-designed) | ✅ Complete |
-| 2 | NPC dialogue system | ✅ Complete (Slice Day 2) |
-| 3 | Town exit + mine entrance cutscene | ✅ Complete (Slice Day 3 resolved) |
-| 4 | Mine dungeon map | ✅ Complete (Slice Day 4 resolved) |
-| 5 | Battle system | ✅ Complete (Slice Day 5 resolved) |
+| 1 | Real town map | ✅ Complete |
+| 2 | NPC dialogue system | ✅ Complete |
+| 3 | Town exit + mine entrance cutscene | ✅ Complete |
+| 4 | Mine dungeon map | ✅ Complete |
+| 5 | Battle system | ✅ Complete |
 | 6 | Boss room + moral choice | 🔄 In progress |
+| 6.5 | Dev skip / scene-load cheat | ⬜ |
 | 7 | Mine exit + area transition | ⬜ |
 | 8 | Save system | ⬜ |
 | 8b | MVP feature pass | ⬜ |
-| 9 | Final feature checklist (developer sign-off) | ⬜ |
+| 9 | Final feature checklist | ⬜ |
 | 10 | Polish + playtester pass | ⬜ |
 
 ---
 
 ## How to use this document
 
-At the start of each Cascade/Claude session:
-
+At the start of each session:
 > "Read `docs/HANDOVER.md` and `docs/vertical_slice_plan.md`. I am on Vertical Slice Stage X — [name]. Help me complete the tasks."
 
-After each session: tick completed tasks, update the status table.
-When a stage passes all verification checks: mark ✅ and start the next.
+After each session: tick completed tasks, update the status table, mark stage ✅ when all verification passes.

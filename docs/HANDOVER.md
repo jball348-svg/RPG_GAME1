@@ -1,32 +1,32 @@
 # Project Handover — RPG_GAME1
-> **For LLM agents.** Read this before doing anything. It is the source of truth for where this project is and what has been decided. Do not contradict decisions marked as locked without flagging it explicitly to the developer first.
+> **For LLM agents.** Read this before doing anything. This is the source of truth. Do not contradict locked decisions without flagging it to the developer first.
 
 ---
 
 ## Who you are working with
 
-**Developer:** John — solo developer, "vibe coder". Works with AI-assisted tooling. Primary stack is Next.js/React/Vercel for web projects. This project is his first Godot game. He is decisive, moves fast, and has strong creative instincts. He does not need hand-holding on concepts but does need concrete, specific technical help. Do not over-explain. Do not pad responses. Be direct.
+**Developer:** John — solo developer, "vibe coder". First Godot game. Decisive, moves fast, strong creative instincts. Does not need hand-holding. Needs concrete, specific technical help. Do not over-explain. Do not pad. Be direct.
 
-**Working style:** John uses the GSD (Get Shit Done) methodology. He scopes hard, cuts ruthlessly, and ships. When he asks for your opinion, give it honestly — including pushback if something is out of scope or a bad idea.
+**Working style:** GSD methodology. Scopes hard, cuts ruthlessly, ships. Give honest opinions including pushback when something is out of scope or a bad idea.
 
-**AI stack in use:**
+**AI stack:**
 - Claude — architecture, scoping, design decisions, prompt generation
-- Windsurf / Cascade — implementation
-- GitHub MCP — direct repo operations (John's account is `jball348-svg`)
+- Codex / Windsurf / Cascade — implementation
+- GitHub MCP — direct repo operations (`jball348-svg`)
 
 ---
 
-## The game — one paragraph
+## The game
 
-An archetypal high fantasy RPG where the player chooses at the start whether they are **Pure** (one class, optionally specialised) or **Mixed** (multiclass, versatile but diluted). This choice is the spine of the game's central conflict: a war between Pure and Mixed factions. The allegory is intentional and not subtle — it mirrors bigotry and racism using the fantasy genre as the frame. The game features a deep but legible stat system, classic JRPG pacing (top-down 2D map, turn-based battle, HUD menus, cutscenes), and a constant low-level dopamine loop where every action contributes to character growth.
+An archetypal high fantasy RPG. At the start, the player chooses **Pure** (one class, optionally specialised) or **Mixed** (multiclass, versatile but diluted). This choice drives the game's central conflict: a war between Pure and Mixed factions. The allegory mirrors bigotry and racism using fantasy as the frame — intentional, not subtle.
 
-**Engine:** Godot 4 (GDScript)
-**Platform target:** PC / Steam (v1.0)
-**Repo:** `github.com/jball348-svg/RPG_GAME1`
+Classic JRPG pacing: top-down 2D map, turn-based battle, HUD menus, cutscenes. Deep but legible stat system. Constant dopamine loop — every action grows the character.
+
+**Engine:** Godot 4 (GDScript) · **Platform:** PC / Steam · **Repo:** `github.com/jball348-svg/RPG_GAME1`
 
 ---
 
-## Locked decisions — do not revisit without flagging
+## Locked decisions
 
 | Decision | Detail |
 |---|---|
@@ -34,41 +34,42 @@ An archetypal high fantasy RPG where the player chooses at the start whether the
 | Genre | 2D top-down RPG, pixel art |
 | Setting | Archetypal high fantasy — all tropes, played straight |
 | Central conflict | Pure vs Mixed class war — allegory for bigotry/racism |
-| Class system | Pure path (1 class + optional specialisation) vs Mixed path (multiclass, watered down) |
-| Stat system | 6 top-level stats, skills beneath each, open registry (add skills during production) |
-| Visibility tiers | Tier 1 always shown, Tier 2 unlocked at milestones, Tier 3 ghost/never shown |
-| Luck | Derived stat under Social — not directly trained, calculated from Charm + Reputation + Empathy |
-| Holy stat | Named "Holy" (not Spirit). Skills: Faith, Intuition, Peace, Justice |
-| Will stat | Named "Will" (not Willpower). Skills: Resolve, Focus, Resistance |
+| Class system | Pure (1 class + optional specialisation) vs Mixed (multiclass, diluted) |
+| Stat system | 6 top-level stats, skills beneath each, open registry |
+| Visibility tiers | Tier 1 always shown · Tier 2 unlocked at milestones · Tier 3 ghost/never shown |
+| Luck | Derived stat under Social — calculated from Charm + Reputation + Empathy |
+| Holy stat | Named "Holy". Skills: Faith, Intuition, Peace, Justice |
+| Will stat | Named "Will". Skills: Resolve, Focus, Resistance |
 | Magik | Stylised with a 'k'. Skills: Spellcasting, Attunement, Mana |
-| Time system | Always-on clock, ~2× real time, never pauses, accelerates on rest/sleep, Age is a stat |
-| Ghost layer | Hidden flags and stats that silently influence world — player never sees them directly |
-| Pure/Mix flag | Not a stat. A flag + reputation score. Lives in PlayerData.gd |
-| Tooling | Notion (planning), GitHub (code + docs), Aseprite (art, later) |
-| Art approach | Free CC0 asset packs (Kenney.nl, OpenGameArt, itch.io) + curation for consistency |
+| Time system | Always-on clock, ~2× real time, never pauses, accelerates on rest/sleep. Age is a stat. |
+| Ghost layer | Hidden flags and stats that silently influence world — never shown to player |
+| Pure/Mix flag | Not a stat. A flag + reputation score. Lives in `PlayerData.gd`. |
+| Art approach | Free CC0 asset packs (Kenney.nl, OpenGameArt, itch.io) + curation |
 | Tile resolution | 32×32. Scrolling map, not screen-shifting. |
-| Art tone | Desaturated earth tones, grim beauty, no bright primaries, no cartoon. Refs: Baldur's Gate, LotR, Game of Thrones, Elden Ring |
-| Character personalisation | Map = generic class sprite only. Battle + HUD + Cutscene = full equipment/armour render. |
+| Art tone | Desaturated earth tones, grim beauty, no bright primaries, no cartoon. Refs: Baldur's Gate, LotR, GoT, Elden Ring |
+| Character art | Map = class sprite only. Battle + HUD + Cutscene = full equipment render. |
+| Audio | Music generated via AI (Suno/Udio). SFX from CC0 sources (freesound.org, Kenney). Stored locally, gitignored. |
 
 ---
 
-## V1.0 scope — locked
+## V1.0 scope
 
 **In scope:**
-- Full main quest arc, playable start to finish
-- Class selection — Pure and Mixed paths, all mechanical consequences
+- Full main quest arc, start to finish
+- Pure and Mixed class paths with all mechanical consequences
 - Specialisation trees within Pure classes
 - Stat system fully operational
-- Four game states: Map, Battle, HUD, Cutscene — with clean transitions
-- Enough world to serve the main quest (~6–10 locations, key NPCs, Pure/Mixed factions)
+- Four game states: Map, Battle, HUD, Cutscene — clean transitions
+- ~6–10 locations, key NPCs, Pure/Mixed factions
 - Battle system with class abilities and stat integration
-- Save system (full stat snapshot, quest state, clock, class, location)
-- PC / Steam as platform target
+- Levelling system with stat allocation
+- Save system (full snapshot: stats, flags, clock, location)
+- PC / Steam
 
-**Explicitly out of scope for v1.0:**
-- Guilds, side quests, open world / free roam, post-game content
-- Crafting, housing, full economy/trading system
-- Companion system (beyond the Shaman recruit mechanic in the core loop)
+**Out of scope for v1.0:**
+- Guilds, side quests, open world, post-game content
+- Crafting, housing, full economy/trading
+- Companion system (beyond Shaman recruit flag)
 - Mounts, dynamic weather, full faction reputation system, multiplayer, mod support
 
 ---
@@ -84,41 +85,33 @@ An archetypal high fantasy RPG where the player chooses at the start whether the
 | Will | Resolve, Focus, Resistance |
 | Holy | Faith, Intuition, Peace, Justice |
 
-**Open registry principle:** Skills are a starting set. Add new ones during production — add a key to `stats` in `StatRegistry.gd` and entries to `action_modifiers`. No architecture change required.
-
-Full design doc: `docs/stat_registry.md`
+Open registry principle: add a key to `StatRegistry.gd` and entries to `action_modifiers`. No architecture change required. Full doc: `docs/stat_registry.md`
 
 ---
 
-## Character art — by game state
+## Character art by game state
 
-| State | Character art | Personalisation visible? |
+| State | Art | Equipment visible? |
 |---|---|---|
-| Map | Generic class sprite, 32×32 or 32×64, top-down | No — class silhouette only |
-| Battle | Larger sprite, side-on/3/4 view, 64×64 or 96×96 | Yes — armour, weapons, equipment rendered |
-| HUD / equipment tab | Portrait or full-body character view | Yes — full equipment loadout visible |
-| Cutscene | Full character sprite, animated, equipment visible | Yes — armour and loadout rendered |
+| Map | Class sprite, 32×32 top-down | No |
+| Battle | Side-on sprite, 64–96px | Yes — armour + weapon layers |
+| HUD | Portrait or full-body | Yes — full loadout |
+| Cutscene | Full sprite, animated | Yes |
 
-Map sprites colour-coded for Pure/Mixed (subtle gold vs teal accent) but no equipment shown.
-Battle sprites use layered composition: base body + armour layer + weapon layer.
-Full art rules: `docs/art_direction.md`
+Map sprites: Pure = muted gold tint, Mixed = muted teal tint. Battle sprites: layered (base body + armour + weapon).
 
 ---
 
-## Core loop — the reference scenario
+## Core loop (reference scenario)
 
-The concrete 20-minute player experience. Every system serves this. It is the vertical slice target.
-
-1. **Load save** → player in a town near a Kobold-occupied mine
-2. **Town (map state)** → NPC intel (Social + gold gated), unmissable moral choice alert, bookstore spell unlock (Intelligence gated)
-3. **Leave town** → point-of-no-return prompt, confirm
-4. **Cutscene** → class-specific mine entrance animation, equipment loadout visible
-5. **Mine dungeon (map state)** → navigation, Kobold encounters, stat ticks constantly
-6. **Battle (battle state)** → Kobold fights, new spell, class abilities, stat engine firing
-7. **Boss room** → Half-Kobold Orc Shaman → recruit (Mixed boosts, companion) or kill (Pure rep up, loot, ghost flag)
-8. **Exit mine** → new area revealed, main quest path opens
-
-Key notes: information gating is a reusable pattern. The Shaman IS the allegory in action. Stat engine never sleeps. Pure/Mix flag affects NPCs, shops, ghost flags from first interaction.
+1. Load save → player in town near Kobold-occupied mine
+2. Town → NPC intel (Social + gold gated), moral choice warning, bookstore unlock (Intelligence gated)
+3. Leave town → point-of-no-return confirm
+4. Cutscene → class-specific mine entrance, path tint
+5. Mine → navigation, Kobold encounters, stat ticks
+6. Battle → Kobold fights, class abilities, levelling
+7. Boss room → Shaman → recruit or kill
+8. Exit mine → new area, main quest path opens
 
 ---
 
@@ -126,128 +119,111 @@ Key notes: information gating is a reusable pattern. The Shaman IS the allegory 
 
 | State | What happens | Stat activity |
 |---|---|---|
-| Map | Top-down movement, NPC interaction, exploration | Movement, Social, Endurance ticking |
-| Battle | Turn-based combat, skills, spells | Strength, Spellcasting, Will, Holy ticking |
-| HUD | Inventory, equipment, skill tree overlay | Minimal — clock still runs |
-| Cutscene | Scripted NPC movement, dialogue, automated sequences | Clock runs, story flags fire |
+| Map | Movement, NPC interaction, exploration | Movement, Social, Endurance |
+| Battle | Turn-based combat | Strength, Spellcasting, Will, Holy |
+| HUD | Inventory, stats, equipment, quests | Clock runs, minimal stat activity |
+| Cutscene | Scripted sequences, dialogue, flags | Clock runs, story flags fire |
 
-Transitions: Map ↔ Battle, Map ↔ Cutscene, HUD overlays map (does not replace it).
-
----
-
-## Pre-production — COMPLETE ✅
-
-| Step | Status |
-|---|---|
-| 1. One-page pitch | ✅ |
-| 2. Scope document | ✅ |
-| 3. World and setting | ✅ |
-| 4. Core loop document | ✅ |
-| 5. Stat registry | ✅ |
-| 6. Technical spike | ✅ All 5 days, all 4 criteria passed |
-| 7. Art direction document | ✅ See `docs/art_direction.md` |
-| 8. Vertical slice | 🔄 **Current — in progress** |
+Transitions: Map ↔ Battle, Map ↔ Cutscene. HUD overlays map (does not replace it).
 
 ---
 
-## Technical spike — COMPLETE ✅
+## Current phase — vertical slice 🔄
 
-- [x] Walk on map → Movement increments in debug panel
-- [x] Attack in battle → Strength increments
-- [x] Clock runs across all four state transitions
-- [x] Pure/Mix flag → NPC shows different dialogue line
+See `docs/vertical_slice_plan.md` for full stage breakdown and status.
 
-### Proven infrastructure
+**Stages complete:** 1–5
+**Stage 6:** 🔄 In progress (2 verification checks outstanding)
+**Up next:** Stage 6.5 (dev skip tools), Stage 7 (mine exit)
+
+### Vertical slice checklist
+- [x] Real tilesets integrated
+- [x] Real town map
+- [x] NPC dialogue system
+- [x] Town exit → cutscene → mine
+- [x] Mine dungeon map
+- [x] Battle system (turn-based, class abilities)
+- [x] Boss room — Shaman intro + moral choice (nearly complete)
+- [ ] Mine exit → new area
+- [ ] Save system
+- [ ] MVP feature pass (portraits, sprites, HUD, levelling, alignment)
+- [ ] Dev sign-off
+- [ ] Polish + playtester pass
+
+---
+
+## Infrastructure reference
 
 | File | Purpose |
 |---|---|
 | `autoloads/SignalBus.gd` | All game signals |
-| `autoloads/StatRegistry.gd` | Stat tree, action modifiers, temp modifiers, Luck derivation |
-| `autoloads/GameClock.gd` | Always-on clock, speed multiplier, day rollover |
-| `autoloads/PlayerData.gd` | Class, path, flags, ghost flags, age, equipment slots |
-| `autoloads/SceneManager.gd` | Game state loader |
+| `autoloads/StatRegistry.gd` | Stat tree, action modifiers, Luck derivation |
+| `autoloads/GameClock.gd` | Always-on clock |
+| `autoloads/PlayerData.gd` | Class, path, flags, ghost flags, age, equipment, level, XP |
+| `autoloads/SceneManager.gd` | Game state loader, payload passing |
+| `autoloads/DialogueManager.gd` | NPC dialogue trees, condition evaluation |
 | `scenes/main/` | Root shell, persistent OverlayHost |
-| `scenes/map/` | WASD movement, stat event emission |
-| `scenes/battle/` | Attack/cast buttons, stat events, round-trip |
-| `scenes/hud/` | Persistent overlay, stat summary, equipment placeholders |
-| `scenes/cutscene/` | Scripted sequence, Pure/Mixed dialogue branching |
-| `scenes/debug/` | Dev-only overlay — **remove before vertical slice** |
+| `scenes/map/` | WASD movement, encounter triggers, stat events |
+| `scenes/battle/Battle.gd` | Full turn-based battle system |
+| `scenes/battle/HitFlash.gdshader` | Hit colour flash |
+| `scenes/hud/` | Persistent overlay, tabs: Stats, Equipment, Quest, Map |
+| `scenes/cutscene/` | Payload-driven: `mine_entry` and `shaman_intro` sequences |
+| `scenes/debug/` | Dev-only overlay — gated by `OS.is_debug_build()` |
 
-**Dev controls (spike only — remove in vertical slice):**
-`WASD/arrows` move · `B` battle · `H` HUD · `C` cutscene · `1` Pure · `2` Mixed · `3` Social+Gold · `4` Intel · `0` Reset stats
-
----
-
-## Current phase — vertical slice
-
-**Goal:** Build the core loop scenario for real. Town → mine → boss → exit. First thing a playtester sees. Must be polished before production continues.
-
-### Vertical slice task list
-
-- [x] Source and integrate real tilesets (outdoor town + dungeon/mine) per `docs/art_direction.md`
-- [x] Replace placeholder map with real tile layout: starting town + mine entrance area
-- [x] Build NPC dialogue system — reusable, supports stat gates and gold gates
-- [x] Place and wire town NPCs (intel NPC, moral choice NPC, bookstore)
-- [x] Build and verify town exit → cutscene → mine start (Stage 3 Day 3)
-- [x] Build mine dungeon map layout
-- [x] Build real battle system — turn structure, player actions, Kobold enemy type
-- [x] Implement class abilities for the starting class (one Pure, one Mixed)
-- [x] Build moral choice scene — Half-Kobold Orc Shaman, recruit vs kill branching
-- [ ] Build mine exit → new area transition
-- [ ] Build class-specific cutscene at mine entrance
-- [ ] Implement save/load (full stat + quest state + clock + location)
-- [ ] Remove spike dev controls and debug overlay
-- [ ] First playtester pass
-
-### Latest implementation update
-
-- Stage 1 town map pass is stable: blocking collision generation, camera bounds, and north exit confirmation are implemented; exit false-fire-on-load is fixed via delayed arming + top-half guard.
-- Stage 2 is complete: reusable `DialogueManager`, bottom-band `DialogueBox`, physically solid NPCs + interaction zones, and three wired town NPCs with stat/gold/flag-gated dialogue.
-- Debug testing workflow now supports path and gate testing via `1/2` (Pure/Mixed), `3` (Social+Gold), `4` (Intelligence), and `0` (reset stats/gold).
-- Stage 3 Day 3 is resolved and verified: town exit → cutscene → mine entry handoff is stable, with one-time transition stat ticks (`will.resolve`, `holy.faith`) guarded by `mine_entry_commit_applied`.
-- Town exit confirm applies one-time transition meaning ticks (`will.resolve`, `holy.faith`) guarded by `mine_entry_commit_applied`, visible in debug panel verification.
-- `Cutscene.gd` transition sequence is stable (movement beat → sentry line → fade out) with path tint baseline (Pure gold / Mixed teal) plus class/specialisation accent overlay, then returns to `map` at mine entry location.
-- Stage 4 is complete: `Map.gd` now runs the editor-authored mine layout with ordered encounter progression, boss-room gating, exit-lock flow, clearer cave blockers/gate clutter, and mine-exit prop removal after unlock via flags (`mine_encounter_progress`, `mine_boss_ready`, `mine_boss_resolved`, `mine_exit_unlocked`, `mine_cleared`).
-- Overlay sizing/alignment is now stable across map hint + confirmation dialogs, `HUD.gd`, `DialogueBox.gd`, and `Cutscene.gd`; the map hint and debug panel also suppress correctly while HUD/dialogue/prompts are active.
-- Stage 5 is complete: `Battle.gd` now delivers the full turn loop, class-specific abilities, mine battle background, loot/game-over resolution, and encounter wiring back into mine progression.
-- Requested Stage 5 art/layout follow-up is merged: Knight battle art uses `assets/art/player/universal-lpc-sprite_male_01_full.png`, Battlemage uses `assets/art/battle/LPC_starhat/sample.png`, Kobold uses `assets/art/battle/LPC imp/attack - vanilla.png`, the player presents facing right, the enemy presents facing left, and Spell/Item submenu panels open above the bottom action bar so they stay on-screen.
-- Current active focus is Stage 6: replace the boss-room placeholder encounter with the Half-Kobold Orc Shaman intro, recruit-or-fight choice, and resolved exit unlock flow.
-
-### Production order after vertical slice
-1. Class selection / character creation screen
-2. Main quest — remaining acts and locations
-3. Steam page + first devlog — do not wait until launch
+**Dev controls** (debug builds only):
+- `WASD/arrows` — move
+- `P` — skip battle to victory (Battle scene)
+- `L` — open location/spawn loader (Map scene)
+- `B` `H` `C` — force state transitions (spike-era, remove in Stage 10)
+- `1` / `2` — set Pure / Mixed path
+- `3` — bump Social + gold
+- `4` — bump Intelligence
+- `0` — reset stats
 
 ---
 
 ## Repo structure
 
 ```
-autoloads/          Global singletons
+autoloads/
 scenes/
-  main/             Entry point
-  map/              Map state
-  battle/           Battle state
-  hud/              HUD overlay
-  cutscene/         Cutscene state
-  debug/            Dev-only (remove before vertical slice)
+  main/
+  map/
+  battle/
+  hud/
+  cutscene/
+  debug/
 assets/
-  art/              Mood boards (mood_[category]_[desc].png — John sources these)
-  placeholder/      Spike-only — replace in vertical slice
+  art/
+    tilesets/
+    battle/
+    player/
+    UI/
+    Mood Board/
+  audio/          (gitignored — local only, not committed)
 docs/
-  HANDOVER.md       This file — keep current
-  stat_registry.md  Stat design reference
-  art_direction.md  Art direction — all asset decisions against this
-  spike_progress.md Archived — spike complete
+  HANDOVER.md
+  vertical_slice_plan.md
+  stat_registry.md
+  art_direction.md
 project.godot
 ```
+
+**Audio files are gitignored.** Store in `assets/audio/` locally. Do not commit binary audio to the repo — this is standard practice. See notes in `Audio` section of locked decisions.
+
+---
+
+## Production order after vertical slice
+1. Class selection / character creation screen
+2. Main quest — remaining acts and locations
+3. Steam page + first devlog — do not wait until launch
 
 ---
 
 ## How to use this document
 
-Paste raw contents or URL at the top of any new agent session, then state what you are working on.
+Paste raw URL at the top of any new agent session, then state the current stage.
 
 **Raw URL:** `https://raw.githubusercontent.com/jball348-svg/RPG_GAME1/main/docs/HANDOVER.md`
 
-After each session: update this file if decisions change or phase status changes. It is the shared memory. Keep it current.
+Update this file when decisions change or phase status changes. It is the shared memory.
