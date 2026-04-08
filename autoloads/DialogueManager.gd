@@ -115,6 +115,15 @@ var dialogue_trees: Dictionary = {
 			"next": -1,
 		},
 	],
+	"crossroads_signpost": [
+		{
+			"speaker": "Signpost",
+			"text": "The road north leads to the city of Vael. The war waits.",
+			"portrait": "",
+			"conditions": [],
+			"next": -1,
+		},
+	],
 }
 
 var _active_npc_id: String = ""

@@ -39,12 +39,12 @@ func consume_state_payload() -> Dictionary:
 func clear_state_payload() -> void:
 	current_state_payload.clear()
 
-func change_state(new_state: String, payload: Dictionary = {}) -> bool:
+func change_state(new_state: String, payload: Dictionary = {}, force_reload: bool = false) -> bool:
 	if _state_host == null:
 		push_error("SceneManager has no state host configured.")
 		return false
 
-	if new_state == current_state_name and is_instance_valid(current_state_scene):
+	if not force_reload and new_state == current_state_name and is_instance_valid(current_state_scene):
 		current_state_payload = payload.duplicate(true)
 		return true
 

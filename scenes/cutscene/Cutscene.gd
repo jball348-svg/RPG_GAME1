@@ -23,15 +23,20 @@ const CLASS_TINTS := {
 
 const CUTSCENE_ID_MINE_ENTRY := "mine_entry"
 const CUTSCENE_ID_SHAMAN_INTRO := "shaman_intro"
+const CUTSCENE_ID_MINE_EXIT := "mine_exit"
 const SHAMAN_INTRO_DIALOGUE_ID := "shaman_intro_cutscene"
 const SHAMAN_RECRUIT_DIALOGUE_ID := "shaman_recruit_resolution"
 const BATTLE_KIND_BOSS_SHAMAN := "boss_shaman"
 const MINE_BOSS_RESOLVED_FLAG := "mine_boss_resolved"
 const MINE_EXIT_UNLOCKED_FLAG := "mine_exit_unlocked"
+const MINE_CLEARED_FLAG := "mine_cleared"
+const MAIN_QUEST_PATH_OPEN_FLAG := "main_quest_path_open"
 const SHAMAN_RECRUITED_FLAG := "shaman_recruited"
 const FRONTIER_REGION := "frontier_village"
 const MINE_REGION := "kobold_mine"
 const MINE_LOCATION := "mine_entry_chamber"
+const CROSSROADS_REGION := "crossroads_region"
+const CROSSROADS_LOCATION := "crossroads_start"
 const CUTSCENE_TOWN_GATE_LOCATION := "town_north_gate_cutscene"
 const SHAMAN_DIALOGUE_PAUSE_SECONDS := 0.8
 
@@ -53,6 +58,10 @@ const SHAMAN_ACTOR_START_POS := Vector2(336.0, 116.0)
 const SHAMAN_ACTOR_END_POS := Vector2(302.0, 116.0)
 const SHAMAN_PLAYER_SIZE := Vector2(72.0, 88.0)
 const SHAMAN_ACTOR_SIZE := Vector2(72.0, 88.0)
+const MINE_EXIT_PLAYER_START_POS := Vector2(88.0, 146.0)
+const MINE_EXIT_PLAYER_END_POS := Vector2(250.0, 146.0)
+const MINE_EXIT_SHAMAN_START_POS := Vector2(56.0, 146.0)
+const MINE_EXIT_SHAMAN_END_POS := Vector2(218.0, 146.0)
 
 var _incoming_payload: Dictionary = {}
 var _cutscene_id := CUTSCENE_ID_MINE_ENTRY
@@ -71,6 +80,7 @@ var _fog_band: ColorRect
 var _floor_band: ColorRect
 var _player_battle_actor: TextureRect
 var _shaman_actor: TextureRect
+var _narration_label: Label
 var _choice_panel: PanelContainer
 var _choice_title_label: Label
 var _talk_button: Button
@@ -194,6 +204,13 @@ func _build_ui() -> void:
 	_shaman_actor.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_shaman_actor.visible = false
 	add_child(_shaman_actor)
+
+	_narration_label = Label.new()
+	_narration_label.visible = false
+	_narration_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_narration_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_narration_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	add_child(_narration_label)
 
 	_dialogue_panel = PanelContainer.new()
 	_dialogue_panel.anchor_left = 0.0
@@ -342,6 +359,9 @@ func _layout_for_viewport() -> void:
 	_player_battle_actor.size = _scaled(SHAMAN_PLAYER_SIZE)
 	_sentry_actor.size = _scaled(Vector2(40.0, 64.0))
 	_shaman_actor.size = _scaled(SHAMAN_ACTOR_SIZE)
+	_narration_label.position = Vector2(_scaled(Vector2(48.0, 0.0)).x, _scaled(Vector2(0.0, 92.0)).y)
+	_narration_label.size = Vector2(viewport_size.x - _scaled(Vector2(96.0, 0.0)).x, _scaled(Vector2(0.0, 34.0)).y)
+	_narration_label.add_theme_font_size_override("font_size", 10 if compact_layout else 11)
 
 	var horizontal_margin := 16.0 if compact_layout else 40.0
 	var bottom_margin := 10.0 if compact_layout else 12.0
@@ -386,6 +406,8 @@ func _reset_sequence() -> void:
 	_sentry_actor.visible = false
 	_shaman_actor.position = _scaled(SHAMAN_ACTOR_START_POS)
 	_shaman_actor.visible = false
+	_narration_label.visible = false
+	_narration_label.text = ""
 	_dialogue_label.text = ""
 	_dialogue_panel.visible = false
 	_continue_button.text = "Enter Mine"
@@ -424,6 +446,8 @@ func _play_sequence() -> void:
 	match _cutscene_id:
 		CUTSCENE_ID_SHAMAN_INTRO:
 			_run_shaman_intro_sequence()
+		CUTSCENE_ID_MINE_EXIT:
+			_run_mine_exit_sequence()
 		_:
 			_run_mine_entry_sequence()
 
@@ -460,6 +484,48 @@ func _run_shaman_intro_sequence() -> void:
 	await _start_dialogue_and_wait(SHAMAN_INTRO_DIALOGUE_ID)
 	await get_tree().create_timer(SHAMAN_DIALOGUE_PAUSE_SECONDS).timeout
 	_show_shaman_choice()
+
+func _run_mine_exit_sequence() -> void:
+	_title_label.text = "Mine Exit"
+	_player_battle_actor.visible = true
+	_player_battle_actor.position = _scaled(MINE_EXIT_PLAYER_START_POS)
+	_shaman_actor.position = _scaled(MINE_EXIT_SHAMAN_START_POS)
+
+	var shaman_recruited := bool(_incoming_payload.get("shaman_recruited", false))
+	_shaman_actor.visible = shaman_recruited
+
+	var screen_fader = SceneManager.get_screen_fader()
+	if screen_fader != null:
+		screen_fader.force_black()
+		var fade_tween: Tween = screen_fader.fade_from_black(0.45)
+		await fade_tween.finished
+
+	var tween := create_tween()
+	tween.tween_property(_player_battle_actor, "position", _scaled(MINE_EXIT_PLAYER_END_POS), 1.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	if shaman_recruited:
+		tween.parallel().tween_property(_shaman_actor, "position", _scaled(MINE_EXIT_SHAMAN_END_POS), 1.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	await tween.finished
+
+	_narration_label.text = "The Shaman walks with you into the light." if shaman_recruited else "You emerge alone. The mine is behind you."
+	_narration_label.visible = true
+	await get_tree().create_timer(1.5).timeout
+	_narration_label.visible = false
+
+	if screen_fader != null:
+		var fade_to_black: Tween = screen_fader.fade_to_black(0.35)
+		await fade_to_black.finished
+
+	PlayerData.set_flag(MINE_CLEARED_FLAG, true)
+	PlayerData.set_flag(MAIN_QUEST_PATH_OPEN_FLAG, true)
+	PlayerData.current_region = _return_region_from_payload()
+	PlayerData.current_location = _return_location_from_payload()
+	SceneManager.change_state("map", {
+		"fade_from_black": true,
+		"source": "cutscene",
+		"return_region": PlayerData.current_region,
+		"return_location": PlayerData.current_location,
+		"return_position": _return_position_from_payload(),
+	})
 
 func _dialogue_for_current_path() -> String:
 	var class_label := PlayerData.get_display_class()
@@ -604,10 +670,12 @@ func _refresh_status() -> void:
 	]
 
 func _return_region_from_payload() -> String:
-	return str(_incoming_payload.get("return_region", PlayerData.current_region))
+	var fallback := CROSSROADS_REGION if _cutscene_id == CUTSCENE_ID_MINE_EXIT else PlayerData.current_region
+	return str(_incoming_payload.get("return_region", fallback))
 
 func _return_location_from_payload() -> String:
-	return str(_incoming_payload.get("return_location", PlayerData.current_location))
+	var fallback := CROSSROADS_LOCATION if _cutscene_id == CUTSCENE_ID_MINE_EXIT else PlayerData.current_location
+	return str(_incoming_payload.get("return_location", fallback))
 
 func _return_position_from_payload() -> Vector2:
 	var return_position = _incoming_payload.get("return_position", Vector2.ZERO)

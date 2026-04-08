@@ -8,6 +8,11 @@ const MINE_BLOCKING_TILE_LAYERS: Array[int] = [2]
 const OVERLAY_BLOCKING_LAYER := 4
 const ROAD_LAYER := 1
 const OVERLAY_BLOCK_BOTTOM_ROWS := 4
+const UI_PANEL_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/panel_brown.png"
+const UI_BUTTON_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_brown.png"
+const UI_BUTTON_PRESSED_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_brown_pressed.png"
+const UI_BUTTON_DISABLED_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_grey.png"
+const NPC_SCENE: PackedScene = preload("res://scenes/npc/NPC.tscn")
 const TOWN_EXIT_PROMPT_ID := "town_exit"
 const TOWN_EXIT_PROMPT_TITLE := "Leave for the Mine?"
 const TOWN_EXIT_PROMPT_CONFIRM_TEXT := "Continue"
@@ -15,6 +20,7 @@ const TOWN_EXIT_PROMPT_CANCEL_TEXT := "Stay"
 const TOWN_EXIT_PROMPT_TEXT := "You prepare to leave for the mine. There is no turning back. Continue?"
 const TOWN_HINT_TEXT := "Frontier Hamlet\nMove: WASD / Arrows\nB: Battle   H: HUD\nC: Cutscene   1: Pure   2: Mixed\n3: Social+Gold  4: Intel  0: Reset stats"
 const MINE_HINT_BASE_TEXT := "Kobold Mine\nMove: WASD / Arrows\nB: Battle   H: HUD\nC: Cutscene   1: Pure   2: Mixed\n3: Social+Gold  4: Intel  0: Reset stats"
+const CROSSROADS_HINT_TEXT := "Crossroads\nMove: WASD / Arrows\nE: Interact"
 const MINE_BOSS_LOCKED_TEXT := "A heavy ward blocks the top shaft. Clear earlier encounter rooms first."
 const MINE_EXIT_LOCKED_TEXT := "The mine exit is sealed. Resolve the boss room first."
 const MINE_EXIT_PROMPT_ID := "mine_exit"
@@ -28,6 +34,8 @@ const TOWN_LOCATION := "starting_town"
 const MINE_REGION := "kobold_mine"
 const MINE_LOCATION := "mine_entry_chamber"
 const MINE_EXIT_LOCATION := "mine_exit_gate"
+const CROSSROADS_REGION := "crossroads_region"
+const CROSSROADS_LOCATION := "crossroads_start"
 const MINE_BATTLE_ENVIRONMENT := "mine"
 const MINE_COMMIT_FLAG := "mine_entry_commit_applied"
 const MINE_ENCOUNTER_PROGRESS_FLAG := "mine_encounter_progress"
@@ -35,6 +43,9 @@ const MINE_BOSS_READY_FLAG := "mine_boss_ready"
 const MINE_BOSS_RESOLVED_FLAG := "mine_boss_resolved"
 const MINE_EXIT_UNLOCKED_FLAG := "mine_exit_unlocked"
 const MINE_CLEARED_FLAG := "mine_cleared"
+const MAIN_QUEST_PATH_OPEN_FLAG := "main_quest_path_open"
+const SHAMAN_RECRUITED_FLAG := "shaman_recruited"
+const SHAMAN_KILLED_FLAG := "shaman_killed"
 const MINE_REGULAR_ENCOUNTER_COUNT := 3
 const BATTLE_KIND_STANDARD := "standard"
 const BATTLE_KIND_BOSS_PLACEHOLDER := "boss_placeholder"
@@ -43,9 +54,22 @@ const SUPPRESSED_TRIGGER_ENCOUNTER := "encounter"
 const SUPPRESSED_TRIGGER_BOSS := "boss"
 const CUTSCENE_ID_MINE_ENTRY := "mine_entry"
 const CUTSCENE_ID_SHAMAN_INTRO := "shaman_intro"
+const CUTSCENE_ID_MINE_EXIT := "mine_exit"
+const CROSSROADS_SIGNPOST_DIALOGUE_ID := "crossroads_signpost"
 
 const MINE_MAP_SIZE := Vector2i(42, 30)
 const MINE_ENTRY_SPAWN_CELL := Vector2i(21, 27)
+const MINE_MID_SPAWN_CELL := Vector2i(21, 13)
+const MINE_BOSS_READY_SPAWN_CELL := Vector2i(21, 5)
+const MINE_POST_BOSS_SPAWN_CELL := Vector2i(33, 3)
+const MINE_EXIT_SPAWN_CELL := Vector2i(37, 2)
+const CROSSROADS_MAP_SIZE := Vector2i(28, 20)
+const CROSSROADS_START_SPAWN_CELL := Vector2i(14, 16)
+const CROSSROADS_SIGNPOST_CELL := Vector2i(18, 13)
+const CROSSROADS_ROAD_MIN_X := 13
+const CROSSROADS_ROAD_MAX_X := 15
+const TOWN_SAMPLE_GRASS_CELL := Vector2i(0, 0)
+const TOWN_SAMPLE_ROAD_CELL := Vector2i(18, 0)
 const MINE_ENCOUNTER_LABELS: PackedStringArray = [
 	"Collapsed Hall",
 	"Western Den",
@@ -147,6 +171,8 @@ const MINE_PROPS_TEXTURE_PATH := "res://assets/art/tilesets/basic caves and dung
 var _distance_since_step: float = 0.0
 var _town_exit_trigger_armed := false
 var _is_mine_start_map := false
+var _is_crossroads_map := false
+var _active_region := FRONTIER_REGION
 var _town_tileset: TileSet
 var _mine_trigger_root: Node2D
 var _mine_encounter_areas: Array[Area2D] = []
@@ -155,7 +181,14 @@ var _incoming_state_payload: Dictionary = {}
 var _mine_boss_area: Area2D
 var _suppressed_mine_trigger_type := ""
 var _suppressed_mine_trigger_index := -1
-var _battle_transition_locked := false
+var _state_transition_locked := false
+var _panel_texture: Texture2D
+var _button_texture: Texture2D
+var _button_pressed_texture: Texture2D
+var _button_disabled_texture: Texture2D
+var _dev_loader_backdrop: ColorRect
+var _dev_loader_panel: PanelContainer
+var _dev_loader_button_list: VBoxContainer
 
 @onready var ground_map: TileMap = $GroundMap
 @onready var world_collision: StaticBody2D = $WorldCollision
@@ -164,22 +197,29 @@ var _battle_transition_locked := false
 @onready var player_spawn: Marker2D = $PlayerSpawn
 @onready var mine_spawn: Marker2D = $MineSpawn
 @onready var town_exit_trigger: Area2D = $TownExitTrigger
+@onready var map_ui: CanvasLayer = $UI
 @onready var hint_backdrop: ColorRect = $UI/HintBackdrop
 @onready var hint_label: Label = $UI/HintLabel
 
 func _ready() -> void:
 	_town_tileset = ground_map.tile_set
 	_incoming_state_payload = _scene_manager().consume_state_payload()
+	_active_region = _resolve_target_region()
 	_is_mine_start_map = _should_load_mine_start_map()
+	_is_crossroads_map = _active_region == CROSSROADS_REGION
+	_load_ui_textures()
 
 	if _is_mine_start_map:
 		_setup_mine_start_map()
+	elif _is_crossroads_map:
+		_setup_crossroads_map()
 	else:
 		_setup_town_map()
 
 	_build_world_collision()
 	map_camera.make_current()
 	_configure_map_camera()
+	_build_dev_location_loader()
 	_layout_map_ui()
 	_connect_overlay_signals()
 
@@ -189,7 +229,10 @@ func _ready() -> void:
 	_apply_incoming_state_payload()
 
 func _should_load_mine_start_map() -> bool:
-	return _player_data().current_region == MINE_REGION
+	return _active_region == MINE_REGION
+
+func _resolve_target_region() -> String:
+	return str(_incoming_state_payload.get("return_region", _player_data().current_region))
 
 func _connect_overlay_signals() -> void:
 	SignalBus.dialogue_started.connect(_on_overlay_state_changed)
@@ -220,7 +263,7 @@ func _setup_town_map() -> void:
 		ground_map.tile_set = _town_tileset
 
 	hint_label.text = TOWN_HINT_TEXT
-	player.global_position = _resolve_return_position(player_spawn.global_position)
+	player.global_position = _resolve_spawn_position(player_spawn.global_position)
 	_wire_town_exit_prompt()
 
 func _setup_mine_start_map() -> void:
@@ -238,20 +281,42 @@ func _setup_mine_start_map() -> void:
 	_wire_mine_exit_prompt()
 	_restore_mine_progress_state()
 	mine_spawn.position = ground_map.map_to_local(MINE_ENTRY_SPAWN_CELL)
-	player.global_position = _resolve_return_position(mine_spawn.global_position)
+	player.global_position = _resolve_spawn_position(mine_spawn.global_position)
 	_update_mine_hint()
+
+func _setup_crossroads_map() -> void:
+	_player_data().current_location = str(_incoming_state_payload.get("return_location", CROSSROADS_LOCATION))
+	_player_data().current_region = str(_incoming_state_payload.get("return_region", CROSSROADS_REGION))
+	_mine_status_text = ""
+
+	if _town_tileset != null:
+		ground_map.tile_set = _town_tileset
+
+	_disable_town_only_content()
+	_build_crossroads_layout()
+	_spawn_crossroads_signpost()
+	hint_label.text = CROSSROADS_HINT_TEXT
+	player.global_position = _resolve_spawn_position(_tile_to_global_position(CROSSROADS_START_SPAWN_CELL))
 
 func _disable_town_only_content() -> void:
 	_town_exit_trigger_armed = false
 	_hide_prompt_modal()
-	_battle_transition_locked = false
+	_state_transition_locked = false
 	_mine_boss_area = null
 	_clear_suppressed_mine_trigger()
 
 	if is_instance_valid(town_exit_trigger):
 		town_exit_trigger.monitoring = false
 
-	for node_path in ["TownExitTrigger", "Triggers", "IntelNPC", "MoralChoiceNPC", "BookstoreNPC"]:
+	for node_path in [
+		"TownExitTrigger",
+		"Triggers",
+		"IntelNPC",
+		"MoralChoiceNPC",
+		"BookstoreNPC",
+		"CrossroadsBackdrop",
+		"CrossroadsSignpost",
+	]:
 		var node := get_node_or_null(node_path)
 		if node != null:
 			node.queue_free()
@@ -260,6 +325,96 @@ func _disable_town_only_content() -> void:
 		_mine_trigger_root.queue_free()
 		_mine_trigger_root = null
 		_mine_encounter_areas.clear()
+
+func _build_crossroads_layout() -> void:
+	var grass_tile := _sample_town_tile(0, TOWN_SAMPLE_GRASS_CELL)
+	var road_tile := _sample_town_tile(ROAD_LAYER, TOWN_SAMPLE_ROAD_CELL)
+
+	for layer_index in range(ground_map.get_layers_count()):
+		ground_map.clear_layer(layer_index)
+
+	for y in range(CROSSROADS_MAP_SIZE.y):
+		for x in range(CROSSROADS_MAP_SIZE.x):
+			var cell := Vector2i(x, y)
+			_set_sampled_tile(0, cell, grass_tile)
+
+			if x >= CROSSROADS_ROAD_MIN_X and x <= CROSSROADS_ROAD_MAX_X:
+				_set_sampled_tile(ROAD_LAYER, cell, road_tile)
+
+	for shoulder_x in [CROSSROADS_ROAD_MIN_X - 1, CROSSROADS_ROAD_MAX_X + 1]:
+		_set_sampled_tile(ROAD_LAYER, Vector2i(shoulder_x, CROSSROADS_MAP_SIZE.y - 3), road_tile)
+
+	_build_crossroads_backdrop()
+
+func _build_crossroads_backdrop() -> void:
+	var existing := get_node_or_null("CrossroadsBackdrop")
+	if existing != null:
+		existing.queue_free()
+
+	var backdrop := Node2D.new()
+	backdrop.name = "CrossroadsBackdrop"
+	backdrop.z_index = -9
+	add_child(backdrop)
+
+	var map_width := float(CROSSROADS_MAP_SIZE.x * ground_map.tile_set.tile_size.x)
+	var sky_height := float(ground_map.tile_set.tile_size.y * 7)
+
+	var sky := Polygon2D.new()
+	sky.color = Color(0.63, 0.70, 0.78, 1.0)
+	sky.polygon = PackedVector2Array([
+		Vector2(0.0, 0.0),
+		Vector2(map_width, 0.0),
+		Vector2(map_width, sky_height),
+		Vector2(0.0, sky_height),
+	])
+	backdrop.add_child(sky)
+
+	var mountains_far := Polygon2D.new()
+	mountains_far.color = Color(0.39, 0.43, 0.46, 1.0)
+	mountains_far.polygon = PackedVector2Array([
+		Vector2(0.0, sky_height),
+		Vector2(70.0, 84.0),
+		Vector2(140.0, 126.0),
+		Vector2(214.0, 70.0),
+		Vector2(310.0, 122.0),
+		Vector2(420.0, 64.0),
+		Vector2(520.0, 124.0),
+		Vector2(map_width, sky_height),
+	])
+	backdrop.add_child(mountains_far)
+
+	var mountains_near := Polygon2D.new()
+	mountains_near.color = Color(0.28, 0.31, 0.33, 1.0)
+	mountains_near.polygon = PackedVector2Array([
+		Vector2(0.0, sky_height + 22.0),
+		Vector2(54.0, 120.0),
+		Vector2(118.0, 148.0),
+		Vector2(186.0, 112.0),
+		Vector2(262.0, 156.0),
+		Vector2(346.0, 106.0),
+		Vector2(432.0, 154.0),
+		Vector2(520.0, 116.0),
+		Vector2(map_width, sky_height + 22.0),
+	])
+	backdrop.add_child(mountains_near)
+
+func _spawn_crossroads_signpost() -> void:
+	var existing := get_node_or_null("CrossroadsSignpost")
+	if existing != null:
+		existing.queue_free()
+
+	var signpost := NPC_SCENE.instantiate()
+	signpost.name = "CrossroadsSignpost"
+	signpost.position = _tile_to_global_position(CROSSROADS_SIGNPOST_CELL)
+	signpost.npc_id = CROSSROADS_SIGNPOST_DIALOGUE_ID
+	signpost.npc_name = "Signpost"
+
+	var sprite := signpost.get_node_or_null("Sprite") as Sprite2D
+	if sprite != null:
+		sprite.texture = _make_signpost_texture()
+		sprite.position = Vector2(0.0, -10.0)
+
+	add_child(signpost)
 
 func _build_mine_layout() -> void:
 	ground_map.tile_set = _build_mine_tileset()
@@ -458,7 +613,10 @@ func _stamp_mine_blocker(cells: Array[Vector2i], prop_specs: Array[Dictionary]) 
 
 	for spec in prop_specs:
 		var atlas_coord: Vector2i = spec["tile"]
-		var prop_cells: Array[Vector2i] = spec["cells"]
+		var prop_cells: Array[Vector2i] = []
+		for cell_value in spec.get("cells", []):
+			if cell_value is Vector2i:
+				prop_cells.append(cell_value)
 		_stamp_prop_cells(atlas_coord, prop_cells)
 
 func _apply_mine_exit_gate_blocker() -> void:
@@ -616,11 +774,35 @@ func _clear_suppressed_mine_trigger() -> void:
 	_suppressed_mine_trigger_type = ""
 	_suppressed_mine_trigger_index = -1
 
-func _resolve_return_position(default_position: Vector2) -> Vector2:
-	var return_position = _incoming_state_payload.get("return_position", default_position)
-	if return_position is Vector2:
+func _resolve_spawn_position(default_position: Vector2) -> Vector2:
+	var return_position = _incoming_state_payload.get("return_position", Vector2.ZERO)
+	if return_position is Vector2 and not (return_position as Vector2).is_zero_approx():
 		return return_position
-	return default_position
+
+	var return_location := str(_incoming_state_payload.get("return_location", _player_data().current_location))
+	return _spawn_position_for_location(return_location, default_position)
+
+func _spawn_position_for_location(location: String, default_position: Vector2) -> Vector2:
+	match location:
+		TOWN_LOCATION:
+			return player_spawn.global_position
+		MINE_LOCATION:
+			return mine_spawn.global_position
+		"mine_mid":
+			return _tile_to_global_position(MINE_MID_SPAWN_CELL)
+		"mine_boss_ready":
+			return _tile_to_global_position(MINE_BOSS_READY_SPAWN_CELL)
+		"mine_post_boss":
+			return _tile_to_global_position(MINE_POST_BOSS_SPAWN_CELL)
+		MINE_EXIT_LOCATION:
+			return _tile_to_global_position(MINE_EXIT_SPAWN_CELL)
+		CROSSROADS_LOCATION:
+			return _tile_to_global_position(CROSSROADS_START_SPAWN_CELL)
+		_:
+			return default_position
+
+func _tile_to_global_position(cell: Vector2i) -> Vector2:
+	return ground_map.map_to_local(cell)
 
 func _play_fade_from_black() -> void:
 	var screen_fader = _scene_manager().get_screen_fader()
@@ -659,18 +841,14 @@ func _on_prompt_modal_confirmed(prompt_id: String) -> void:
 	match prompt_id:
 		TOWN_EXIT_PROMPT_ID:
 			_on_town_exit_confirmed()
-		MINE_EXIT_PROMPT_ID:
-			_on_mine_exit_confirmed()
 
 func _on_prompt_modal_canceled(prompt_id: String) -> void:
 	match prompt_id:
 		TOWN_EXIT_PROMPT_ID:
 			_on_town_exit_canceled()
-		MINE_EXIT_PROMPT_ID:
-			_on_mine_exit_canceled()
 
 func _on_overlay_state_changed(_unused: Variant = null) -> void:
-	if _is_prompt_open():
+	if _is_prompt_open() or _is_dev_loader_open():
 		_set_debug_panel_suppressed(true)
 	else:
 		_set_debug_panel_suppressed(false)
@@ -741,10 +919,11 @@ func _create_mine_trigger_area(trigger_name: String, tile_rect: Rect2i) -> Area2
 func _restore_mine_progress_state() -> void:
 	var progress := _mine_encounter_progress()
 	for encounter_index in range(_mine_encounter_areas.size()):
-		if encounter_index >= progress:
-			break
 		if is_instance_valid(_mine_encounter_areas[encounter_index]):
-			_mine_encounter_areas[encounter_index].monitoring = false
+			_mine_encounter_areas[encounter_index].monitoring = encounter_index >= progress
+
+	if is_instance_valid(_mine_boss_area):
+		_mine_boss_area.monitoring = not _player_data().get_flag(MINE_BOSS_RESOLVED_FLAG, false)
 
 	if progress >= MINE_REGULAR_ENCOUNTER_COUNT:
 		_player_data().set_flag(MINE_BOSS_READY_FLAG, true)
@@ -761,7 +940,7 @@ func _on_mine_encounter_trigger_body_entered(body: Node, encounter_index: int) -
 	if body != player:
 		return
 
-	if _battle_transition_locked:
+	if _state_transition_locked:
 		return
 
 	if _suppressed_mine_trigger_type == SUPPRESSED_TRIGGER_ENCOUNTER and _suppressed_mine_trigger_index == encounter_index:
@@ -788,7 +967,7 @@ func _on_mine_boss_trigger_body_entered(body: Node) -> void:
 	if body != player:
 		return
 
-	if _battle_transition_locked:
+	if _state_transition_locked:
 		return
 
 	if _suppressed_mine_trigger_type == SUPPRESSED_TRIGGER_BOSS:
@@ -822,7 +1001,7 @@ func _on_mine_exit_trigger_body_entered(body: Node) -> void:
 	if body != player:
 		return
 
-	if _is_prompt_open():
+	if _is_prompt_open() or _state_transition_locked:
 		return
 
 	if not _player_data().get_flag(MINE_EXIT_UNLOCKED_FLAG, false):
@@ -830,25 +1009,7 @@ func _on_mine_exit_trigger_body_entered(body: Node) -> void:
 		return
 
 	player.velocity = Vector2.ZERO
-	_show_prompt_modal(
-		MINE_EXIT_PROMPT_ID,
-		MINE_EXIT_PROMPT_TITLE,
-		MINE_EXIT_PROMPT_TEXT,
-		MINE_EXIT_PROMPT_CONFIRM_TEXT,
-		MINE_EXIT_PROMPT_CANCEL_TEXT
-	)
-
-func _on_mine_exit_confirmed() -> void:
-	_player_data().set_flag(MINE_CLEARED_FLAG, true)
-	_player_data().current_location = MINE_EXIT_LOCATION
-	_set_mine_status("Mine progression recorded as cleared. Stage 7 transition remains pending.")
-	_set_debug_panel_suppressed(false)
-	_update_mine_hint()
-
-func _on_mine_exit_canceled() -> void:
-	player.velocity = Vector2.ZERO
-	_set_debug_panel_suppressed(false)
-	_update_map_overlay_visibility()
+	_start_mine_exit_cutscene()
 
 func _set_mine_status(status_text: String) -> void:
 	_mine_status_text = status_text
@@ -902,17 +1063,130 @@ func _layout_map_ui() -> void:
 	hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	hint_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	hint_label.add_theme_font_size_override("font_size", 8 if compact_layout else 9)
+	_layout_dev_location_panel(viewport_size)
 	_update_map_overlay_visibility()
 
+func _layout_dev_location_panel(viewport_size: Vector2) -> void:
+	if _dev_loader_backdrop == null or _dev_loader_panel == null:
+		return
+
+	var compact_layout := viewport_size.x <= 640.0 or viewport_size.y <= 360.0
+	_dev_loader_backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_dev_loader_backdrop.color = Color(0.0, 0.0, 0.0, 0.56)
+
+	var panel_width := clampf(viewport_size.x * 0.42, 220.0, 280.0)
+	var panel_height := clampf(viewport_size.y * 0.56, 168.0, 228.0)
+	_dev_loader_panel.anchor_left = 0.5
+	_dev_loader_panel.anchor_top = 0.5
+	_dev_loader_panel.anchor_right = 0.5
+	_dev_loader_panel.anchor_bottom = 0.5
+	_dev_loader_panel.offset_left = -panel_width * 0.5
+	_dev_loader_panel.offset_top = -panel_height * 0.5
+	_dev_loader_panel.offset_right = panel_width * 0.5
+	_dev_loader_panel.offset_bottom = panel_height * 0.5
+	_dev_loader_panel.custom_minimum_size = Vector2(panel_width, panel_height)
+
+	for child in _dev_loader_button_list.get_children():
+		if child is Button:
+			var button := child as Button
+			button.custom_minimum_size = Vector2(0.0, 22.0 if compact_layout else 24.0)
+			button.add_theme_font_size_override("font_size", 8 if compact_layout else 9)
+
 func _update_map_overlay_visibility() -> void:
-	var show_hint := not _is_hud_open() and not _is_dialogue_active() and not _is_prompt_open()
+	var show_hint := not _is_hud_open() and not _is_dialogue_active() and not _is_prompt_open() and not _is_dev_loader_open()
 	hint_backdrop.visible = show_hint
 	hint_label.visible = show_hint
+
+func _build_dev_location_loader() -> void:
+	if _dev_loader_panel != null:
+		return
+
+	_dev_loader_backdrop = ColorRect.new()
+	_dev_loader_backdrop.visible = false
+	_dev_loader_backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
+	map_ui.add_child(_dev_loader_backdrop)
+
+	_dev_loader_panel = PanelContainer.new()
+	_dev_loader_panel.visible = false
+	_dev_loader_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	_dev_loader_panel.add_theme_stylebox_override("panel", _make_panel_style(_panel_texture))
+	map_ui.add_child(_dev_loader_panel)
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_bottom", 10)
+	_dev_loader_panel.add_child(margin)
+
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 6)
+	margin.add_child(content)
+
+	var title := Label.new()
+	title.text = "Dev Location Loader"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 10)
+	content.add_child(title)
+
+	_dev_loader_button_list = VBoxContainer.new()
+	_dev_loader_button_list.add_theme_constant_override("separation", 4)
+	_dev_loader_button_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content.add_child(_dev_loader_button_list)
+
+	for entry in _dev_loader_entries():
+		var button := Button.new()
+		button.text = str(entry.get("label", "Spawn"))
+		button.focus_mode = Control.FOCUS_ALL
+		button.add_theme_stylebox_override("normal", _make_button_style(_button_texture))
+		button.add_theme_stylebox_override("hover", _make_button_style(_button_pressed_texture if _button_pressed_texture != null else _button_texture))
+		button.add_theme_stylebox_override("pressed", _make_button_style(_button_pressed_texture if _button_pressed_texture != null else _button_texture))
+		button.add_theme_stylebox_override("disabled", _make_button_style(_button_disabled_texture if _button_disabled_texture != null else _button_texture))
+		button.add_theme_stylebox_override("focus", _make_button_style(_button_pressed_texture if _button_pressed_texture != null else _button_texture))
+		button.pressed.connect(_on_dev_loader_entry_pressed.bind(entry))
+		_dev_loader_button_list.add_child(button)
+
+func _show_dev_location_panel() -> void:
+	if not OS.is_debug_build():
+		return
+	if _is_prompt_open() or _is_hud_open() or _is_dialogue_active() or _is_dev_loader_open():
+		return
+
+	_dev_loader_backdrop.visible = true
+	_dev_loader_panel.visible = true
+	_set_debug_panel_suppressed(true)
+	_update_map_overlay_visibility()
+
+	for child in _dev_loader_button_list.get_children():
+		if child is Button:
+			(child as Button).grab_focus()
+			break
+
+func _hide_dev_location_panel() -> void:
+	if _dev_loader_backdrop != null:
+		_dev_loader_backdrop.visible = false
+	if _dev_loader_panel != null:
+		_dev_loader_panel.visible = false
+	_set_debug_panel_suppressed(false)
+	_update_map_overlay_visibility()
+
+func _is_dev_loader_open() -> bool:
+	return _dev_loader_panel != null and _dev_loader_panel.visible
+
+func _on_dev_loader_entry_pressed(entry: Dictionary) -> void:
+	_apply_dev_loader_spawn(entry)
 
 func _on_viewport_size_changed() -> void:
 	_layout_map_ui()
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _is_dev_loader_open():
+		if event.is_action_pressed("ui_cancel"):
+			get_viewport().set_input_as_handled()
+			_hide_dev_location_panel()
+		return
+
 	if _is_prompt_open():
 		return
 
@@ -954,6 +1228,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			_reset_debug_stats_and_gold()
 			return
 
+		if event.is_action_pressed("dev_open_loader") and not _is_dialogue_active() and not _is_hud_open():
+			get_viewport().set_input_as_handled()
+			_show_dev_location_panel()
+			return
+
 	if event.is_action_pressed("debug_cutscene"):
 		get_viewport().set_input_as_handled()
 		_scene_manager().change_state("cutscene", {
@@ -966,7 +1245,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_launch_battle(_build_battle_payload(BATTLE_KIND_DEBUG, -1, ""))
 
 func _physics_process(delta: float) -> void:
-	if _is_hud_open() or _is_dialogue_active() or _is_prompt_open():
+	if _is_hud_open() or _is_dialogue_active() or _is_prompt_open() or _is_dev_loader_open():
 		player.velocity = Vector2.ZERO
 		return
 
@@ -1043,6 +1322,30 @@ func _on_town_exit_canceled() -> void:
 	_set_debug_panel_suppressed(false)
 	_update_map_overlay_visibility()
 
+func _start_mine_exit_cutscene() -> void:
+	_start_mine_exit_cutscene_async()
+
+func _start_mine_exit_cutscene_async() -> void:
+	if _state_transition_locked:
+		return
+
+	_state_transition_locked = true
+	var screen_fader = _scene_manager().get_screen_fader()
+	if screen_fader != null:
+		var fade_tween: Tween = screen_fader.fade_to_black(0.35)
+		await fade_tween.finished
+
+	if not _scene_manager().change_state("cutscene", {
+		"cutscene_id": CUTSCENE_ID_MINE_EXIT,
+		"shaman_recruited": _player_data().get_flag(SHAMAN_RECRUITED_FLAG, false),
+		"return_region": CROSSROADS_REGION,
+		"return_location": CROSSROADS_LOCATION,
+		"return_position": Vector2.ZERO,
+	}):
+		_state_transition_locked = false
+		if screen_fader != null:
+			screen_fader.fade_from_black(0.35)
+
 func _toggle_hud() -> void:
 	var hud = _get_spike_hud()
 	if hud != null:
@@ -1055,6 +1358,132 @@ func _is_hud_open() -> bool:
 
 func _is_dialogue_active() -> bool:
 	return DialogueManager.is_active()
+
+func _dev_loader_entries() -> Array[Dictionary]:
+	return [
+		{
+			"label": "Town Start",
+			"region": FRONTIER_REGION,
+			"location": TOWN_LOCATION,
+			"flags": [
+				{"flag": MINE_COMMIT_FLAG, "value": false},
+				{"flag": MINE_ENCOUNTER_PROGRESS_FLAG, "value": 0},
+				{"flag": MINE_BOSS_READY_FLAG, "value": false},
+				{"flag": MINE_BOSS_RESOLVED_FLAG, "value": false},
+				{"flag": MINE_EXIT_UNLOCKED_FLAG, "value": false},
+				{"flag": MINE_CLEARED_FLAG, "value": false},
+				{"flag": SHAMAN_RECRUITED_FLAG, "value": false},
+				{"flag": SHAMAN_KILLED_FLAG, "value": false},
+				{"flag": MAIN_QUEST_PATH_OPEN_FLAG, "value": false},
+			],
+		},
+		{
+			"label": "Mine Entry",
+			"region": MINE_REGION,
+			"location": MINE_LOCATION,
+			"flags": [
+				{"flag": MINE_COMMIT_FLAG, "value": true},
+				{"flag": MINE_ENCOUNTER_PROGRESS_FLAG, "value": 0},
+				{"flag": MINE_BOSS_READY_FLAG, "value": false},
+				{"flag": MINE_BOSS_RESOLVED_FLAG, "value": false},
+				{"flag": MINE_EXIT_UNLOCKED_FLAG, "value": false},
+				{"flag": MINE_CLEARED_FLAG, "value": false},
+				{"flag": SHAMAN_RECRUITED_FLAG, "value": false},
+				{"flag": SHAMAN_KILLED_FLAG, "value": false},
+				{"flag": MAIN_QUEST_PATH_OPEN_FLAG, "value": false},
+			],
+		},
+		{
+			"label": "Mine Mid",
+			"region": MINE_REGION,
+			"location": "mine_mid",
+			"flags": [
+				{"flag": MINE_COMMIT_FLAG, "value": true},
+				{"flag": MINE_ENCOUNTER_PROGRESS_FLAG, "value": 2},
+				{"flag": MINE_BOSS_READY_FLAG, "value": false},
+				{"flag": MINE_BOSS_RESOLVED_FLAG, "value": false},
+				{"flag": MINE_EXIT_UNLOCKED_FLAG, "value": false},
+				{"flag": MINE_CLEARED_FLAG, "value": false},
+				{"flag": SHAMAN_RECRUITED_FLAG, "value": false},
+				{"flag": SHAMAN_KILLED_FLAG, "value": false},
+				{"flag": MAIN_QUEST_PATH_OPEN_FLAG, "value": false},
+			],
+		},
+		{
+			"label": "Mine Boss Ready",
+			"region": MINE_REGION,
+			"location": "mine_boss_ready",
+			"flags": [
+				{"flag": MINE_COMMIT_FLAG, "value": true},
+				{"flag": MINE_ENCOUNTER_PROGRESS_FLAG, "value": 3},
+				{"flag": MINE_BOSS_READY_FLAG, "value": true},
+				{"flag": MINE_BOSS_RESOLVED_FLAG, "value": false},
+				{"flag": MINE_EXIT_UNLOCKED_FLAG, "value": false},
+				{"flag": MINE_CLEARED_FLAG, "value": false},
+				{"flag": SHAMAN_RECRUITED_FLAG, "value": false},
+				{"flag": SHAMAN_KILLED_FLAG, "value": false},
+				{"flag": MAIN_QUEST_PATH_OPEN_FLAG, "value": false},
+			],
+		},
+		{
+			"label": "Post Boss",
+			"region": MINE_REGION,
+			"location": "mine_post_boss",
+			"flags": [
+				{"flag": MINE_COMMIT_FLAG, "value": true},
+				{"flag": MINE_ENCOUNTER_PROGRESS_FLAG, "value": 3},
+				{"flag": MINE_BOSS_READY_FLAG, "value": true},
+				{"flag": MINE_BOSS_RESOLVED_FLAG, "value": true},
+				{"flag": MINE_EXIT_UNLOCKED_FLAG, "value": true},
+				{"flag": MINE_CLEARED_FLAG, "value": false},
+				{"flag": MAIN_QUEST_PATH_OPEN_FLAG, "value": false},
+			],
+		},
+	]
+
+func _apply_dev_loader_spawn(entry: Dictionary) -> void:
+	var target_region := str(entry.get("region", _player_data().current_region))
+	var target_location := str(entry.get("location", _player_data().current_location))
+	_apply_flag_updates(entry.get("flags", []))
+	_hide_dev_location_panel()
+
+	if target_region != _active_region:
+		_player_data().current_region = target_region
+		_player_data().current_location = target_location
+		_scene_manager().change_state("map", {
+			"return_region": target_region,
+			"return_location": target_location,
+			"return_position": Vector2.ZERO,
+		}, true)
+		return
+
+	_player_data().current_region = target_region
+	_player_data().current_location = target_location
+	player.velocity = Vector2.ZERO
+	player.global_position = _spawn_position_for_location(target_location, player.global_position)
+	_refresh_map_state_after_debug_spawn()
+
+func _apply_flag_updates(flag_updates: Array) -> void:
+	for value in flag_updates:
+		if not (value is Dictionary):
+			continue
+		var flag_name := str(value.get("flag", ""))
+		if flag_name == "":
+			continue
+		_player_data().set_flag(flag_name, value.get("value", true))
+
+func _refresh_map_state_after_debug_spawn() -> void:
+	_state_transition_locked = false
+	_mine_status_text = ""
+	_clear_suppressed_mine_trigger()
+
+	if _is_mine_start_map:
+		_restore_mine_progress_state()
+		_update_mine_hint()
+	else:
+		hint_label.text = CROSSROADS_HINT_TEXT if _is_crossroads_map else TOWN_HINT_TEXT
+
+	_update_map_overlay_visibility()
 
 func _reset_debug_stats_and_gold() -> void:
 	for category_value in StatRegistry.stats.keys():
@@ -1122,10 +1551,10 @@ func _launch_battle(battle_payload: Dictionary) -> void:
 	_launch_battle_async(battle_payload)
 
 func _launch_battle_async(battle_payload: Dictionary) -> void:
-	if _battle_transition_locked:
+	if _state_transition_locked:
 		return
 
-	_battle_transition_locked = true
+	_state_transition_locked = true
 	player.velocity = Vector2.ZERO
 
 	var screen_fader = _scene_manager().get_screen_fader()
@@ -1134,6 +1563,100 @@ func _launch_battle_async(battle_payload: Dictionary) -> void:
 		await fade_tween.finished
 
 	if not _scene_manager().change_state("battle", battle_payload):
-		_battle_transition_locked = false
+		_state_transition_locked = false
 		if screen_fader != null:
 			screen_fader.fade_from_black(0.35)
+
+func _load_ui_textures() -> void:
+	_panel_texture = _load_texture(UI_PANEL_TEXTURE_PATH)
+	_button_texture = _load_texture(UI_BUTTON_TEXTURE_PATH)
+	_button_pressed_texture = _load_texture(UI_BUTTON_PRESSED_TEXTURE_PATH)
+	_button_disabled_texture = _load_texture(UI_BUTTON_DISABLED_TEXTURE_PATH)
+
+func _load_texture(resource_path: String) -> Texture2D:
+	var image := Image.load_from_file(resource_path)
+	if image == null or image.is_empty():
+		return null
+	return ImageTexture.create_from_image(image)
+
+func _make_panel_style(texture: Texture2D) -> StyleBox:
+	if texture == null:
+		var fallback := StyleBoxFlat.new()
+		fallback.bg_color = Color(0.17, 0.13, 0.11, 0.94)
+		fallback.border_color = Color(0.36, 0.27, 0.21, 1.0)
+		fallback.set_border_width_all(2)
+		fallback.set_corner_radius_all(4)
+		return fallback
+
+	var style := StyleBoxTexture.new()
+	style.texture = texture
+	style.texture_margin_left = 14
+	style.texture_margin_top = 14
+	style.texture_margin_right = 14
+	style.texture_margin_bottom = 14
+	style.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_TILE_FIT
+	style.axis_stretch_vertical = StyleBoxTexture.AXIS_STRETCH_MODE_TILE_FIT
+	return style
+
+func _make_button_style(texture: Texture2D) -> StyleBox:
+	if texture == null:
+		var fallback := StyleBoxFlat.new()
+		fallback.bg_color = Color(0.29, 0.22, 0.18, 1.0)
+		fallback.border_color = Color(0.48, 0.36, 0.28, 1.0)
+		fallback.set_border_width_all(2)
+		fallback.set_corner_radius_all(3)
+		fallback.content_margin_left = 6
+		fallback.content_margin_right = 6
+		fallback.content_margin_top = 4
+		fallback.content_margin_bottom = 4
+		return fallback
+
+	var style := StyleBoxTexture.new()
+	style.texture = texture
+	style.texture_margin_left = 16
+	style.texture_margin_top = 8
+	style.texture_margin_right = 16
+	style.texture_margin_bottom = 8
+	style.content_margin_left = 6
+	style.content_margin_right = 6
+	style.content_margin_top = 4
+	style.content_margin_bottom = 4
+	style.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_TILE_FIT
+	style.axis_stretch_vertical = StyleBoxTexture.AXIS_STRETCH_MODE_TILE_FIT
+	return style
+
+func _sample_town_tile(layer: int, sample_cell: Vector2i) -> Dictionary:
+	return {
+		"source_id": ground_map.get_cell_source_id(layer, sample_cell),
+		"atlas_coords": ground_map.get_cell_atlas_coords(layer, sample_cell),
+		"alternative_tile": ground_map.get_cell_alternative_tile(layer, sample_cell),
+	}
+
+func _set_sampled_tile(layer: int, cell: Vector2i, tile_data: Dictionary) -> void:
+	var source_id := int(tile_data.get("source_id", -1))
+	if source_id == -1:
+		return
+	ground_map.set_cell(
+		layer,
+		cell,
+		source_id,
+		tile_data.get("atlas_coords", Vector2i.ZERO),
+		int(tile_data.get("alternative_tile", 0))
+	)
+
+func _make_signpost_texture() -> Texture2D:
+	var image := Image.create(24, 32, false, Image.FORMAT_RGBA8)
+	image.fill(Color(0.0, 0.0, 0.0, 0.0))
+
+	for y in range(8, 26):
+		for x in range(10, 14):
+			image.set_pixel(x, y, Color(0.36, 0.23, 0.13, 1.0))
+
+	for y in range(4, 13):
+		for x in range(3, 21):
+			image.set_pixel(x, y, Color(0.56, 0.43, 0.25, 1.0))
+
+	for x in range(5, 19):
+		image.set_pixel(x, 6, Color(0.74, 0.64, 0.44, 1.0))
+
+	return ImageTexture.create_from_image(image)

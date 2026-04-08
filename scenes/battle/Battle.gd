@@ -163,6 +163,11 @@ func _draw() -> void:
 	)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if OS.is_debug_build() and not _input_locked and not _battle_over and event.is_action_pressed("dev_skip_battle"):
+		get_viewport().set_input_as_handled()
+		_dev_skip_to_victory()
+		return
+
 	if _input_locked or _battle_over:
 		return
 
@@ -171,19 +176,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		_show_main_menu()
 
 func _load_ui_textures() -> void:
-	_panel_texture = load(UI_PANEL_TEXTURE_PATH) as Texture2D
-	_inset_texture = load(UI_INSET_TEXTURE_PATH) as Texture2D
-	_button_texture = load(UI_BUTTON_TEXTURE_PATH) as Texture2D
-	_button_pressed_texture = load(UI_BUTTON_PRESSED_TEXTURE_PATH) as Texture2D
-	_button_disabled_texture = load(UI_BUTTON_DISABLED_TEXTURE_PATH) as Texture2D
+	_panel_texture = _load_texture(UI_PANEL_TEXTURE_PATH)
+	_inset_texture = _load_texture(UI_INSET_TEXTURE_PATH)
+	_button_texture = _load_texture(UI_BUTTON_TEXTURE_PATH)
+	_button_pressed_texture = _load_texture(UI_BUTTON_PRESSED_TEXTURE_PATH)
+	_button_disabled_texture = _load_texture(UI_BUTTON_DISABLED_TEXTURE_PATH)
 
 func _build_scene() -> void:
 	_battle_camera = Camera2D.new()
 	_battle_camera.name = "BattleCamera"
 	_battle_camera.enabled = true
 	_battle_camera.position_smoothing_enabled = false
-	_battle_camera.make_current()
 	add_child(_battle_camera)
+	_battle_camera.make_current()
 
 	_player_sprite = Sprite2D.new()
 	_player_sprite.centered = true
@@ -698,6 +703,10 @@ func _begin_player_turn() -> void:
 	_show_main_menu()
 	_append_log("Your turn.")
 	_refresh_all_ui()
+
+func _dev_skip_to_victory() -> void:
+	_append_log("[DEV] Battle skipped.")
+	_run_victory_sequence()
 
 func _begin_enemy_turn() -> void:
 	_input_locked = true

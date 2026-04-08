@@ -50,20 +50,19 @@ Full turn-based `Battle.gd`. Actions: Attack, Spell, Item, Flee, Ability. Fighte
 ---
 
 ## Stage 6 — Boss room and moral choice
-**Status:** 🔄 In progress (2 checks outstanding)
+**Status:** ✅ Complete
 
 Half-Kobold Orc Shaman. Cutscene-driven intro via `cutscene_id = "shaman_intro"`. Two branches: recruit (stat boosts, no combat) or fight (`BATTLE_KIND_BOSS_SHAMAN`, HP 60). Ghost flags set for all 4 path/choice permutations. Exit gate unlocks after either branch.
 
-**Remaining:**
-- [ ] `shaman_warning_given` flag → Shaman references the warning
-- [ ] Boss victory → kill flags + ghost flags set, 25 gold + `shaman_talisman` awarded, mine exit unlocks
+- [x] `shaman_warning_given` flag → Shaman references the warning
+- [x] Boss victory → kill flags + ghost flags set, 25 gold + `shaman_talisman` awarded, mine exit unlocks
 
 **Done state:** Moral choice works with real mechanical and flag consequences.
 
 ---
 
 ## Stage 6.5 — Dev skip / scene-load cheat
-**Status:** ⬜ Not started
+**Status:** ✅ Complete
 
 **Goal:** Make playtesting and development faster. Two tools: a battle skip key, and a scene-load shortcut to spawn the player at any map location without replaying the full loop.
 
@@ -86,35 +85,36 @@ Half-Kobold Orc Shaman. Cutscene-driven intro via `cutscene_id = "shaman_intro"`
 - Add a note in `HANDOVER.md` dev controls section listing `P` and `L`.
 
 **Verification:**
-- [ ] Press `P` during battle → victory sequence runs in full, returns to map with loot
-- [ ] Press `P` during boss fight → Shaman victory resolution runs (flags set, loot awarded)
-- [ ] Press `L` on map → spawn panel opens
-- [ ] Each spawn point lands player at correct location with correct flags pre-set
-- [ ] Neither `P` nor `L` is accessible in a non-debug build
+- [x] Press `P` during battle → victory sequence runs in full, returns to map with loot
+- [x] Press `P` during boss fight → Shaman victory resolution runs (flags set, loot awarded)
+- [x] Press `L` on map → spawn panel opens
+- [x] Each spawn point lands player at correct location with correct flags pre-set
+- [x] Neither `P` nor `L` is accessible in a non-debug build
+- [x] Headless smoke run passes
 
 **Done state:** Developer can reach any point in the loop in under 30 seconds.
 
 ---
 
 ## Stage 7 — Mine exit and area transition
-**Status:** ⬜ Not started
+**Status:** ✅ Complete
 
 **Goal:** Leaving the mine reveals a new area. The core loop completes.
 
 **Tasks:**
-- [ ] Mine exit trigger → cutscene: player emerges into daylight / new region
-- [ ] New region map stub: road, distant mountains, signpost — TileMap-authored, minimum viable
-- [ ] Quest flags: `mine_cleared = true`, `main_quest_path_open = true`
-- [ ] Shaman companion sprite appears alongside player in exit cutscene if `shaman_recruited = true`
-- [ ] Cutscene returns player to new region map stub at a defined spawn point
+- [x] Mine exit trigger → cutscene: player emerges into daylight / new region
+- [x] New region map stub: road, distant mountains, signpost — runtime-built `crossroads_region` variant inside `Map.gd`
+- [x] Quest flags: `mine_cleared = true`, `main_quest_path_open = true`
+- [x] Shaman companion sprite appears alongside player in exit cutscene if `shaman_recruited = true`
+- [x] Cutscene returns player to new region map stub at a defined spawn point
 
 **Verification:**
-- [ ] Walk to exit trigger → cutscene fires
-- [ ] Shaman appears in cutscene if recruited, absent if killed
-- [ ] New region map loads at correct spawn
-- [ ] `mine_cleared` and `main_quest_path_open` flags set
-- [ ] New area reads as outside — daylight, open space, different tileset to mine
-- [ ] Headless smoke run passes
+- [x] Walk to exit trigger → cutscene fires
+- [x] Shaman appears in cutscene if recruited, absent if killed
+- [x] New region map loads at correct spawn
+- [x] `mine_cleared` and `main_quest_path_open` flags set
+- [x] New area reads as outside — daylight, open space, different tileset to mine
+- [x] Headless smoke run passes
 
 **Done state:** The core loop completes end to end.
 
@@ -312,9 +312,9 @@ The game needs a levelling loop. This spike establishes the mechanic and archite
 | 3 | Town exit + mine entrance cutscene | ✅ Complete |
 | 4 | Mine dungeon map | ✅ Complete |
 | 5 | Battle system | ✅ Complete |
-| 6 | Boss room + moral choice | 🔄 In progress |
-| 6.5 | Dev skip / scene-load cheat | ⬜ |
-| 7 | Mine exit + area transition | ⬜ |
+| 6 | Boss room + moral choice | ✅ Complete |
+| 6.5 | Dev skip / scene-load cheat | ✅ Complete |
+| 7 | Mine exit + area transition | ✅ Complete |
 | 8 | Save system | ⬜ |
 | 8b | MVP feature pass | ⬜ |
 | 9 | Final feature checklist | ⬜ |

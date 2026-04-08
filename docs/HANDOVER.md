@@ -132,9 +132,9 @@ Transitions: Map ↔ Battle, Map ↔ Cutscene. HUD overlays map (does not replac
 
 See `docs/vertical_slice_plan.md` for full stage breakdown and status.
 
-**Stages complete:** 1–5
-**Stage 6:** 🔄 In progress (2 verification checks outstanding)
-**Up next:** Stage 6.5 (dev skip tools), Stage 7 (mine exit)
+**Stages complete:** 1–7
+**Current focus:** Stage 8 (save system)
+**Recently completed:** Stage 6 (boss room), Stage 6.5 (dev skip tools), Stage 7 (mine exit + crossroads)
 
 ### Vertical slice checklist
 - [x] Real tilesets integrated
@@ -143,8 +143,8 @@ See `docs/vertical_slice_plan.md` for full stage breakdown and status.
 - [x] Town exit → cutscene → mine
 - [x] Mine dungeon map
 - [x] Battle system (turn-based, class abilities)
-- [x] Boss room — Shaman intro + moral choice (nearly complete)
-- [ ] Mine exit → new area
+- [x] Boss room — Shaman intro + moral choice
+- [x] Mine exit → new area
 - [ ] Save system
 - [ ] MVP feature pass (portraits, sprites, HUD, levelling, alignment)
 - [ ] Dev sign-off
@@ -163,11 +163,11 @@ See `docs/vertical_slice_plan.md` for full stage breakdown and status.
 | `autoloads/SceneManager.gd` | Game state loader, payload passing |
 | `autoloads/DialogueManager.gd` | NPC dialogue trees, condition evaluation |
 | `scenes/main/` | Root shell, persistent OverlayHost |
-| `scenes/map/` | WASD movement, encounter triggers, stat events |
+| `scenes/map/` | WASD movement, town/mine/crossroads regions, encounter triggers, stat events |
 | `scenes/battle/Battle.gd` | Full turn-based battle system |
 | `scenes/battle/HitFlash.gdshader` | Hit colour flash |
 | `scenes/hud/` | Persistent overlay, tabs: Stats, Equipment, Quest, Map |
-| `scenes/cutscene/` | Payload-driven: `mine_entry` and `shaman_intro` sequences |
+| `scenes/cutscene/` | Payload-driven: `mine_entry`, `shaman_intro`, and `mine_exit` sequences |
 | `scenes/debug/` | Dev-only overlay — gated by `OS.is_debug_build()` |
 
 **Dev controls** (debug builds only):
