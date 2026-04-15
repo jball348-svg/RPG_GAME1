@@ -38,18 +38,15 @@ const CROSSROADS_LOCATION := "crossroads_start"
 const CUTSCENE_TOWN_GATE_LOCATION := "town_north_gate_cutscene"
 const SHAMAN_DIALOGUE_PAUSE_SECONDS := 0.8
 
-const PLAYER_KNIGHT_SPRITE_PATH := "res://assets/art/player/universal-lpc-sprite_male_01_full.png"
-const PLAYER_BATTLEMAGE_SPRITE_PATH := "res://assets/art/external/stage_8_5/battlemage_walk_sheet.png"
-const ENTRY_SENTRY_SPRITE_PATH := "res://assets/art/external/stage_8_5/fighter_walk_sheet.png"
+const LPC_SPRITE_SHEET_PATH := "res://assets/art/player/universal-lpc-sprite_male_01_full.png"
 const SHAMAN_SPRITE_PATH := "res://assets/art/battle/goblinsword.png"
 const UI_PANEL_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/panel_brown.png"
 const UI_BUTTON_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_brown.png"
 const UI_BUTTON_PRESSED_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_brown_pressed.png"
 const UI_BUTTON_DISABLED_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_grey.png"
 
-const KNIGHT_PLAYER_REGION := Rect2i(64, 64, 64, 64)
-const BATTLEMAGE_PLAYER_REGION := Rect2i(256, 128, 64, 64)
-const ENTRY_SENTRY_REGION := Rect2i(256, 128, 64, 64)
+const LPC_DOWN_IDLE_REGION := Rect2i(256, 128, 64, 64)
+const LPC_RIGHT_WALK_REGION := Rect2i(192, 192, 64, 64)
 const SHAMAN_SPRITE_REGION := Rect2i(0, 0, 64, 64)
 
 const SHAMAN_PLAYER_START_POS := Vector2(92.0, 142.0)
@@ -420,6 +417,7 @@ func _apply_player_visuals() -> void:
 	_player_battle_actor.texture = _load_player_cutscene_texture()
 	_player_battle_actor.modulate = Color(1.0, 1.0, 1.0, 1.0)
 	_sentry_actor.texture = _load_entry_sentry_texture()
+	_sentry_actor.flip_h = true
 	_sentry_actor.modulate = _resolve_class_tint().lerp(Color(0.78, 0.76, 0.72, 1.0), 0.55)
 	_shaman_actor.texture = _load_shaman_texture()
 
@@ -775,16 +773,9 @@ func _make_button_style(texture: Texture2D) -> StyleBox:
 	return style
 
 func _load_player_cutscene_texture() -> Texture2D:
-	if PlayerData.resolve_vertical_slice_class_id() == PlayerData.CLASS_BATTLEMAGE:
-		return _load_cropped_texture(
-			PLAYER_BATTLEMAGE_SPRITE_PATH,
-			BATTLEMAGE_PLAYER_REGION,
-			_make_fallback_texture(64, 64, Color(0.21, 0.31, 0.55))
-		)
-
 	return _load_cropped_texture(
-		PLAYER_KNIGHT_SPRITE_PATH,
-		KNIGHT_PLAYER_REGION,
+		LPC_SPRITE_SHEET_PATH,
+		LPC_DOWN_IDLE_REGION,
 		_make_fallback_texture(64, 64, Color(0.58, 0.53, 0.47))
 	)
 
@@ -799,8 +790,8 @@ func _load_shaman_texture() -> Texture2D:
 
 func _load_entry_sentry_texture() -> Texture2D:
 	return _load_cropped_texture(
-		ENTRY_SENTRY_SPRITE_PATH,
-		ENTRY_SENTRY_REGION,
+		LPC_SPRITE_SHEET_PATH,
+		LPC_RIGHT_WALK_REGION,
 		_make_fallback_texture(64, 64, Color(0.52, 0.48, 0.42))
 	)
 
