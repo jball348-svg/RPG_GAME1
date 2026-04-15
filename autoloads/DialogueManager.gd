@@ -47,7 +47,7 @@ var dialogue_trees: Dictionary = {
 		{
 			"speaker": "The Shaman",
 			"text": "Another pureblood who fears what they cannot name.",
-			"portrait": "res://assets/art/generated/stage_8_5/shaman_portrait.png",
+			"portrait": "res://assets/art/portraits/stage_8_5/shaman_portrait.png",
 			"conditions": [
 				{"type": "pure_path"},
 			],
@@ -57,7 +57,7 @@ var dialogue_trees: Dictionary = {
 		{
 			"speaker": "The Shaman",
 			"text": "You carry both bloods. I see the war in you.",
-			"portrait": "res://assets/art/generated/stage_8_5/shaman_portrait.png",
+			"portrait": "res://assets/art/portraits/stage_8_5/shaman_portrait.png",
 			"conditions": [
 				{"type": "mixed_path"},
 			],
@@ -66,7 +66,7 @@ var dialogue_trees: Dictionary = {
 		{
 			"speaker": "The Shaman",
 			"text": "Someone warned you. And still you came.",
-			"portrait": "res://assets/art/generated/stage_8_5/shaman_portrait.png",
+			"portrait": "res://assets/art/portraits/stage_8_5/shaman_portrait.png",
 			"conditions": [
 				{"type": "flag_set", "flag": "shaman_warning_given"},
 			],
@@ -77,7 +77,7 @@ var dialogue_trees: Dictionary = {
 		{
 			"speaker": "The Shaman",
 			"text": "The Shaman nods. No words. The chamber opens.",
-			"portrait": "res://assets/art/generated/stage_8_5/shaman_portrait.png",
+			"portrait": "res://assets/art/portraits/stage_8_5/shaman_portrait.png",
 			"conditions": [],
 			"next": -1,
 		},

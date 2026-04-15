@@ -99,9 +99,8 @@ position = Vector2(400, 432)
 [node name="@CollisionShape2D@21" type="CollisionShape2D" parent="Player" unique_id=1885935161]
 shape = SubResource("RectangleShape2D_48h8m")
 
-[node name="PlayerSprite" type="Sprite2D" parent="Player" unique_id=844466718]
-position = Vector2(0, -6)
-texture = SubResource("GradientTexture2D_8r4jv")
+[node name="PlayerSprite" type="AnimatedSprite2D" parent="Player" unique_id=844466718]
+position = Vector2(0, -12)
 
 [node name="MapCamera" type="Camera2D" parent="Player" unique_id=1949770270]
 zoom = Vector2(0.5, 0.5)

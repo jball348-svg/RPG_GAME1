@@ -3,4 +3,241 @@
 [ext_resource type="Script" path="res://scenes/hud/HUD.gd" id="1_hud"]
 
 [node name="HUD" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
 script = ExtResource("1_hud")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
+color = Color(0.0352941, 0.0313726, 0.0235294, 0.8)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
+
+[node name="Frame" type="PanelContainer" parent="Center"]
+custom_minimum_size = Vector2(840, 600)
+layout_mode = 2
+mouse_filter = 1
+
+[node name="FrameMargin" type="MarginContainer" parent="Center/Frame"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 18.0
+offset_top = 16.0
+offset_right = -18.0
+offset_bottom = -16.0
+
+[node name="Content" type="VBoxContainer" parent="Center/Frame/FrameMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="HeaderRow" type="HBoxContainer" parent="Center/Frame/FrameMargin/Content"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="TitleLabel" type="Label" parent="Center/Frame/FrameMargin/Content/HeaderRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Field Journal"
+
+[node name="HeaderSpacer" type="Control" parent="Center/Frame/FrameMargin/Content/HeaderRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CloseButton" type="Button" parent="Center/Frame/FrameMargin/Content/HeaderRow"]
+custom_minimum_size = Vector2(96, 0)
+layout_mode = 2
+focus_mode = 2
+text = "Close"
+
+[node name="Tabs" type="TabContainer" parent="Center/Frame/FrameMargin/Content"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+current_tab = 0
+
+[node name="Stats" type="MarginContainer" parent="Center/Frame/FrameMargin/Content/Tabs"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
+
+[node name="StatsBody" type="VBoxContainer" parent="Center/Frame/FrameMargin/Content/Tabs/Stats"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="SummaryRow" type="HBoxContainer" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 14
+
+[node name="PlayerPortrait" type="TextureRect" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/SummaryRow"]
+custom_minimum_size = Vector2(140, 140)
+layout_mode = 2
+stretch_mode = 5
+
+[node name="SummaryGrid" type="GridContainer" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/SummaryRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 2
+theme_override_constants/h_separation = 14
+theme_override_constants/v_separation = 8
+
+[node name="LevelLabel" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/SummaryRow/SummaryGrid"]
+layout_mode = 2
+text = "Level"
+
+[node name="LevelValue" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/SummaryRow/SummaryGrid"]
+layout_mode = 2
+text = "-"
+
+[node name="XPLabel" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/SummaryRow/SummaryGrid"]
+layout_mode = 2
+text = "XP"
+
+[node name="XPValue" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/SummaryRow/SummaryGrid"]
+layout_mode = 2
+text = "-"
+
+[node name="PointsLabel" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/SummaryRow/SummaryGrid"]
+layout_mode = 2
+text = "Unspent"
+
+[node name="PointsValue" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/SummaryRow/SummaryGrid"]
+layout_mode = 2
+text = "-"
+
+[node name="AlignmentLabel" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/SummaryRow/SummaryGrid"]
+layout_mode = 2
+text = "Alignment"
+
+[node name="AlignmentValue" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/SummaryRow/SummaryGrid"]
+layout_mode = 2
+text = "-"
+
+[node name="LawChaosLabel" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/SummaryRow/SummaryGrid"]
+layout_mode = 2
+text = "Law / Chaos"
+
+[node name="LawChaosValue" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/SummaryRow/SummaryGrid"]
+layout_mode = 2
+text = "-"
+
+[node name="MoralLabel" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/SummaryRow/SummaryGrid"]
+layout_mode = 2
+text = "Good / Evil"
+
+[node name="MoralValue" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/SummaryRow/SummaryGrid"]
+layout_mode = 2
+text = "-"
+
+[node name="GoldLabel" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/SummaryRow/SummaryGrid"]
+layout_mode = 2
+text = "Gold"
+
+[node name="GoldValue" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/SummaryRow/SummaryGrid"]
+layout_mode = 2
+text = "-"
+
+[node name="AlignmentHelp" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Alignment is derived from your choices and flags in Stage 8.5. It is display-only here, but you can inspect it at any time."
+
+[node name="PointsBanner" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody"]
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Spend your unspent stat points below."
+
+[node name="FamiliesList" type="VBoxContainer" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="Equipment" type="MarginContainer" parent="Center/Frame/FrameMargin/Content/Tabs"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
+
+[node name="EquipmentBody" type="VBoxContainer" parent="Center/Frame/FrameMargin/Content/Tabs/Equipment"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="EquipmentIntro" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Equipment/EquipmentBody"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Current loadout from the eight-slot Stage 8.5 equipment model."
+
+[node name="EquipmentList" type="VBoxContainer" parent="Center/Frame/FrameMargin/Content/Tabs/Equipment/EquipmentBody"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="Quest" type="MarginContainer" parent="Center/Frame/FrameMargin/Content/Tabs"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
+
+[node name="QuestBody" type="VBoxContainer" parent="Center/Frame/FrameMargin/Content/Tabs/Quest"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="QuestTitle" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Quest/QuestBody"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Quest"
+
+[node name="QuestObjective" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Quest/QuestBody"]
+layout_mode = 2
+autowrap_mode = 3
+text = "-"
+
+[node name="QuestStatus" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Quest/QuestBody"]
+layout_mode = 2
+autowrap_mode = 3
+text = "-"
+
+[node name="Map" type="MarginContainer" parent="Center/Frame/FrameMargin/Content/Tabs"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
+
+[node name="MapBody" type="VBoxContainer" parent="Center/Frame/FrameMargin/Content/Tabs/Map"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="MapPlaceholder" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Map/MapBody"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Map - coming soon"

@@ -3,9 +3,10 @@ extends Node2D
 const REFERENCE_VIEWPORT_SIZE := Vector2(480.0, 270.0)
 
 const PLAYER_KNIGHT_SPRITE_PATH := "res://assets/art/player/universal-lpc-sprite_male_01_full.png"
-const PLAYER_BATTLEMAGE_SPRITE_PATH := "res://assets/art/battle/LPC_starhat/sample.png"
+const PLAYER_BATTLEMAGE_SPRITE_PATH := "res://assets/art/external/stage_8_5/battlemage_walk_sheet.png"
 const ENEMY_KOBOLD_SPRITE_PATH := "res://assets/art/battle/LPC imp/attack - vanilla.png"
 const ENEMY_SHAMAN_SPRITE_PATH := "res://assets/art/battle/goblinsword.png"
+const ENEMY_SHAMAN_PORTRAIT_PATH := "res://assets/art/portraits/stage_8_5/shaman_portrait.png"
 const MINE_BACKGROUND_PATH := "res://assets/art/battle/monster2_combat_backgrounds/volcano.png"
 const WEAPON_OVERLAY_PATH := "res://assets/art/generated/stage_8_5/weapon_overlay.png"
 
@@ -45,7 +46,7 @@ const HEALTH_POTION_HEAL := 20
 const HUD_TAB_STATS := "stats"
 
 const KNIGHT_PLAYER_REGION := Rect2i(64, 64, 64, 64)
-const BATTLEMAGE_PLAYER_REGION := Rect2i(50, 135, 50, 45)
+const BATTLEMAGE_PLAYER_REGION := Rect2i(256, 128, 64, 64)
 const KOBOLD_ENEMY_REGION := Rect2i(64, 128, 64, 64)
 const SHAMAN_ENEMY_REGION := Rect2i(0, 0, 64, 64)
 const PLAYER_TARGET_HEIGHT := 88.0
@@ -76,7 +77,11 @@ var _enemy_hp_fill: ColorRect
 var _enemy_hp_label: Label
 var _enemy_name_label: Label
 var _turn_label: Label
-var _log_label: RichTextLabel
+var _status_label: Label
+var _player_portrait_panel: PanelContainer
+var _player_portrait_texture: TextureRect
+var _enemy_portrait_panel: PanelContainer
+var _enemy_portrait_texture: TextureRect
 var _main_menu_panel: PanelContainer
 var _main_menu_grid: GridContainer
 var _submenu_panel: PanelContainer
@@ -108,7 +113,7 @@ var _player_base_scale := Vector2.ONE
 var _enemy_base_scale := Vector2.ONE
 var _player_scale_multiplier := 1.4
 var _enemy_scale_multiplier := 1.5
-var _log_lines: Array[String] = []
+var _status_message := ""
 var _player_turn_count := 0
 var _ability_cooldown_remaining := 0
 var _enemy_hp := KOBOLD_MAX_HP
@@ -225,7 +230,7 @@ func _build_scene() -> void:
 	ui_layer.add_child(_ui_root)
 
 	_build_hp_widgets()
-	_build_log_panel()
+	_build_status_panels()
 	_build_turn_label()
 	_build_main_menu()
 	_build_submenu()
@@ -273,27 +278,47 @@ func _create_hp_widget(default_name: String) -> Dictionary:
 		"value_label": value_label,
 	}
 
-func _build_log_panel() -> void:
-	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", _make_panel_style(_panel_texture))
-	_ui_root.add_child(panel)
+func _build_status_panels() -> void:
+	_player_portrait_panel = PanelContainer.new()
+	_player_portrait_panel.add_theme_stylebox_override("panel", _make_panel_style(_panel_texture))
+	_ui_root.add_child(_player_portrait_panel)
 
-	var margin := MarginContainer.new()
-	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 10)
-	margin.add_theme_constant_override("margin_top", 8)
-	margin.add_theme_constant_override("margin_right", 10)
-	margin.add_theme_constant_override("margin_bottom", 8)
-	panel.add_child(margin)
+	var player_margin := MarginContainer.new()
+	player_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	player_margin.add_theme_constant_override("margin_left", 8)
+	player_margin.add_theme_constant_override("margin_top", 8)
+	player_margin.add_theme_constant_override("margin_right", 8)
+	player_margin.add_theme_constant_override("margin_bottom", 8)
+	_player_portrait_panel.add_child(player_margin)
 
-	_log_label = RichTextLabel.new()
-	_log_label.fit_content = false
-	_log_label.bbcode_enabled = false
-	_log_label.scroll_active = true
-	_log_label.selection_enabled = false
-	_log_label.add_theme_font_size_override("normal_font_size", int(_scale_font(8.0)))
-	margin.add_child(_log_label)
-	panel.name = "LogPanel"
+	_player_portrait_texture = TextureRect.new()
+	_player_portrait_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_player_portrait_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	player_margin.add_child(_player_portrait_texture)
+
+	_enemy_portrait_panel = PanelContainer.new()
+	_enemy_portrait_panel.add_theme_stylebox_override("panel", _make_panel_style(_panel_texture))
+	_ui_root.add_child(_enemy_portrait_panel)
+
+	var enemy_margin := MarginContainer.new()
+	enemy_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	enemy_margin.add_theme_constant_override("margin_left", 8)
+	enemy_margin.add_theme_constant_override("margin_top", 8)
+	enemy_margin.add_theme_constant_override("margin_right", 8)
+	enemy_margin.add_theme_constant_override("margin_bottom", 8)
+	_enemy_portrait_panel.add_child(enemy_margin)
+
+	_enemy_portrait_texture = TextureRect.new()
+	_enemy_portrait_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_enemy_portrait_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	enemy_margin.add_child(_enemy_portrait_texture)
+
+	_status_label = Label.new()
+	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_status_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	_status_label.add_theme_font_size_override("font_size", int(_scale_font(8.0)))
+	_ui_root.add_child(_status_label)
 
 func _build_turn_label() -> void:
 	_turn_label = Label.new()
@@ -466,6 +491,8 @@ func _configure_battle_state() -> void:
 
 	_player_name_label.text = PlayerData.get_display_class()
 	_enemy_name_label.text = "Boss Gate" if _boss_placeholder_mode else _enemy_display_name
+	_player_portrait_texture.texture = _player_sprite.texture
+	_enemy_portrait_texture.texture = _load_texture(ENEMY_SHAMAN_PORTRAIT_PATH) if _shaman_boss_mode else _enemy_sprite.texture
 	_append_log("The sealed chamber stirs." if _boss_placeholder_mode else _enemy_intro_log)
 
 func _layout_scene() -> void:
@@ -489,9 +516,15 @@ func _layout_scene() -> void:
 	_turn_label.position = Vector2((viewport_size.x - turn_width) * 0.5, _scale_y(180.0 + BATTLE_CONTENT_Y_OFFSET))
 	_turn_label.size = Vector2(turn_width, _scale_y(18.0))
 
-	var log_panel := _ui_root.get_node("LogPanel") as PanelContainer
-	log_panel.position = Vector2(_scale_x(42.0), _scale_y(190.0 + BATTLE_CONTENT_Y_OFFSET))
-	log_panel.size = Vector2(_scale_x(396.0), _scale_y(48.0))
+	_player_portrait_panel.position = Vector2(_scale_x(18.0), _scale_y(102.0 + BATTLE_CONTENT_Y_OFFSET))
+	_player_portrait_panel.size = Vector2(_scale_x(96.0), _scale_y(82.0))
+
+	_enemy_portrait_panel.position = Vector2(_scale_x(366.0), _scale_y(102.0 + BATTLE_CONTENT_Y_OFFSET))
+	_enemy_portrait_panel.size = Vector2(_scale_x(96.0), _scale_y(82.0))
+
+	_status_label.position = Vector2(_scale_x(122.0), _scale_y(188.0 + BATTLE_CONTENT_Y_OFFSET))
+	_status_label.size = Vector2(_scale_x(228.0), _scale_y(42.0))
+	_status_label.add_theme_font_size_override("font_size", int(_scale_font(8.0)))
 
 	_main_menu_panel.position = Vector2(_scale_x(28.0), _scale_y(222.0))
 	_main_menu_panel.size = Vector2(_scale_x(424.0), _scale_y(40.0))
@@ -620,7 +653,7 @@ func _position_hp_widget(container: Node, top_left: Vector2) -> void:
 
 func _refresh_all_ui() -> void:
 	_refresh_hp_ui()
-	_refresh_log_ui()
+	_refresh_status_ui()
 	_refresh_turn_label()
 	_refresh_main_menu_buttons()
 
@@ -634,9 +667,9 @@ func _update_hp_widget(fill: ColorRect, value_label: Label, current_hp: int, max
 	fill.color = Color(1.0 - ratio * 0.75, 0.18 + ratio * 0.62, 0.18, 1.0)
 	value_label.text = "%d / %d" % [current_hp, max_hp]
 
-func _refresh_log_ui() -> void:
-	_log_label.text = "\n".join(_log_lines)
-	_log_label.scroll_to_line(maxi(0, _log_lines.size() - 1))
+func _refresh_status_ui() -> void:
+	if _status_label != null:
+		_status_label.text = _status_message
 
 func _refresh_turn_label() -> void:
 	if _battle_over:
@@ -667,10 +700,8 @@ func _ability_button_text() -> String:
 	return base_label
 
 func _append_log(message: String) -> void:
-	_log_lines.append(message)
-	while _log_lines.size() > 4:
-		_log_lines.remove_at(0)
-	_refresh_log_ui()
+	_status_message = message
+	_refresh_status_ui()
 
 func _show_main_menu() -> void:
 	_submenu_panel.visible = false
@@ -1268,14 +1299,18 @@ func _shake_camera(intensity: float) -> void:
 	shake_tween.tween_property(_battle_camera, "offset", Vector2.ZERO, 0.05)
 
 func _load_texture(resource_path: String) -> Texture2D:
-	var image := Image.load_from_file(resource_path)
+	if ResourceLoader.exists(resource_path, "Texture2D") or ResourceLoader.exists(resource_path):
+		var texture := load(resource_path)
+		if texture is Texture2D:
+			return texture as Texture2D
+
+	var image := Image.load_from_file(ProjectSettings.globalize_path(resource_path))
 	if image == null or image.is_empty():
 		return null
-
 	return ImageTexture.create_from_image(image)
 
 func _load_cropped_texture(resource_path: String, region: Rect2i, fallback: Texture2D, transparent_black: bool = false, trim_to_visible_bounds: bool = false) -> Texture2D:
-	var image := Image.load_from_file(resource_path)
+	var image := Image.load_from_file(ProjectSettings.globalize_path(resource_path))
 	if image == null or image.is_empty():
 		return fallback
 

@@ -78,6 +78,21 @@ Until the source page is recovered, these stay in `needs source trace`.
 
 ---
 
+## Stage 8.5 implementation choices
+
+The close-out implementation currently uses these concrete assets:
+
+| Need | Chosen asset | Local path | Source note |
+|---|---|---|---|
+| Fighter animated map sheet | `baldricfrontwalksheet copy.png` | `assets/art/external/stage_8_5/fighter_walk_sheet.png` | From [Four characters: My LPC entries](https://opengameart.org/content/four-characters-my-lpc-entries) on OpenGameArt. |
+| Battlemage animated map sheet | `mage walking poses sheet copy.png` | `assets/art/external/stage_8_5/battlemage_walk_sheet.png` | From [Four characters: My LPC entries](https://opengameart.org/content/four-characters-my-lpc-entries) on OpenGameArt. |
+| Shaman portrait | `elf_m_256.png` | `assets/art/portraits/stage_8_5/shaman_portrait.png` | From [Fantasy Portrait Pack by Ravenmore](https://opengameart.org/content/fantasy-portrait-pack-by-ravenmore). |
+| Generic town NPC sprite | repo LPC crop | `assets/art/player/universal-lpc-sprite_male_01_full.png` | Still a repo reuse; source tracing is still desirable if this remains the long-term default. |
+
+These choices satisfy the Stage 8.5 close-out pass, but the repo LPC NPC crop still carries the original `needs source trace` caveat.
+
+---
+
 ## External shortlist
 
 ### 1. Universal LPC Sprite Generator

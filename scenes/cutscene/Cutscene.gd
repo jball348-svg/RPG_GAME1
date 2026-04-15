@@ -4,13 +4,11 @@ const REFERENCE_VIEWPORT_SIZE := Vector2(480.0, 270.0)
 
 const PLAYER_START_POS := Vector2(44.0, 143.0)
 const PLAYER_END_POS := Vector2(156.0, 143.0)
-const PLAYER_ACCENT_OFFSET := Vector2(4.0, 5.0)
-const PLAYER_ACCENT_SIZE := Vector2(28.0, 8.0)
 const SENTRY_START_POS := Vector2(342.0, 114.0)
 const SENTRY_END_POS := Vector2(298.0, 114.0)
 
-const PATH_TINT_PURE := Color(0.68, 0.56, 0.33, 1.0)
-const PATH_TINT_MIXED := Color(0.25, 0.53, 0.50, 1.0)
+const PATH_TINT_PURE := Color(0.96, 0.98, 1.0, 1.0)
+const PATH_TINT_MIXED := Color(1.0, 0.95, 0.90, 1.0)
 const CLASS_TINT_FALLBACK := Color(0.64, 0.62, 0.60, 1.0)
 const CLASS_TINTS := {
 	"knight": Color(0.71, 0.42, 0.36, 1.0),
@@ -41,7 +39,8 @@ const CUTSCENE_TOWN_GATE_LOCATION := "town_north_gate_cutscene"
 const SHAMAN_DIALOGUE_PAUSE_SECONDS := 0.8
 
 const PLAYER_KNIGHT_SPRITE_PATH := "res://assets/art/player/universal-lpc-sprite_male_01_full.png"
-const PLAYER_BATTLEMAGE_SPRITE_PATH := "res://assets/art/battle/LPC_starhat/sample.png"
+const PLAYER_BATTLEMAGE_SPRITE_PATH := "res://assets/art/external/stage_8_5/battlemage_walk_sheet.png"
+const ENTRY_SENTRY_SPRITE_PATH := "res://assets/art/external/stage_8_5/fighter_walk_sheet.png"
 const SHAMAN_SPRITE_PATH := "res://assets/art/battle/goblinsword.png"
 const UI_PANEL_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/panel_brown.png"
 const UI_BUTTON_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_brown.png"
@@ -49,7 +48,8 @@ const UI_BUTTON_PRESSED_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-
 const UI_BUTTON_DISABLED_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_grey.png"
 
 const KNIGHT_PLAYER_REGION := Rect2i(64, 64, 64, 64)
-const BATTLEMAGE_PLAYER_REGION := Rect2i(50, 135, 50, 45)
+const BATTLEMAGE_PLAYER_REGION := Rect2i(256, 128, 64, 64)
+const ENTRY_SENTRY_REGION := Rect2i(256, 128, 64, 64)
 const SHAMAN_SPRITE_REGION := Rect2i(0, 0, 64, 64)
 
 const SHAMAN_PLAYER_START_POS := Vector2(92.0, 142.0)
@@ -62,6 +62,9 @@ const MINE_EXIT_PLAYER_START_POS := Vector2(88.0, 146.0)
 const MINE_EXIT_PLAYER_END_POS := Vector2(250.0, 146.0)
 const MINE_EXIT_SHAMAN_START_POS := Vector2(56.0, 146.0)
 const MINE_EXIT_SHAMAN_END_POS := Vector2(218.0, 146.0)
+const ENTRY_PLAYER_SIZE := Vector2(72.0, 88.0)
+const ENTRY_SENTRY_SIZE := Vector2(72.0, 88.0)
+const MINE_POST_BOSS_LOCATION := "mine_post_boss"
 
 var _incoming_payload: Dictionary = {}
 var _cutscene_id := CUTSCENE_ID_MINE_ENTRY
@@ -73,9 +76,8 @@ var _speaker_label: Label
 var _dialogue_label: Label
 var _continue_button: Button
 var _dialogue_panel: PanelContainer
-var _player_actor: ColorRect
-var _player_accent: ColorRect
-var _sentry_actor: ColorRect
+var _player_actor: TextureRect
+var _sentry_actor: TextureRect
 var _fog_band: ColorRect
 var _floor_band: ColorRect
 var _player_battle_actor: TextureRect
@@ -178,14 +180,11 @@ func _build_ui() -> void:
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	info_content.add_child(_status_label)
 
-	_player_actor = ColorRect.new()
-	_player_actor.size = _scaled(Vector2(36.0, 56.0))
+	_player_actor = TextureRect.new()
+	_player_actor.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_player_actor.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_player_actor.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	add_child(_player_actor)
-
-	_player_accent = ColorRect.new()
-	_player_accent.position = _scaled(PLAYER_ACCENT_OFFSET)
-	_player_accent.size = _scaled(PLAYER_ACCENT_SIZE)
-	_player_actor.add_child(_player_accent)
 
 	_player_battle_actor = TextureRect.new()
 	_player_battle_actor.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -194,8 +193,10 @@ func _build_ui() -> void:
 	_player_battle_actor.visible = false
 	add_child(_player_battle_actor)
 
-	_sentry_actor = ColorRect.new()
-	_sentry_actor.color = Color(0.46, 0.43, 0.37, 1.0)
+	_sentry_actor = TextureRect.new()
+	_sentry_actor.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_sentry_actor.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_sentry_actor.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	add_child(_sentry_actor)
 
 	_shaman_actor = TextureRect.new()
@@ -353,11 +354,9 @@ func _layout_for_viewport() -> void:
 	_title_label.add_theme_font_size_override("font_size", 8 if compact_layout else 9)
 	_status_label.add_theme_font_size_override("font_size", 7 if compact_layout else 8)
 
-	_player_actor.size = _scaled(Vector2(36.0, 56.0))
-	_player_accent.position = _scaled(PLAYER_ACCENT_OFFSET)
-	_player_accent.size = _scaled(PLAYER_ACCENT_SIZE)
+	_player_actor.size = _scaled(ENTRY_PLAYER_SIZE)
 	_player_battle_actor.size = _scaled(SHAMAN_PLAYER_SIZE)
-	_sentry_actor.size = _scaled(Vector2(40.0, 64.0))
+	_sentry_actor.size = _scaled(ENTRY_SENTRY_SIZE)
 	_shaman_actor.size = _scaled(SHAMAN_ACTOR_SIZE)
 	_narration_label.position = Vector2(_scaled(Vector2(48.0, 0.0)).x, _scaled(Vector2(0.0, 92.0)).y)
 	_narration_label.size = Vector2(viewport_size.x - _scaled(Vector2(96.0, 0.0)).x, _scaled(Vector2(0.0, 34.0)).y)
@@ -399,7 +398,6 @@ func _layout_for_viewport() -> void:
 func _reset_sequence() -> void:
 	_player_actor.position = _scaled(PLAYER_START_POS)
 	_player_actor.visible = false
-	_player_accent.visible = false
 	_player_battle_actor.position = _scaled(SHAMAN_PLAYER_START_POS)
 	_player_battle_actor.visible = false
 	_sentry_actor.position = _scaled(SENTRY_START_POS)
@@ -417,9 +415,12 @@ func _reset_sequence() -> void:
 	_fight_button.disabled = true
 
 func _apply_player_visuals() -> void:
-	_player_actor.color = PATH_TINT_PURE if PlayerData.is_pure() else PATH_TINT_MIXED
-	_player_accent.color = _resolve_class_tint()
+	_player_actor.texture = _load_player_cutscene_texture()
+	_player_actor.modulate = PATH_TINT_PURE if PlayerData.is_pure() else PATH_TINT_MIXED
 	_player_battle_actor.texture = _load_player_cutscene_texture()
+	_player_battle_actor.modulate = Color(1.0, 1.0, 1.0, 1.0)
+	_sentry_actor.texture = _load_entry_sentry_texture()
+	_sentry_actor.modulate = _resolve_class_tint().lerp(Color(0.78, 0.76, 0.72, 1.0), 0.55)
 	_shaman_actor.texture = _load_shaman_texture()
 
 func _resolve_class_tint() -> Color:
@@ -454,7 +455,6 @@ func _play_sequence() -> void:
 func _run_mine_entry_sequence() -> void:
 	_title_label.text = "Mine Entrance Transition"
 	_player_actor.visible = true
-	_player_accent.visible = true
 	_sentry_actor.visible = true
 	_player_actor.position = _scaled(PLAYER_START_POS)
 	_sentry_actor.position = _scaled(SENTRY_START_POS)
@@ -598,7 +598,7 @@ func _run_recruit_branch() -> void:
 
 	await _start_dialogue_and_wait(SHAMAN_RECRUIT_DIALOGUE_ID)
 	SaveManager.save_game()
-	_return_to_map_after_resolution("The Shaman lowers his staff. The chamber is quiet.")
+	_return_to_map_after_resolution("The Shaman lowers his staff. He follows you toward the exit.")
 
 func _launch_shaman_battle() -> void:
 	_launch_shaman_battle_async()
@@ -631,14 +631,14 @@ func _return_to_map_after_resolution_async(status_text: String) -> void:
 		await fade_tween.finished
 
 	PlayerData.current_region = _return_region_from_payload()
-	PlayerData.current_location = _return_location_from_payload()
+	PlayerData.current_location = MINE_POST_BOSS_LOCATION if bool(PlayerData.get_flag(SHAMAN_RECRUITED_FLAG, false)) else _return_location_from_payload()
 	SceneManager.change_state("map", {
 		"fade_from_black": true,
 		"source": "cutscene",
 		"status_text": status_text,
 		"return_region": PlayerData.current_region,
 		"return_location": PlayerData.current_location,
-		"return_position": _return_position_from_payload(),
+		"return_position": Vector2.ZERO if bool(PlayerData.get_flag(SHAMAN_RECRUITED_FLAG, false)) else _return_position_from_payload(),
 		"suppressed_trigger_type": _suppressed_trigger_type_from_payload(),
 		"suppressed_trigger_index": _suppressed_trigger_index_from_payload(),
 	})
@@ -779,9 +779,7 @@ func _load_player_cutscene_texture() -> Texture2D:
 		return _load_cropped_texture(
 			PLAYER_BATTLEMAGE_SPRITE_PATH,
 			BATTLEMAGE_PLAYER_REGION,
-			_make_fallback_texture(32, 40, Color(0.21, 0.31, 0.55)),
-			true,
-			true
+			_make_fallback_texture(64, 64, Color(0.21, 0.31, 0.55))
 		)
 
 	return _load_cropped_texture(
@@ -799,14 +797,26 @@ func _load_shaman_texture() -> Texture2D:
 		true
 	)
 
+func _load_entry_sentry_texture() -> Texture2D:
+	return _load_cropped_texture(
+		ENTRY_SENTRY_SPRITE_PATH,
+		ENTRY_SENTRY_REGION,
+		_make_fallback_texture(64, 64, Color(0.52, 0.48, 0.42))
+	)
+
 func _load_texture(resource_path: String) -> Texture2D:
-	var image := Image.load_from_file(resource_path)
+	if ResourceLoader.exists(resource_path, "Texture2D") or ResourceLoader.exists(resource_path):
+		var texture := load(resource_path)
+		if texture is Texture2D:
+			return texture as Texture2D
+
+	var image := Image.load_from_file(ProjectSettings.globalize_path(resource_path))
 	if image == null or image.is_empty():
 		return null
 	return ImageTexture.create_from_image(image)
 
 func _load_cropped_texture(resource_path: String, region: Rect2i, fallback: Texture2D, transparent_black: bool = false, trim_to_visible_bounds: bool = false) -> Texture2D:
-	var image := Image.load_from_file(resource_path)
+	var image := Image.load_from_file(ProjectSettings.globalize_path(resource_path))
 	if image == null or image.is_empty():
 		return fallback
 

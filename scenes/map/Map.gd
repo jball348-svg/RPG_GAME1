@@ -12,9 +12,13 @@ const UI_PANEL_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion
 const UI_BUTTON_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_brown.png"
 const UI_BUTTON_PRESSED_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_brown_pressed.png"
 const UI_BUTTON_DISABLED_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_grey.png"
-const FIGHTER_MAP_SPRITE_PATH := "res://assets/art/generated/stage_8_5/map_fighter.png"
-const BATTLEMAGE_MAP_SPRITE_PATH := "res://assets/art/generated/stage_8_5/map_battlemage.png"
-const NPC_MAP_SPRITE_PATH := "res://assets/art/generated/stage_8_5/map_npc.png"
+const FIGHTER_MAP_SPRITE_PATH := "res://assets/art/external/stage_8_5/fighter_walk_sheet.png"
+const BATTLEMAGE_MAP_SPRITE_PATH := "res://assets/art/external/stage_8_5/battlemage_walk_sheet.png"
+const NPC_MAP_SPRITE_PATH := "res://assets/art/player/universal-lpc-sprite_male_01_full.png"
+const FIGHTER_FRAME_SIZE := Vector2i(64, 64)
+const BATTLEMAGE_FRAME_SIZE := Vector2i(64, 64)
+const NPC_FRAME_REGION := Rect2i(0, 64, 32, 32)
+const SHAMAN_FOLLOWER_SCENE: PackedScene = preload("res://scenes/npc/ShamanFollower.tscn")
 const PURE_PATH_TINT := Color(0.78, 0.88, 1.0, 1.0)
 const MIXED_PATH_TINT := Color(1.0, 0.84, 0.68, 1.0)
 const NPC_SCENE: PackedScene = preload("res://scenes/npc/NPC.tscn")
@@ -191,9 +195,11 @@ var _panel_texture: Texture2D
 var _button_texture: Texture2D
 var _button_pressed_texture: Texture2D
 var _button_disabled_texture: Texture2D
-var _fighter_map_texture: Texture2D
-var _battlemage_map_texture: Texture2D
+var _fighter_map_frames: SpriteFrames
+var _battlemage_map_frames: SpriteFrames
 var _npc_map_texture: Texture2D
+var _player_facing := "down"
+var _shaman_follower: Node2D
 var _dev_loader_backdrop: ColorRect
 var _dev_loader_panel: PanelContainer
 var _dev_loader_button_list: VBoxContainer
@@ -201,7 +207,7 @@ var _dev_loader_button_list: VBoxContainer
 @onready var ground_map: TileMap = $GroundMap
 @onready var world_collision: StaticBody2D = $WorldCollision
 @onready var player: CharacterBody2D = $Player
-@onready var player_sprite: Sprite2D = $Player/PlayerSprite
+@onready var player_sprite: AnimatedSprite2D = $Player/PlayerSprite
 @onready var map_camera: Camera2D = $Player/MapCamera
 @onready var player_spawn: Marker2D = $PlayerSpawn
 @onready var mine_spawn: Marker2D = $MineSpawn
@@ -763,24 +769,32 @@ func _wire_mine_exit_prompt() -> void:
 	_hide_prompt_modal()
 
 func _load_stage_8_5_sprite_textures() -> void:
-	_fighter_map_texture = _load_texture(FIGHTER_MAP_SPRITE_PATH)
-	_battlemage_map_texture = _load_texture(BATTLEMAGE_MAP_SPRITE_PATH)
+	_fighter_map_frames = _build_directional_sprite_frames(
+		_load_texture(FIGHTER_MAP_SPRITE_PATH),
+		FIGHTER_FRAME_SIZE
+	)
+	_battlemage_map_frames = _build_directional_sprite_frames(
+		_load_texture(BATTLEMAGE_MAP_SPRITE_PATH),
+		BATTLEMAGE_FRAME_SIZE
+	)
 	_npc_map_texture = _load_texture(NPC_MAP_SPRITE_PATH)
 
 func _apply_stage_8_5_map_sprites() -> void:
 	_apply_player_map_sprite()
 	_apply_town_npc_sprites()
+	_sync_shaman_follower()
 
 func _apply_player_map_sprite() -> void:
 	if not is_instance_valid(player_sprite):
 		return
 
-	var resolved_texture := _battlemage_map_texture if _player_data().resolve_vertical_slice_class_id() == PlayerData.CLASS_BATTLEMAGE else _fighter_map_texture
-	if resolved_texture != null:
-		player_sprite.texture = resolved_texture
+	var resolved_frames := _battlemage_map_frames if _player_data().resolve_vertical_slice_class_id() == PlayerData.CLASS_BATTLEMAGE else _fighter_map_frames
+	if resolved_frames != null:
+		player_sprite.sprite_frames = resolved_frames
 	player_sprite.modulate = _player_path_tint()
-	player_sprite.position = Vector2(0.0, -8.0)
-	player_sprite.scale = Vector2.ONE
+	player_sprite.position = Vector2(0.0, -12.0)
+	player_sprite.scale = Vector2.ONE * 0.5
+	_update_player_map_animation(Vector2.ZERO)
 
 func _apply_town_npc_sprites() -> void:
 	for node_path in ["IntelNPC", "MoralChoiceNPC", "BookstoreNPC"]:
@@ -795,10 +809,121 @@ func _apply_generic_npc_sprite(npc: Node) -> void:
 		return
 
 	if _npc_map_texture != null:
-		sprite.texture = _npc_map_texture
-	sprite.modulate = Color(1.0, 1.0, 1.0, 1.0)
-	sprite.position = Vector2(0.0, -8.0)
+		sprite.texture = _make_atlas_texture(_npc_map_texture, NPC_FRAME_REGION)
+	sprite.modulate = _npc_tint_for(npc.name)
+	sprite.position = Vector2(0.0, -10.0)
 	sprite.scale = Vector2.ONE
+
+func _make_atlas_texture(texture: Texture2D, region: Rect2i) -> Texture2D:
+	if texture == null:
+		return null
+
+	var atlas := AtlasTexture.new()
+	atlas.atlas = texture
+	atlas.region = Rect2(region.position, region.size)
+	return atlas
+
+func _npc_tint_for(npc_name: String) -> Color:
+	match npc_name:
+		"IntelNPC":
+			return Color(0.88, 0.92, 1.0, 1.0)
+		"MoralChoiceNPC":
+			return Color(1.0, 0.90, 0.76, 1.0)
+		"BookstoreNPC":
+			return Color(0.92, 1.0, 0.90, 1.0)
+		_:
+			return Color(1.0, 1.0, 1.0, 1.0)
+
+func _build_directional_sprite_frames(texture: Texture2D, frame_size: Vector2i) -> SpriteFrames:
+	if texture == null:
+		return null
+
+	var sprite_frames := SpriteFrames.new()
+	var directions := {
+		"up": 0,
+		"left": 1,
+		"down": 2,
+		"right": 3,
+	}
+
+	for direction in directions.keys():
+		var row := int(directions[direction])
+		var idle_animation := "idle_%s" % direction
+		sprite_frames.add_animation(idle_animation)
+		sprite_frames.set_animation_loop(idle_animation, true)
+		sprite_frames.set_animation_speed(idle_animation, 1.0)
+		sprite_frames.add_frame(idle_animation, _make_sheet_frame(texture, frame_size, row, 4))
+
+		var walk_animation := "walk_%s" % direction
+		sprite_frames.add_animation(walk_animation)
+		sprite_frames.set_animation_loop(walk_animation, true)
+		sprite_frames.set_animation_speed(walk_animation, 10.0)
+		for column in range(9):
+			sprite_frames.add_frame(walk_animation, _make_sheet_frame(texture, frame_size, row, column))
+
+	return sprite_frames
+
+func _make_sheet_frame(texture: Texture2D, frame_size: Vector2i, row: int, column: int) -> Texture2D:
+	var atlas := AtlasTexture.new()
+	atlas.atlas = texture
+	atlas.region = Rect2(
+		Vector2(column * frame_size.x, row * frame_size.y),
+		Vector2(frame_size.x, frame_size.y)
+	)
+	return atlas
+
+func _update_player_map_animation(movement_vector: Vector2) -> void:
+	if not is_instance_valid(player_sprite) or player_sprite.sprite_frames == null:
+		return
+
+	var facing := _player_facing
+	if not movement_vector.is_zero_approx():
+		facing = _direction_from_vector(movement_vector)
+		_player_facing = facing
+
+	var animation_name := "walk_%s" % facing if not movement_vector.is_zero_approx() else "idle_%s" % _player_facing
+	if player_sprite.animation != animation_name:
+		player_sprite.play(animation_name)
+	elif not player_sprite.is_playing():
+		player_sprite.play()
+
+func _direction_from_vector(movement_vector: Vector2) -> String:
+	if absf(movement_vector.x) > absf(movement_vector.y):
+		return "right" if movement_vector.x > 0.0 else "left"
+	if movement_vector.y < 0.0:
+		return "up"
+	return "down"
+
+func _should_show_shaman_follower() -> bool:
+	return (
+		bool(_player_data().get_flag(SHAMAN_RECRUITED_FLAG, false))
+		and bool(_player_data().get_flag(MINE_EXIT_UNLOCKED_FLAG, false))
+		and not bool(_player_data().get_flag(MINE_CLEARED_FLAG, false))
+		and str(_player_data().current_region) == MINE_REGION
+	)
+
+func _sync_shaman_follower() -> void:
+	if not _should_show_shaman_follower():
+		if is_instance_valid(_shaman_follower):
+			_shaman_follower.queue_free()
+			_shaman_follower = null
+		return
+
+	if not is_instance_valid(_shaman_follower):
+		_shaman_follower = SHAMAN_FOLLOWER_SCENE.instantiate()
+		_shaman_follower.name = "ShamanFollower"
+		add_child(_shaman_follower)
+
+	if _shaman_follower != null and _shaman_follower.has_method("configure"):
+		_shaman_follower.configure(
+			player,
+			_battlemage_map_frames,
+			Color(0.86, 1.0, 0.88, 1.0),
+			Vector2.ONE * 0.5
+		)
+
+	if _shaman_follower != null:
+		_shaman_follower.global_position = player.global_position + Vector2(-18.0, 16.0)
 
 func _player_path_tint() -> Color:
 	return MIXED_PATH_TINT if _player_data().is_mixed() else PURE_PATH_TINT
@@ -1305,6 +1430,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	if _is_hud_open() or _is_dialogue_active() or _is_prompt_open() or _is_dev_loader_open():
 		player.velocity = Vector2.ZERO
+		_update_player_map_animation(Vector2.ZERO)
 		return
 
 	var input_vector := Input.get_vector("move_left", "move_right", "move_up", "move_down")
@@ -1313,6 +1439,7 @@ func _physics_process(delta: float) -> void:
 	var previous_position := player.global_position
 	player.move_and_slide()
 	_clamp_player_to_map()
+	_update_player_map_animation(player.velocity)
 
 	var travelled := player.global_position - previous_position
 	if travelled.is_zero_approx():
@@ -1503,6 +1630,22 @@ func _dev_loader_entries() -> Array[Dictionary]:
 				{"flag": MAIN_QUEST_PATH_OPEN_FLAG, "value": false},
 			],
 		},
+		{
+			"label": "Post Boss (Recruit)",
+			"region": MINE_REGION,
+			"location": "mine_post_boss",
+			"flags": [
+				{"flag": MINE_COMMIT_FLAG, "value": true},
+				{"flag": MINE_ENCOUNTER_PROGRESS_FLAG, "value": 3},
+				{"flag": MINE_BOSS_READY_FLAG, "value": true},
+				{"flag": MINE_BOSS_RESOLVED_FLAG, "value": true},
+				{"flag": MINE_EXIT_UNLOCKED_FLAG, "value": true},
+				{"flag": MINE_CLEARED_FLAG, "value": false},
+				{"flag": SHAMAN_RECRUITED_FLAG, "value": true},
+				{"flag": SHAMAN_KILLED_FLAG, "value": false},
+				{"flag": MAIN_QUEST_PATH_OPEN_FLAG, "value": false},
+			],
+		},
 	]
 
 func _apply_dev_loader_spawn(entry: Dictionary) -> void:
@@ -1540,6 +1683,8 @@ func _refresh_map_state_after_debug_spawn() -> void:
 	_state_transition_locked = false
 	_mine_status_text = ""
 	_clear_suppressed_mine_trigger()
+	_apply_stage_8_5_map_sprites()
+	_update_player_map_animation(Vector2.ZERO)
 
 	if _is_mine_start_map:
 		_restore_mine_progress_state()
@@ -1647,7 +1792,12 @@ func _load_ui_textures() -> void:
 	_button_disabled_texture = _load_texture(UI_BUTTON_DISABLED_TEXTURE_PATH)
 
 func _load_texture(resource_path: String) -> Texture2D:
-	var image := Image.load_from_file(resource_path)
+	if ResourceLoader.exists(resource_path, "Texture2D") or ResourceLoader.exists(resource_path):
+		var texture := load(resource_path)
+		if texture is Texture2D:
+			return texture as Texture2D
+
+	var image := Image.load_from_file(ProjectSettings.globalize_path(resource_path))
 	if image == null or image.is_empty():
 		return null
 	return ImageTexture.create_from_image(image)
