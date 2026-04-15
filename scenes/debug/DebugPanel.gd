@@ -20,6 +20,7 @@ const SKILL_ORDER: Dictionary = {
 
 var _content_label: RichTextLabel
 var _externally_suppressed := false
+var _user_hidden := false
 
 func _ready() -> void:
 	z_index = 5
@@ -96,7 +97,16 @@ func set_suppressed(suppressed: bool) -> void:
 func _refresh_visibility() -> void:
 	visible = _should_be_visible()
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("toggle_debug"):
+		_user_hidden = not _user_hidden
+		_refresh_visibility()
+		get_viewport().set_input_as_handled()
+
 func _should_be_visible() -> bool:
+	if _user_hidden:
+		return false
+
 	if _externally_suppressed:
 		return false
 
