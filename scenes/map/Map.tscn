@@ -36,6 +36,7 @@ script = ExtResource("1_ub3q0")
 metadata/map_size_tiles = Vector2i(40, 26)
 
 [node name="GroundMap" type="TileMap" parent="." unique_id=508837998]
+texture_filter = 1
 z_index = -10
 tile_set = ExtResource("2_nuen2")
 format = 2
