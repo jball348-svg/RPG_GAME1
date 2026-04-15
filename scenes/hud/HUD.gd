@@ -80,6 +80,11 @@ var _button_disabled_texture: Texture2D
 @onready var _quest_status: Label = $Center/Frame/FrameMargin/Content/Tabs/Quest/QuestBody/QuestStatus
 @onready var _map_placeholder: Label = $Center/Frame/FrameMargin/Content/Tabs/Map/MapBody/MapPlaceholder
 
+@onready var _tab_stats_button: Button = $Center/Frame/FrameMargin/Content/NavigationRow/TabStatsButton
+@onready var _tab_equipment_button: Button = $Center/Frame/FrameMargin/Content/NavigationRow/TabEquipmentButton
+@onready var _tab_quest_button: Button = $Center/Frame/FrameMargin/Content/NavigationRow/TabQuestButton
+@onready var _tab_map_button: Button = $Center/Frame/FrameMargin/Content/NavigationRow/TabMapButton
+
 func _ready() -> void:
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -107,12 +112,14 @@ func set_open(open: bool) -> void:
 	if open:
 		_refresh_all()
 		_tabs.current_tab = _tab_index_for_id(_current_tab)
+		_refresh_tab_buttons()
 		_close_button.grab_focus()
 
 func open_to_tab(tab_id: String) -> void:
 	_current_tab = _resolve_tab_id(tab_id)
 	_tabs.current_tab = _tab_index_for_id(_current_tab)
 	set_open(true)
+	_refresh_tab_buttons()
 
 func is_open() -> bool:
 	return _is_open
@@ -134,7 +141,7 @@ func _load_ui_textures() -> void:
 func _apply_styles() -> void:
 	_frame.add_theme_stylebox_override("panel", _make_panel_style(_panel_texture))
 	_title_label.add_theme_color_override("font_color", Color(0.96, 0.93, 0.84, 1.0))
-	for button in [_close_button]:
+	for button in [_close_button, _tab_stats_button, _tab_equipment_button, _tab_quest_button, _tab_map_button]:
 		_apply_button_style(button)
 
 func _build_family_rows() -> void:
@@ -218,6 +225,11 @@ func _connect_signals() -> void:
 	SignalBus.flag_set.connect(_on_refresh_requested_flag)
 	SignalBus.level_up.connect(_on_level_up)
 	SignalBus.state_changed.connect(_on_state_changed)
+	
+	_tab_stats_button.pressed.connect(_on_tab_button_pressed.bind(TAB_STATS))
+	_tab_equipment_button.pressed.connect(_on_tab_button_pressed.bind(TAB_EQUIPMENT))
+	_tab_quest_button.pressed.connect(_on_tab_button_pressed.bind(TAB_QUEST))
+	_tab_map_button.pressed.connect(_on_tab_button_pressed.bind(TAB_MAP))
 
 func _on_viewport_size_changed() -> void:
 	_layout_for_viewport()
@@ -235,6 +247,27 @@ func _on_tab_changed(tab_index: int) -> void:
 	if tab_index < 0 or tab_index >= TAB_ORDER.size():
 		return
 	_current_tab = str(TAB_ORDER[tab_index])
+	_refresh_tab_buttons()
+
+func _on_tab_button_pressed(tab_id: String) -> void:
+	_current_tab = tab_id
+	_tabs.current_tab = _tab_index_for_id(tab_id)
+	_refresh_tab_buttons()
+
+func _refresh_tab_buttons() -> void:
+	var buttons = {
+		TAB_STATS: _tab_stats_button,
+		TAB_EQUIPMENT: _tab_equipment_button,
+		TAB_QUEST: _tab_quest_button,
+		TAB_MAP: _tab_map_button
+	}
+	
+	for id in buttons:
+		var btn: Button = buttons[id]
+		if id == _current_tab:
+			btn.add_theme_stylebox_override("normal", _make_button_style(_button_pressed_texture))
+		else:
+			btn.add_theme_stylebox_override("normal", _make_button_style(_button_texture))
 
 func _on_allocate_pressed(family_key: String) -> void:
 	if PlayerData.unspent_stat_points <= 0:

@@ -26,7 +26,6 @@ anchor_bottom = 1.0
 mouse_filter = 1
 
 [node name="Frame" type="PanelContainer" parent="Center"]
-custom_minimum_size = Vector2(840, 600)
 layout_mode = 2
 mouse_filter = 1
 
@@ -66,11 +65,32 @@ layout_mode = 2
 focus_mode = 2
 text = "Close"
 
+[node name="NavigationRow" type="HBoxContainer" parent="Center/Frame/FrameMargin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TabStatsButton" type="Button" parent="Center/Frame/FrameMargin/Content/NavigationRow"]
+layout_mode = 2
+text = "Stats"
+
+[node name="TabEquipmentButton" type="Button" parent="Center/Frame/FrameMargin/Content/NavigationRow"]
+layout_mode = 2
+text = "Equipment"
+
+[node name="TabQuestButton" type="Button" parent="Center/Frame/FrameMargin/Content/NavigationRow"]
+layout_mode = 2
+text = "Quest"
+
+[node name="TabMapButton" type="Button" parent="Center/Frame/FrameMargin/Content/NavigationRow"]
+layout_mode = 2
+text = "Map"
+
 [node name="Tabs" type="TabContainer" parent="Center/Frame/FrameMargin/Content"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 current_tab = 0
+tabs_visible = false
 
 [node name="Stats" type="MarginContainer" parent="Center/Frame/FrameMargin/Content/Tabs"]
 layout_mode = 2
