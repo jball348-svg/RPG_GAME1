@@ -14,6 +14,12 @@ func _ready() -> void:
 func has_save() -> bool:
 	return FileAccess.file_exists(SAVE_PATH)
 
+func delete_save() -> bool:
+	if not has_save():
+		return true
+	var result := DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH))
+	return result == OK
+
 func save_game() -> bool:
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file == null:

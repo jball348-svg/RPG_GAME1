@@ -1427,6 +1427,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		_launch_battle(_build_battle_payload(BATTLE_KIND_DEBUG, -1, ""))
 
+	if event.is_action_pressed("full_reset"):
+		get_viewport().set_input_as_handled()
+		_full_game_reset()
+
 func _physics_process(delta: float) -> void:
 	if _is_hud_open() or _is_dialogue_active() or _is_prompt_open() or _is_dev_loader_open():
 		player.velocity = Vector2.ZERO
@@ -1709,6 +1713,34 @@ func _reset_debug_stats_and_gold() -> void:
 	PlayerData.gold = 0
 	PlayerData.reset_vertical_slice_battle_resources()
 	_player_data().set_flag(MINE_COMMIT_FLAG, false)
+
+func _full_game_reset() -> void:
+	SaveManager.delete_save()
+	PlayerData.flags.clear()
+	PlayerData.ghost_flags.clear()
+	PlayerData.chosen_path = ""
+	PlayerData.chosen_class = ""
+	PlayerData.specialisation = ""
+	PlayerData.mixed_classes.clear()
+	PlayerData.gold = 0
+	PlayerData.inventory.clear()
+	PlayerData.equipment = PlayerData.DEFAULT_EQUIPMENT.duplicate(true)
+	PlayerData.level = PlayerData.DEFAULT_LEVEL
+	PlayerData.xp = PlayerData.DEFAULT_XP
+	PlayerData.xp_to_next_level = PlayerData.DEFAULT_XP_TO_NEXT_LEVEL
+	PlayerData.unspent_stat_points = PlayerData.DEFAULT_UNSPENT_STAT_POINTS
+	PlayerData.current_hp = 0
+	PlayerData.current_region = FRONTIER_REGION
+	PlayerData.current_location = TOWN_LOCATION
+	_reset_debug_stats_and_gold()
+	PlayerData.ensure_spike_defaults()
+	PlayerData.restore_hp_full()
+	SceneManager.change_state("map", {
+		"fade_from_black": true,
+		"source": "full_reset",
+		"return_region": FRONTIER_REGION,
+		"return_location": TOWN_LOCATION,
+	})
 
 func _apply_mine_commit_stats_once() -> void:
 	if _player_data().get_flag(MINE_COMMIT_FLAG, false):
