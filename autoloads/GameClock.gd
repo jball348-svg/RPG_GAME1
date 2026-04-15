@@ -11,12 +11,16 @@ extends Node
 # Default: 1 real second = 2 in-game minutes
 # So 1 real hour = 120 in-game hours (5 in-game days). Adjust to taste.
 const CLOCK_SPEED: float = 2.0
+const DEFAULT_MINUTE := 0
+const DEFAULT_HOUR := 8
+const DEFAULT_DAY := 1
+const DEFAULT_SPEED_MULTIPLIER := 1.0
 
 # --- State ---
-var in_game_minute: int = 0
-var in_game_hour: int   = 8   # game starts at 8am
-var in_game_day: int    = 1
-var speed_multiplier: float = 1.0  # 1.0 = normal, 4.0 = resting, 8.0 = sleeping
+var in_game_minute: int = DEFAULT_MINUTE
+var in_game_hour: int   = DEFAULT_HOUR   # game starts at 8am
+var in_game_day: int    = DEFAULT_DAY
+var speed_multiplier: float = DEFAULT_SPEED_MULTIPLIER  # 1.0 = normal, 4.0 = resting, 8.0 = sleeping
 
 # Accumulates real-time seconds until a full in-game minute has passed.
 var _accumulator: float = 0.0
@@ -26,7 +30,27 @@ var _accumulator: float = 0.0
 var _seconds_per_ingame_minute: float = 1.0 / CLOCK_SPEED
 
 func _ready() -> void:
-	pass  # Clock runs via _process — no setup needed.
+	pass  # Clock runs via _process - no setup needed.
+
+func get_save_data() -> Dictionary:
+	return {
+		"day": in_game_day,
+		"hour": in_game_hour,
+		"minute": in_game_minute,
+		"speed_multiplier": speed_multiplier,
+	}
+
+func apply_save_data(save_data: Variant) -> void:
+	if not (save_data is Dictionary):
+		return
+
+	var clock_data: Dictionary = save_data
+	in_game_day = maxi(1, int(clock_data.get("day", DEFAULT_DAY)))
+	in_game_hour = clampi(int(clock_data.get("hour", DEFAULT_HOUR)), 0, 23)
+	in_game_minute = clampi(int(clock_data.get("minute", DEFAULT_MINUTE)), 0, 59)
+	set_speed_multiplier(float(clock_data.get("speed_multiplier", DEFAULT_SPEED_MULTIPLIER)))
+	_accumulator = 0.0
+	SignalBus.clock_ticked.emit(get_time())
 
 func _process(delta: float) -> void:
 	_accumulator += delta * speed_multiplier

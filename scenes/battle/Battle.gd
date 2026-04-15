@@ -1014,6 +1014,7 @@ func _run_victory_sequence() -> void:
 
 	PlayerData.gold += gold_reward
 	SignalBus.action_performed.emit({"type": "battle_victory"})
+	SaveManager.save_game()
 
 	_loot_panel.visible = true
 	await get_tree().create_timer(1.2).timeout
@@ -1056,6 +1057,16 @@ func _run_boss_placeholder_sequence() -> void:
 
 func _return_to_map(status_text: String, suppressed_trigger_type: String, suppressed_trigger_index: int) -> void:
 	_return_to_map_async(status_text, suppressed_trigger_type, suppressed_trigger_index)
+
+func get_save_context() -> Dictionary:
+	var return_position = _context.get("return_position", Vector2.ZERO)
+	return {
+		"region": str(_context.get("return_region", PlayerData.current_region)),
+		"location": str(_context.get("return_location", PlayerData.current_location)),
+		"position": return_position if return_position is Vector2 else Vector2.ZERO,
+		"suppressed_trigger_type": str(_context.get("suppressed_trigger_type", "")),
+		"suppressed_trigger_index": int(_context.get("suppressed_trigger_index", -1)),
+	}
 
 func _return_to_map_async(status_text: String, suppressed_trigger_type: String, suppressed_trigger_index: int) -> void:
 	var screen_fader = SceneManager.get_screen_fader()

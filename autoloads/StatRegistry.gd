@@ -8,7 +8,7 @@ extends Node
 # --- Stat tree ---
 # Structure mirrors the design doc exactly.
 # Values are floats: 0.0 to 100.0 unless noted.
-var stats: Dictionary = {
+const DEFAULT_STATS := {
 	"physical": {
 		"strength":  0.0,
 		"endurance": 0.0,
@@ -42,6 +42,7 @@ var stats: Dictionary = {
 		"justice":   0.0,
 	},
 }
+var stats: Dictionary = DEFAULT_STATS.duplicate(true)
 
 # --- Temporary modifiers ---
 # Active buffs/debuffs with remaining duration (in in-game seconds).
@@ -74,6 +75,27 @@ var action_modifiers: Dictionary = {
 func _ready() -> void:
 	SignalBus.action_performed.connect(_on_action_performed)
 	SignalBus.clock_ticked.connect(_on_clock_ticked)
+
+func get_save_data() -> Dictionary:
+	return stats.duplicate(true)
+
+func apply_save_data(save_data: Variant) -> void:
+	var restored := DEFAULT_STATS.duplicate(true)
+	if save_data is Dictionary:
+		var saved_stats: Dictionary = save_data
+		for category in restored.keys():
+			if not saved_stats.has(category) or not (saved_stats[category] is Dictionary):
+				continue
+
+			var source_category: Dictionary = saved_stats[category]
+			for skill in restored[category].keys():
+				if source_category.has(skill):
+					restored[category][skill] = float(source_category[skill])
+
+	stats = restored
+	temp_modifiers.clear()
+	_recalculate_luck()
+	_emit_stat_refresh()
 
 # Called whenever any action signal fires.
 func _on_action_performed(payload: Dictionary) -> void:
@@ -145,3 +167,9 @@ func get_stat(stat_path: String) -> float:
 	if temp_modifiers.has(stat_path):
 		return clamp(base + temp_modifiers[stat_path]["modifier"], 0.0, 100.0)
 	return base
+
+func _emit_stat_refresh() -> void:
+	for category in stats.keys():
+		for skill in stats[category].keys():
+			var stat_path := "%s.%s" % [category, skill]
+			SignalBus.stat_changed.emit(stat_path, get_stat(stat_path))

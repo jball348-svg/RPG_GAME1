@@ -37,6 +37,7 @@ GameClock="*res://autoloads/GameClock.gd"
 PlayerData="*res://autoloads/PlayerData.gd"
 SceneManager="*res://autoloads/SceneManager.gd"
 DialogueManager="*res://autoloads/DialogueManager.gd"
+SaveManager="*res://autoloads/SaveManager.gd"
 
 [input]
 

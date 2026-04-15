@@ -1534,6 +1534,15 @@ func _scene_manager() -> Node:
 func _signal_bus() -> Node:
 	return get_node("/root/SignalBus")
 
+func get_save_context() -> Dictionary:
+	return {
+		"region": _player_data().current_region,
+		"location": _player_data().current_location,
+		"position": player.global_position if is_instance_valid(player) else Vector2.ZERO,
+		"suppressed_trigger_type": _suppressed_mine_trigger_type,
+		"suppressed_trigger_index": _suppressed_mine_trigger_index,
+	}
+
 func _build_battle_payload(encounter_kind: String, encounter_index: int, suppressed_trigger_type: String) -> Dictionary:
 	return {
 		"encounter_kind": encounter_kind,

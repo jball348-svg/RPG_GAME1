@@ -597,6 +597,7 @@ func _run_recruit_branch() -> void:
 	StatRegistry._recalculate_luck()
 
 	await _start_dialogue_and_wait(SHAMAN_RECRUIT_DIALOGUE_ID)
+	SaveManager.save_game()
 	_return_to_map_after_resolution("The Shaman lowers his staff. The chamber is quiet.")
 
 func _launch_shaman_battle() -> void:
@@ -648,6 +649,33 @@ func _start_dialogue_and_wait(dialogue_id: String) -> void:
 		await get_tree().process_frame
 		return
 	await SignalBus.dialogue_ended
+
+func get_save_context() -> Dictionary:
+	match _cutscene_id:
+		CUTSCENE_ID_MINE_ENTRY:
+			return {
+				"region": MINE_REGION,
+				"location": MINE_LOCATION,
+				"position": Vector2.ZERO,
+				"suppressed_trigger_type": "",
+				"suppressed_trigger_index": -1,
+			}
+		CUTSCENE_ID_MINE_EXIT:
+			return {
+				"region": _return_region_from_payload(),
+				"location": _return_location_from_payload(),
+				"position": _return_position_from_payload(),
+				"suppressed_trigger_type": "",
+				"suppressed_trigger_index": -1,
+			}
+		_:
+			return {
+				"region": _return_region_from_payload(),
+				"location": _return_location_from_payload(),
+				"position": _return_position_from_payload(),
+				"suppressed_trigger_type": _suppressed_trigger_type_from_payload(),
+				"suppressed_trigger_index": _suppressed_trigger_index_from_payload(),
+			}
 
 func _on_clock_ticked(_time: Dictionary) -> void:
 	_refresh_status()

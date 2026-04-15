@@ -16,6 +16,11 @@ func _ready() -> void:
 	_ensure_dialogue_box()
 	_ensure_prompt_modal()
 	_ensure_screen_fader()
+	if SaveManager.has_save():
+		if not SaveManager.load_game():
+			SceneManager.change_state("map")
+		return
+
 	SceneManager.change_state("map")
 
 func _ensure_spike_hud() -> void:

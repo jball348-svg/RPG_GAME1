@@ -11,6 +11,16 @@ const HEALTH_POTION_ID := "health_potion"
 const SHAMAN_TALISMAN_ID := "shaman_talisman"
 const DEFAULT_POTION_COUNT := 2
 const DEFAULT_WEAPON_MODIFIER := 5
+const DEFAULT_EQUIPMENT := {
+	"head":    "",
+	"chest":   "",
+	"legs":    "",
+	"feet":    "",
+	"weapon":  "",
+	"offhand": "",
+	"ring":    "",
+	"amulet":  "",
+}
 
 # --- Class system ---
 # chosen_class: the player's primary class (e.g. "knight", "mage", "rogue")
@@ -40,16 +50,7 @@ var current_region: String   = "starting_region"
 # --- Inventory (sketch — expand in production) ---
 var gold: int          = 0
 var inventory: Array   = []   # Array of item Dictionaries
-var equipment: Dictionary = {
-	"head":    "",
-	"chest":   "",
-	"legs":    "",
-	"feet":    "",
-	"weapon":  "",
-	"offhand": "",
-	"ring":    "",
-	"amulet":  "",
-}
+var equipment: Dictionary = DEFAULT_EQUIPMENT.duplicate(true)
 
 # --- Age ---
 # Tracked separately — it's both a stat and a narrative device.
@@ -85,6 +86,74 @@ func set_ghost_flag(flag_name: String, value: Variant) -> void:
 
 func get_ghost_flag(flag_name: String, default: Variant = null) -> Variant:
 	return ghost_flags.get(flag_name, default)
+
+func get_save_data() -> Dictionary:
+	return {
+		"chosen_class": chosen_class,
+		"chosen_path": chosen_path,
+		"specialisation": specialisation,
+		"mixed_classes": mixed_classes.duplicate(true),
+		"gold": gold,
+		"current_hp": current_hp,
+		"age_years": age_years,
+		"age_days": age_days,
+		"flags": flags.duplicate(true),
+		"ghost_flags": ghost_flags.duplicate(true),
+		"inventory": inventory.duplicate(true),
+		"equipment": equipment.duplicate(true),
+		"progression": {
+			"level": null,
+			"xp": null,
+			"xp_to_next_level": null,
+			"unspent_stat_points": null,
+		},
+	}
+
+func apply_save_data(save_data: Variant) -> void:
+	if not (save_data is Dictionary):
+		return
+
+	var player_data: Dictionary = save_data
+	var saved_path := str(player_data.get("chosen_path", chosen_path))
+	if VALID_PATHS.has(saved_path):
+		chosen_path = saved_path
+	elif not VALID_PATHS.has(chosen_path):
+		chosen_path = "pure"
+
+	chosen_class = str(player_data.get("chosen_class", ""))
+	specialisation = str(player_data.get("specialisation", ""))
+	mixed_classes = _duplicate_array(player_data.get("mixed_classes", []))
+	if chosen_class == "":
+		_apply_vertical_slice_class_defaults_for_current_path()
+
+	flags = _duplicate_dictionary(player_data.get("flags", {}))
+	ghost_flags = _duplicate_dictionary(player_data.get("ghost_flags", {}))
+	gold = maxi(0, int(player_data.get("gold", 0)))
+	inventory = _duplicate_array(player_data.get("inventory", []))
+	equipment = _restore_equipment(player_data.get("equipment", {}))
+	age_years = maxi(0, int(player_data.get("age_years", 20)))
+	age_days = clampi(int(player_data.get("age_days", 0)), 0, 364)
+	set_current_hp(int(player_data.get("current_hp", get_max_hp())))
+
+func _duplicate_dictionary(value: Variant) -> Dictionary:
+	if value is Dictionary:
+		return (value as Dictionary).duplicate(true)
+	return {}
+
+func _duplicate_array(value: Variant) -> Array:
+	if value is Array:
+		return (value as Array).duplicate(true)
+	return []
+
+func _restore_equipment(value: Variant) -> Dictionary:
+	var restored := DEFAULT_EQUIPMENT.duplicate(true)
+	if not (value is Dictionary):
+		return restored
+
+	var equipment_data: Dictionary = value
+	for slot in restored.keys():
+		restored[slot] = str(equipment_data.get(slot, restored[slot]))
+	return restored
 
 # --- Convenience ---
 func ensure_spike_defaults() -> void:
