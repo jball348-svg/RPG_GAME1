@@ -923,7 +923,7 @@ func _sync_shaman_follower() -> void:
 		)
 
 	if _shaman_follower != null:
-		_shaman_follower.global_position = player.global_position + Vector2(-18.0, 16.0)
+		_shaman_follower.global_position = player.global_position + Vector2(-20.0, 14.0)
 
 func _player_path_tint() -> Color:
 	return MIXED_PATH_TINT if _player_data().is_mixed() else PURE_PATH_TINT

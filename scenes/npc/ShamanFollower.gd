@@ -1,7 +1,7 @@
 extends Node2D
 
-const FOLLOW_SPEED := 165.0
-const FOLLOW_OFFSET := Vector2(-18.0, 16.0)
+const FOLLOW_SPEED := 190.0
+const FOLLOW_OFFSET := Vector2(-20.0, 14.0)
 
 @onready var sprite: AnimatedSprite2D = $Sprite
 
