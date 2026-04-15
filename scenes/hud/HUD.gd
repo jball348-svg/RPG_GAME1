@@ -39,8 +39,7 @@ const UI_INSET_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion
 const UI_BUTTON_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_brown.png"
 const UI_BUTTON_PRESSED_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_brown_pressed.png"
 const UI_BUTTON_DISABLED_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_grey.png"
-const FIGHTER_PORTRAIT_PATH := "res://assets/art/external/stage_8_5/fighter_walk_sheet.png"
-const BATTLEMAGE_PORTRAIT_PATH := "res://assets/art/external/stage_8_5/battlemage_walk_sheet.png"
+const LPC_SPRITE_SHEET_PATH := "res://assets/art/player/universal-lpc-sprite_male_01_full.png"
 const PORTRAIT_REGION := Rect2i(256, 128, 64, 64)
 
 const MINE_ENCOUNTER_PROGRESS_FLAG := "mine_encounter_progress"
@@ -350,9 +349,7 @@ func _refresh_quest_tab() -> void:
 	_quest_status.text = "Current location: %s" % PlayerData.current_location.replace("_", " ").capitalize()
 
 func _load_player_portrait() -> Texture2D:
-	if PlayerData.resolve_vertical_slice_class_id() == PlayerData.CLASS_BATTLEMAGE:
-		return _load_cropped_texture(BATTLEMAGE_PORTRAIT_PATH, PORTRAIT_REGION, _make_fallback_texture(64, 64, Color(0.20, 0.28, 0.48)))
-	return _load_cropped_texture(FIGHTER_PORTRAIT_PATH, PORTRAIT_REGION, _make_fallback_texture(64, 64, Color(0.54, 0.44, 0.34)))
+	return _load_cropped_texture(LPC_SPRITE_SHEET_PATH, PORTRAIT_REGION, _make_fallback_texture(64, 64, Color(0.54, 0.44, 0.34)))
 
 func _can_open() -> bool:
 	return SceneManager.current_state_name == "map"
@@ -375,7 +372,14 @@ func _load_texture(resource_path: String) -> Texture2D:
 	return ImageTexture.create_from_image(image)
 
 func _load_cropped_texture(resource_path: String, region: Rect2i, fallback: Texture2D) -> Texture2D:
-	var image := Image.load_from_file(resource_path)
+	var source_texture := _load_texture(resource_path)
+	if source_texture != null:
+		var atlas := AtlasTexture.new()
+		atlas.atlas = source_texture
+		atlas.region = Rect2(region.position, region.size)
+		return atlas
+
+	var image := Image.load_from_file(ProjectSettings.globalize_path(resource_path))
 	if image == null or image.is_empty():
 		return fallback
 
