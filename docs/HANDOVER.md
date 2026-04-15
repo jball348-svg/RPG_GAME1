@@ -58,9 +58,9 @@ Classic JRPG pacing: top-down 2D map, turn-based battle, HUD menus, cutscenes. D
 
 See `docs/vertical_slice_plan.md` for the full stage breakdown.
 
-**Stages complete:** 1-8  
-**Current focus:** Stage 8.5 implementation prep and feature pass handoff  
-**Recently completed:** Stage 8 save system, plus the Stage 8.5 admin/spec pack in this docs pass
+**Stages complete:** 1-8, 8.5 Polish Pass (T01-T10)  
+**Current focus:** Post-8.5 — dev sign-off and playtester pass  
+**Recently completed:** Stage 8.5 Polish Pass: HUD tabbed navigation, NPC sprite fix, cutscene facing, portrait restore, tilemap audit, shaman follow speed, debug O-key toggle, graphics quality, full game reset
 
 ### Vertical slice checklist
 - [x] Real tilesets integrated
@@ -72,7 +72,7 @@ See `docs/vertical_slice_plan.md` for the full stage breakdown.
 - [x] Boss room - Shaman intro + moral choice
 - [x] Mine exit -> new area
 - [x] Save system
-- [ ] Stage 8.5 MVP feature implementation (portraits, sprites, HUD, leveling, alignment, equipment-render spike)
+- [x] Stage 8.5 MVP feature implementation (portraits, sprites, HUD, leveling, alignment, equipment-render spike)
 - [ ] Dev sign-off
 - [ ] Polish + playtester pass
 
@@ -215,7 +215,7 @@ Transitions: Map <-> Battle, Map <-> Cutscene. HUD overlays map and does not rep
 | `scenes/main/` | Root shell, persistent `OverlayHost` |
 | `scenes/map/` | WASD movement, town/mine/crossroads regions, encounter triggers, stat events |
 | `scenes/battle/Battle.gd` | Full turn-based battle system and victory/return flow |
-| `scenes/hud/` | Current summary overlay; Stage 8.5 target is a tabbed rebuild |
+| `scenes/hud/` | Tabbed HUD overlay (Stats / Equipment / Quest / Map), stat allocation, portrait display |
 | `scenes/cutscene/` | Payload-driven `mine_entry`, `shaman_intro`, and `mine_exit` sequences |
 | `scenes/ui/DialogueBox.gd` | Existing dialogue portrait slot and portrait-path loader |
 | `scenes/debug/` | Dev-only overlay - gated by `OS.is_debug_build()` |
@@ -231,6 +231,8 @@ Debug builds only:
 - `B` - force battle
 - `H` - toggle HUD
 - `C` - force cutscene
+- `O` - toggle debug panel visibility
+- `F9` - full game reset (delete save, reset all state)
 - `1` / `2` - set Pure / Mixed path
 - `3` - bump Social + gold
 - `4` - bump Intelligence
