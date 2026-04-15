@@ -7,6 +7,7 @@ const PLAYER_BATTLEMAGE_SPRITE_PATH := "res://assets/art/battle/LPC_starhat/samp
 const ENEMY_KOBOLD_SPRITE_PATH := "res://assets/art/battle/LPC imp/attack - vanilla.png"
 const ENEMY_SHAMAN_SPRITE_PATH := "res://assets/art/battle/goblinsword.png"
 const MINE_BACKGROUND_PATH := "res://assets/art/battle/monster2_combat_backgrounds/volcano.png"
+const WEAPON_OVERLAY_PATH := "res://assets/art/generated/stage_8_5/weapon_overlay.png"
 
 const UI_PANEL_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/panel_brown.png"
 const UI_INSET_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/panelInset_brown.png"
@@ -37,8 +38,11 @@ const SHAMAN_RESISTANCE := 4
 const SHAMAN_HEAL_AMOUNT := 10
 const SHAMAN_HEX_PENALTY := 2
 const SHAMAN_GOLD_REWARD := 25
+const KOBOLD_XP_REWARD := 30
+const SHAMAN_XP_REWARD := 80
 const SHAMAN_TALISMAN_LABEL := "Shaman's Talisman"
 const HEALTH_POTION_HEAL := 20
+const HUD_TAB_STATS := "stats"
 
 const KNIGHT_PLAYER_REGION := Rect2i(64, 64, 64, 64)
 const BATTLEMAGE_PLAYER_REGION := Rect2i(50, 135, 50, 45)
@@ -63,6 +67,7 @@ var _context: Dictionary = {}
 var _ui_root: Control
 var _battle_camera: Camera2D
 var _player_sprite: Sprite2D
+var _weapon_overlay_sprite: Sprite2D
 var _enemy_sprite: Sprite2D
 var _player_hp_fill: ColorRect
 var _player_hp_label: Label
@@ -195,6 +200,12 @@ func _build_scene() -> void:
 	_player_sprite.texture = _make_fallback_texture(64, 64, Color(0.58, 0.53, 0.47))
 	_player_sprite.material = _make_flash_material()
 	add_child(_player_sprite)
+
+	_weapon_overlay_sprite = Sprite2D.new()
+	_weapon_overlay_sprite.centered = true
+	_weapon_overlay_sprite.visible = false
+	_weapon_overlay_sprite.z_index = 1
+	_player_sprite.add_child(_weapon_overlay_sprite)
 
 	_enemy_sprite = Sprite2D.new()
 	_enemy_sprite.centered = true
@@ -564,6 +575,27 @@ func _apply_battle_sprite_art() -> void:
 		)
 		_enemy_sprite.flip_h = true
 		_enemy_scale_multiplier = _reference_scale_for_height(_enemy_sprite.texture, ENEMY_TARGET_HEIGHT, 1.5)
+
+	_apply_weapon_overlay()
+
+func _apply_weapon_overlay() -> void:
+	if not is_instance_valid(_weapon_overlay_sprite):
+		return
+
+	var weapon_name := str(PlayerData.equipment.get("weapon", ""))
+	if weapon_name == "":
+		_weapon_overlay_sprite.visible = false
+		return
+
+	var overlay_texture := _load_texture(WEAPON_OVERLAY_PATH)
+	if overlay_texture == null:
+		overlay_texture = _make_fallback_texture(24, 24, Color(0.82, 0.82, 0.84))
+
+	_weapon_overlay_sprite.texture = overlay_texture
+	_weapon_overlay_sprite.flip_h = _player_sprite.flip_h
+	_weapon_overlay_sprite.position = Vector2(10.0, -4.0)
+	_weapon_overlay_sprite.rotation = deg_to_rad(-18.0)
+	_weapon_overlay_sprite.visible = true
 
 func _position_hp_widget(container: Node, top_left: Vector2) -> void:
 	var widget := container as Control
@@ -989,12 +1021,12 @@ func _run_victory_sequence() -> void:
 
 	var gold_reward := randi_range(10, 15)
 	var status_text := "Victory! You recover %d gold." % gold_reward
-	_loot_label.text = "Victory!\nGold found: %d" % gold_reward
+	var found_item_label := ""
 
 	if _shaman_boss_mode:
 		gold_reward = SHAMAN_GOLD_REWARD
 		status_text = "The Shaman falls. The mine is silent."
-		_loot_label.text = "Victory!\nGold found: %d\nFound: %s" % [gold_reward, SHAMAN_TALISMAN_LABEL]
+		found_item_label = SHAMAN_TALISMAN_LABEL
 		PlayerData.add_item(PlayerData.SHAMAN_TALISMAN_ID, 1)
 		PlayerData.set_flag(SHAMAN_KILLED_FLAG, true)
 		PlayerData.set_flag(MINE_BOSS_RESOLVED_FLAG, true)
@@ -1013,14 +1045,31 @@ func _run_victory_sequence() -> void:
 			status_text = "Victory! You recover %d gold. Boss chamber unlocked." % gold_reward
 
 	PlayerData.gold += gold_reward
+	var xp_reward := _xp_reward_for_current_encounter()
+	PlayerData.xp += xp_reward
 	SignalBus.action_performed.emit({"type": "battle_victory"})
-	SaveManager.save_game()
+	_loot_label.text = _build_loot_text(gold_reward, xp_reward, found_item_label)
 
 	_loot_panel.visible = true
 	await get_tree().create_timer(1.2).timeout
 	_loot_panel.visible = false
 
-	_return_to_map(status_text, str(_context.get("suppressed_trigger_type", "")), int(_context.get("suppressed_trigger_index", -1)))
+	var levels_gained := _evaluate_level_ups()
+	if levels_gained > 0:
+		_center_banner.text = "Level Up!"
+		_center_banner.visible = true
+		await get_tree().create_timer(1.5).timeout
+		_center_banner.visible = false
+
+	SaveManager.save_game()
+
+	var open_hud_tab := HUD_TAB_STATS if levels_gained > 0 else ""
+	_return_to_map(
+		status_text,
+		str(_context.get("suppressed_trigger_type", "")),
+		int(_context.get("suppressed_trigger_index", -1)),
+		open_hud_tab
+	)
 
 func _run_defeat_sequence() -> void:
 	_battle_over = true
@@ -1055,8 +1104,31 @@ func _run_boss_placeholder_sequence() -> void:
 	_boss_placeholder_panel.visible = false
 	_return_to_map("Boss encounter — Stage 6.", str(_context.get("suppressed_trigger_type", "")), int(_context.get("suppressed_trigger_index", -1)))
 
-func _return_to_map(status_text: String, suppressed_trigger_type: String, suppressed_trigger_index: int) -> void:
-	_return_to_map_async(status_text, suppressed_trigger_type, suppressed_trigger_index)
+func _xp_reward_for_current_encounter() -> int:
+	return SHAMAN_XP_REWARD if _shaman_boss_mode else KOBOLD_XP_REWARD
+
+func _build_loot_text(gold_reward: int, xp_reward: int, found_item_label: String) -> String:
+	var lines: PackedStringArray = [
+		"Victory!",
+		"Gold found: %d" % gold_reward,
+		"XP gained: %d" % xp_reward,
+	]
+	if found_item_label != "":
+		lines.append("Found: %s" % found_item_label)
+	return "\n".join(lines)
+
+func _evaluate_level_ups() -> int:
+	var levels_gained := 0
+	while PlayerData.xp >= PlayerData.xp_to_next_level:
+		PlayerData.xp -= PlayerData.xp_to_next_level
+		PlayerData.level += 1
+		PlayerData.unspent_stat_points += 3
+		levels_gained += 1
+		SignalBus.level_up.emit(PlayerData.level)
+	return levels_gained
+
+func _return_to_map(status_text: String, suppressed_trigger_type: String, suppressed_trigger_index: int, open_hud_tab: String = "") -> void:
+	_return_to_map_async(status_text, suppressed_trigger_type, suppressed_trigger_index, open_hud_tab)
 
 func get_save_context() -> Dictionary:
 	var return_position = _context.get("return_position", Vector2.ZERO)
@@ -1068,7 +1140,7 @@ func get_save_context() -> Dictionary:
 		"suppressed_trigger_index": int(_context.get("suppressed_trigger_index", -1)),
 	}
 
-func _return_to_map_async(status_text: String, suppressed_trigger_type: String, suppressed_trigger_index: int) -> void:
+func _return_to_map_async(status_text: String, suppressed_trigger_type: String, suppressed_trigger_index: int, open_hud_tab: String = "") -> void:
 	var screen_fader = SceneManager.get_screen_fader()
 	if screen_fader != null:
 		var fade_tween: Tween = screen_fader.fade_to_black(0.35)
@@ -1076,7 +1148,7 @@ func _return_to_map_async(status_text: String, suppressed_trigger_type: String, 
 
 	PlayerData.current_region = str(_context.get("return_region", PlayerData.current_region))
 	PlayerData.current_location = str(_context.get("return_location", PlayerData.current_location))
-	SceneManager.change_state("map", {
+	var map_payload := {
 		"fade_from_black": true,
 		"source": "battle",
 		"status_text": status_text,
@@ -1085,7 +1157,10 @@ func _return_to_map_async(status_text: String, suppressed_trigger_type: String, 
 		"return_position": _context.get("return_position", Vector2.ZERO),
 		"suppressed_trigger_type": suppressed_trigger_type,
 		"suppressed_trigger_index": suppressed_trigger_index,
-	})
+	}
+	if open_hud_tab != "":
+		map_payload["open_hud_tab"] = open_hud_tab
+	SceneManager.change_state("map", map_payload)
 
 func _on_try_again_pressed() -> void:
 	PlayerData.reset_vertical_slice_battle_resources()

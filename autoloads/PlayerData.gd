@@ -11,6 +11,11 @@ const HEALTH_POTION_ID := "health_potion"
 const SHAMAN_TALISMAN_ID := "shaman_talisman"
 const DEFAULT_POTION_COUNT := 2
 const DEFAULT_WEAPON_MODIFIER := 5
+const DEFAULT_STARTER_WEAPON := "Starter Blade"
+const DEFAULT_LEVEL := 1
+const DEFAULT_XP := 0
+const DEFAULT_XP_TO_NEXT_LEVEL := 100
+const DEFAULT_UNSPENT_STAT_POINTS := 0
 const DEFAULT_EQUIPMENT := {
 	"head":    "",
 	"chest":   "",
@@ -51,6 +56,10 @@ var current_region: String   = "starting_region"
 var gold: int          = 0
 var inventory: Array   = []   # Array of item Dictionaries
 var equipment: Dictionary = DEFAULT_EQUIPMENT.duplicate(true)
+var level: int = DEFAULT_LEVEL
+var xp: int = DEFAULT_XP
+var xp_to_next_level: int = DEFAULT_XP_TO_NEXT_LEVEL
+var unspent_stat_points: int = DEFAULT_UNSPENT_STAT_POINTS
 
 # --- Age ---
 # Tracked separately — it's both a stat and a narrative device.
@@ -102,10 +111,10 @@ func get_save_data() -> Dictionary:
 		"inventory": inventory.duplicate(true),
 		"equipment": equipment.duplicate(true),
 		"progression": {
-			"level": null,
-			"xp": null,
-			"xp_to_next_level": null,
-			"unspent_stat_points": null,
+			"level": level,
+			"xp": xp,
+			"xp_to_next_level": xp_to_next_level,
+			"unspent_stat_points": unspent_stat_points,
 		},
 	}
 
@@ -134,6 +143,7 @@ func apply_save_data(save_data: Variant) -> void:
 	age_years = maxi(0, int(player_data.get("age_years", 20)))
 	age_days = clampi(int(player_data.get("age_days", 0)), 0, 364)
 	set_current_hp(int(player_data.get("current_hp", get_max_hp())))
+	_restore_progression(player_data.get("progression", {}))
 
 func _duplicate_dictionary(value: Variant) -> Dictionary:
 	if value is Dictionary:
@@ -155,6 +165,26 @@ func _restore_equipment(value: Variant) -> Dictionary:
 		restored[slot] = str(equipment_data.get(slot, restored[slot]))
 	return restored
 
+func _restore_progression(value: Variant) -> void:
+	var progression_data: Dictionary = value if value is Dictionary else {}
+	level = _restore_progression_value(progression_data.get("level", DEFAULT_LEVEL), DEFAULT_LEVEL, DEFAULT_LEVEL)
+	xp = _restore_progression_value(progression_data.get("xp", DEFAULT_XP), DEFAULT_XP, DEFAULT_XP)
+	xp_to_next_level = _restore_progression_value(
+		progression_data.get("xp_to_next_level", DEFAULT_XP_TO_NEXT_LEVEL),
+		DEFAULT_XP_TO_NEXT_LEVEL,
+		1
+	)
+	unspent_stat_points = _restore_progression_value(
+		progression_data.get("unspent_stat_points", DEFAULT_UNSPENT_STAT_POINTS),
+		DEFAULT_UNSPENT_STAT_POINTS,
+		DEFAULT_UNSPENT_STAT_POINTS
+	)
+
+func _restore_progression_value(value: Variant, fallback: int, minimum: int) -> int:
+	if value == null:
+		return maxi(minimum, fallback)
+	return maxi(minimum, int(value))
+
 # --- Convenience ---
 func ensure_spike_defaults() -> void:
 	if chosen_path == "":
@@ -163,9 +193,21 @@ func ensure_spike_defaults() -> void:
 	if resolve_vertical_slice_class_id() == "":
 		_apply_vertical_slice_class_defaults_for_current_path()
 
+	ensure_progression_defaults()
+	ensure_vertical_slice_equipment()
 	ensure_vertical_slice_inventory()
 	if current_hp <= 0:
 		restore_hp_full()
+
+func ensure_progression_defaults() -> void:
+	level = maxi(DEFAULT_LEVEL, level)
+	xp = maxi(DEFAULT_XP, xp)
+	xp_to_next_level = maxi(1, xp_to_next_level)
+	unspent_stat_points = maxi(DEFAULT_UNSPENT_STAT_POINTS, unspent_stat_points)
+
+func ensure_vertical_slice_equipment() -> void:
+	if str(equipment.get("weapon", "")) == "":
+		equipment["weapon"] = DEFAULT_STARTER_WEAPON
 
 func set_chosen_path(path: String) -> void:
 	if not VALID_PATHS.has(path):

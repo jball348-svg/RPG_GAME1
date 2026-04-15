@@ -72,6 +72,10 @@ var action_modifiers: Dictionary = {
 	"battle_victory": { "physical.endurance": 0.08 },
 }
 
+const DERIVED_SKILLS := {
+	"social": ["luck"],
+}
+
 func _ready() -> void:
 	SignalBus.action_performed.connect(_on_action_performed)
 	SignalBus.clock_ticked.connect(_on_clock_ticked)
@@ -167,6 +171,47 @@ func get_stat(stat_path: String) -> float:
 	if temp_modifiers.has(stat_path):
 		return clamp(base + temp_modifiers[stat_path]["modifier"], 0.0, 100.0)
 	return base
+
+func apply_family_allocation(family_key: String) -> bool:
+	if not stats.has(family_key):
+		return false
+
+	var category_stats: Dictionary = stats[family_key]
+	var changed := false
+	for skill_value in category_stats.keys():
+		var skill := str(skill_value)
+		if _is_derived_skill(family_key, skill):
+			continue
+		_increment_stat("%s.%s" % [family_key, skill], 1.0)
+		changed = true
+
+	if family_key == "social":
+		_recalculate_luck()
+
+	return changed
+
+func get_family_average(family_key: String) -> float:
+	if not stats.has(family_key):
+		return 0.0
+
+	var total := 0.0
+	var count := 0
+	var category_stats: Dictionary = stats[family_key]
+	for skill_value in category_stats.keys():
+		var skill := str(skill_value)
+		if _is_derived_skill(family_key, skill):
+			continue
+		total += get_stat("%s.%s" % [family_key, skill])
+		count += 1
+
+	if count <= 0:
+		return 0.0
+	return total / float(count)
+
+func _is_derived_skill(category: String, skill: String) -> bool:
+	if not DERIVED_SKILLS.has(category):
+		return false
+	return DERIVED_SKILLS[category].has(skill)
 
 func _emit_stat_refresh() -> void:
 	for category in stats.keys():

@@ -12,6 +12,11 @@ const UI_PANEL_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion
 const UI_BUTTON_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_brown.png"
 const UI_BUTTON_PRESSED_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_brown_pressed.png"
 const UI_BUTTON_DISABLED_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_grey.png"
+const FIGHTER_MAP_SPRITE_PATH := "res://assets/art/generated/stage_8_5/map_fighter.png"
+const BATTLEMAGE_MAP_SPRITE_PATH := "res://assets/art/generated/stage_8_5/map_battlemage.png"
+const NPC_MAP_SPRITE_PATH := "res://assets/art/generated/stage_8_5/map_npc.png"
+const PURE_PATH_TINT := Color(0.78, 0.88, 1.0, 1.0)
+const MIXED_PATH_TINT := Color(1.0, 0.84, 0.68, 1.0)
 const NPC_SCENE: PackedScene = preload("res://scenes/npc/NPC.tscn")
 const TOWN_EXIT_PROMPT_ID := "town_exit"
 const TOWN_EXIT_PROMPT_TITLE := "Leave for the Mine?"
@@ -186,6 +191,9 @@ var _panel_texture: Texture2D
 var _button_texture: Texture2D
 var _button_pressed_texture: Texture2D
 var _button_disabled_texture: Texture2D
+var _fighter_map_texture: Texture2D
+var _battlemage_map_texture: Texture2D
+var _npc_map_texture: Texture2D
 var _dev_loader_backdrop: ColorRect
 var _dev_loader_panel: PanelContainer
 var _dev_loader_button_list: VBoxContainer
@@ -193,6 +201,7 @@ var _dev_loader_button_list: VBoxContainer
 @onready var ground_map: TileMap = $GroundMap
 @onready var world_collision: StaticBody2D = $WorldCollision
 @onready var player: CharacterBody2D = $Player
+@onready var player_sprite: Sprite2D = $Player/PlayerSprite
 @onready var map_camera: Camera2D = $Player/MapCamera
 @onready var player_spawn: Marker2D = $PlayerSpawn
 @onready var mine_spawn: Marker2D = $MineSpawn
@@ -208,6 +217,7 @@ func _ready() -> void:
 	_is_mine_start_map = _should_load_mine_start_map()
 	_is_crossroads_map = _active_region == CROSSROADS_REGION
 	_load_ui_textures()
+	_load_stage_8_5_sprite_textures()
 
 	if _is_mine_start_map:
 		_setup_mine_start_map()
@@ -216,6 +226,7 @@ func _ready() -> void:
 	else:
 		_setup_town_map()
 
+	_apply_stage_8_5_map_sprites()
 	_build_world_collision()
 	map_camera.make_current()
 	_configure_map_camera()
@@ -751,6 +762,47 @@ func _wire_town_exit_prompt() -> void:
 func _wire_mine_exit_prompt() -> void:
 	_hide_prompt_modal()
 
+func _load_stage_8_5_sprite_textures() -> void:
+	_fighter_map_texture = _load_texture(FIGHTER_MAP_SPRITE_PATH)
+	_battlemage_map_texture = _load_texture(BATTLEMAGE_MAP_SPRITE_PATH)
+	_npc_map_texture = _load_texture(NPC_MAP_SPRITE_PATH)
+
+func _apply_stage_8_5_map_sprites() -> void:
+	_apply_player_map_sprite()
+	_apply_town_npc_sprites()
+
+func _apply_player_map_sprite() -> void:
+	if not is_instance_valid(player_sprite):
+		return
+
+	var resolved_texture := _battlemage_map_texture if _player_data().resolve_vertical_slice_class_id() == PlayerData.CLASS_BATTLEMAGE else _fighter_map_texture
+	if resolved_texture != null:
+		player_sprite.texture = resolved_texture
+	player_sprite.modulate = _player_path_tint()
+	player_sprite.position = Vector2(0.0, -8.0)
+	player_sprite.scale = Vector2.ONE
+
+func _apply_town_npc_sprites() -> void:
+	for node_path in ["IntelNPC", "MoralChoiceNPC", "BookstoreNPC"]:
+		var npc = get_node_or_null(node_path)
+		if npc == null:
+			continue
+		_apply_generic_npc_sprite(npc)
+
+func _apply_generic_npc_sprite(npc: Node) -> void:
+	var sprite := npc.get_node_or_null("Sprite") as Sprite2D
+	if sprite == null:
+		return
+
+	if _npc_map_texture != null:
+		sprite.texture = _npc_map_texture
+	sprite.modulate = Color(1.0, 1.0, 1.0, 1.0)
+	sprite.position = Vector2(0.0, -8.0)
+	sprite.scale = Vector2.ONE
+
+func _player_path_tint() -> Color:
+	return MIXED_PATH_TINT if _player_data().is_mixed() else PURE_PATH_TINT
+
 func _apply_incoming_state_payload() -> void:
 	if _incoming_state_payload.is_empty():
 		return
@@ -762,6 +814,10 @@ func _apply_incoming_state_payload() -> void:
 		var status_text := str(_incoming_state_payload.get("status_text", ""))
 		if status_text != "":
 			_set_mine_status(status_text)
+
+	var open_hud_tab := str(_incoming_state_payload.get("open_hud_tab", ""))
+	if open_hud_tab != "":
+		call_deferred("_open_hud_from_payload", open_hud_tab)
 
 	if bool(_incoming_state_payload.get("fade_from_black", false)):
 		call_deferred("_play_fade_from_black")
@@ -1203,12 +1259,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			_player_data().set_vertical_slice_debug_profile("pure")
 			_player_data().reset_vertical_slice_battle_resources()
+			_apply_player_map_sprite()
 			return
 
 		if event.is_action_pressed("set_path_mixed"):
 			get_viewport().set_input_as_handled()
 			_player_data().set_vertical_slice_debug_profile("mixed")
 			_player_data().reset_vertical_slice_battle_resources()
+			_apply_player_map_sprite()
 			return
 
 		if event.is_action_pressed("debug_stat_bump_social"):
@@ -1345,6 +1403,12 @@ func _start_mine_exit_cutscene_async() -> void:
 		_state_transition_locked = false
 		if screen_fader != null:
 			screen_fader.fade_from_black(0.35)
+
+func _open_hud_from_payload(tab_id: String) -> void:
+	var hud = _get_spike_hud()
+	if hud != null and hud.has_method("open_to_tab"):
+		hud.open_to_tab(tab_id)
+	_update_map_overlay_visibility()
 
 func _toggle_hud() -> void:
 	var hud = _get_spike_hud()

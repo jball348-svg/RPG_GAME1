@@ -33,3 +33,7 @@ signal dialogue_ended(npc_id: String)
 # --- Flag signals ---
 # Emitted when a major player flag is set (Pure/Mix choice, moral decisions).
 signal flag_set(flag_name: String, value: Variant)
+
+# --- Progression signals ---
+# Emitted once for each level gained after XP overflow is resolved.
+signal level_up(level: int)
