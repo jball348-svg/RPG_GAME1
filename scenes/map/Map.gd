@@ -17,7 +17,7 @@ const BATTLEMAGE_MAP_SPRITE_PATH := "res://assets/art/external/stage_8_5/battlem
 const NPC_MAP_SPRITE_PATH := "res://assets/art/player/universal-lpc-sprite_male_01_full.png"
 const FIGHTER_FRAME_SIZE := Vector2i(64, 64)
 const BATTLEMAGE_FRAME_SIZE := Vector2i(64, 64)
-const NPC_FRAME_REGION := Rect2i(0, 64, 32, 32)
+const NPC_FRAME_REGION := Rect2i(256, 128, 64, 64)
 const SHAMAN_FOLLOWER_SCENE: PackedScene = preload("res://scenes/npc/ShamanFollower.tscn")
 const PURE_PATH_TINT := Color(0.78, 0.88, 1.0, 1.0)
 const MIXED_PATH_TINT := Color(1.0, 0.84, 0.68, 1.0)
@@ -811,8 +811,8 @@ func _apply_generic_npc_sprite(npc: Node) -> void:
 	if _npc_map_texture != null:
 		sprite.texture = _make_atlas_texture(_npc_map_texture, NPC_FRAME_REGION)
 	sprite.modulate = _npc_tint_for(npc.name)
-	sprite.position = Vector2(0.0, -10.0)
-	sprite.scale = Vector2.ONE
+	sprite.position = Vector2(0.0, -12.0)
+	sprite.scale = Vector2.ONE * 0.5
 
 func _make_atlas_texture(texture: Texture2D, region: Rect2i) -> Texture2D:
 	if texture == null:

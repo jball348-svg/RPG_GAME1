@@ -121,3 +121,13 @@ debug_stat_bump_reset={
 "events": Array[InputEvent]([Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":48,"physical_keycode":48,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
 ])
 }
+toggle_debug={
+"deadzone": 0.5,
+"events": Array[InputEvent]([Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":79,"physical_keycode":79,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+])
+}
+full_reset={
+"deadzone": 0.5,
+"events": Array[InputEvent]([Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":4194330,"physical_keycode":4194330,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+])
+}

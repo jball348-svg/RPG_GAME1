@@ -100,6 +100,7 @@ position = Vector2(400, 432)
 shape = SubResource("RectangleShape2D_48h8m")
 
 [node name="PlayerSprite" type="AnimatedSprite2D" parent="Player" unique_id=844466718]
+texture_filter = 1
 position = Vector2(0, -12)
 
 [node name="MapCamera" type="Camera2D" parent="Player" unique_id=1949770270]
