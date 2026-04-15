@@ -224,8 +224,8 @@ func _on_viewport_size_changed() -> void:
 
 func _layout_for_viewport() -> void:
 	var viewport_size := get_viewport_rect().size
-	var frame_width := clampf(viewport_size.x - 72.0, 320.0, 880.0)
-	var frame_height := clampf(viewport_size.y - 56.0, 280.0, 640.0)
+	var frame_width := clampf(viewport_size.x - 32.0, 320.0, 880.0)
+	var frame_height := clampf(viewport_size.y - 32.0, 220.0, 640.0)
 	_frame.custom_minimum_size = Vector2(frame_width, frame_height)
 
 func _on_close_pressed() -> void:

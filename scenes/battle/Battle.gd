@@ -1094,7 +1094,7 @@ func _run_victory_sequence() -> void:
 
 	SaveManager.save_game()
 
-	var open_hud_tab := HUD_TAB_STATS if levels_gained > 0 else ""
+	var open_hud_tab := ""
 	_return_to_map(
 		status_text,
 		str(_context.get("suppressed_trigger_type", "")),
