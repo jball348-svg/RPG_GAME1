@@ -88,6 +88,10 @@ The close-out implementation currently uses these concrete assets:
 | Battlemage animated map sheet | `mage walking poses sheet copy.png` | `assets/art/external/stage_8_5/battlemage_walk_sheet.png` | From [Four characters: My LPC entries](https://opengameart.org/content/four-characters-my-lpc-entries) on OpenGameArt. |
 | Shaman portrait | `elf_m_256.png` | `assets/art/portraits/stage_8_5/shaman_portrait.png` | From [Fantasy Portrait Pack by Ravenmore](https://opengameart.org/content/fantasy-portrait-pack-by-ravenmore). |
 | Generic town NPC sprite | repo LPC crop | `assets/art/player/universal-lpc-sprite_male_01_full.png` | Still a repo reuse; source tracing is still desirable if this remains the long-term default. |
+| Fighter presentation card | generated in-repo composite | `assets/art/generated/stage_8_5/fighter_presentation_card.png` | Built during the Stage 8.5 close-out pass from the chosen Fighter walk sheet plus simple generated framing/background work. No extra provenance burden beyond the source walk sheet already documented above. |
+| Battlemage presentation card | generated in-repo composite | `assets/art/generated/stage_8_5/battlemage_presentation_card.png` | Built during the Stage 8.5 close-out pass from the chosen Battlemage walk sheet plus simple generated framing/background work. No extra provenance burden beyond the source walk sheet already documented above. |
+| Kobold presentation card | generated in-repo composite | `assets/art/generated/stage_8_5/kobold_presentation_card.png` | Built during the Stage 8.5 close-out pass from the existing repo kobold battle sprite plus simple generated framing/background work. |
+| Mine battle backdrop | generated in-repo background | `assets/art/generated/stage_8_5/mine_battle_backdrop.png` | Built during the Stage 8.5 close-out pass as a repo-local fallback battle backdrop to replace the weak low-resolution placeholder background. |
 
 These choices satisfy the Stage 8.5 close-out pass, but the repo LPC NPC crop still carries the original `needs source trace` caveat.
 

@@ -9,15 +9,6 @@ const SENTRY_END_POS := Vector2(298.0, 114.0)
 
 const PATH_TINT_PURE := Color(0.96, 0.98, 1.0, 1.0)
 const PATH_TINT_MIXED := Color(1.0, 0.95, 0.90, 1.0)
-const CLASS_TINT_FALLBACK := Color(0.64, 0.62, 0.60, 1.0)
-const CLASS_TINTS := {
-	"knight": Color(0.71, 0.42, 0.36, 1.0),
-	"warrior": Color(0.70, 0.44, 0.33, 1.0),
-	"mage": Color(0.42, 0.46, 0.73, 1.0),
-	"rogue": Color(0.33, 0.58, 0.36, 1.0),
-	"cleric": Color(0.75, 0.73, 0.44, 1.0),
-	"ranger": Color(0.43, 0.62, 0.39, 1.0),
-}
 
 const CUTSCENE_ID_MINE_ENTRY := "mine_entry"
 const CUTSCENE_ID_SHAMAN_INTRO := "shaman_intro"
@@ -38,16 +29,10 @@ const CROSSROADS_LOCATION := "crossroads_start"
 const CUTSCENE_TOWN_GATE_LOCATION := "town_north_gate_cutscene"
 const SHAMAN_DIALOGUE_PAUSE_SECONDS := 0.8
 
-const LPC_SPRITE_SHEET_PATH := "res://assets/art/player/universal-lpc-sprite_male_01_full.png"
-const SHAMAN_SPRITE_PATH := "res://assets/art/battle/goblinsword.png"
 const UI_PANEL_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/panel_brown.png"
 const UI_BUTTON_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_brown.png"
 const UI_BUTTON_PRESSED_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_brown_pressed.png"
 const UI_BUTTON_DISABLED_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_grey.png"
-
-const LPC_DOWN_IDLE_REGION := Rect2i(256, 128, 64, 64)
-const LPC_RIGHT_WALK_REGION := Rect2i(192, 192, 64, 64)
-const SHAMAN_SPRITE_REGION := Rect2i(0, 0, 64, 64)
 
 const SHAMAN_PLAYER_START_POS := Vector2(92.0, 142.0)
 const SHAMAN_PLAYER_END_POS := Vector2(120.0, 142.0)
@@ -412,34 +397,11 @@ func _reset_sequence() -> void:
 	_fight_button.disabled = true
 
 func _apply_player_visuals() -> void:
-	_player_actor.texture = _load_player_cutscene_texture()
-	_player_actor.modulate = PATH_TINT_PURE if PlayerData.is_pure() else PATH_TINT_MIXED
-	_player_battle_actor.texture = _load_player_cutscene_texture()
-	_player_battle_actor.modulate = Color(1.0, 1.0, 1.0, 1.0)
-	_sentry_actor.texture = _load_entry_sentry_texture()
-	_sentry_actor.flip_h = true
-	_sentry_actor.modulate = _resolve_class_tint().lerp(Color(0.78, 0.76, 0.72, 1.0), 0.55)
-	_shaman_actor.texture = _load_shaman_texture()
-
-func _resolve_class_tint() -> Color:
-	var class_key := _resolve_class_key()
-	for known_key in CLASS_TINTS.keys():
-		if class_key.find(known_key) != -1:
-			return CLASS_TINTS[known_key]
-
-	return CLASS_TINT_FALLBACK
-
-func _resolve_class_key() -> String:
-	if PlayerData.specialisation != "":
-		return PlayerData.specialisation.to_lower()
-
-	if PlayerData.chosen_class != "":
-		return PlayerData.chosen_class.to_lower()
-
-	if PlayerData.mixed_classes.size() > 0:
-		return str(PlayerData.mixed_classes[0]).to_lower()
-
-	return ""
+	_apply_player_actor_pose(_player_actor, "down", PATH_TINT_PURE if PlayerData.is_pure() else PATH_TINT_MIXED)
+	_apply_player_actor_pose(_player_battle_actor, "down", Color(1.0, 1.0, 1.0, 1.0))
+	_set_actor_facing(_sentry_actor, ActorVisuals.ACTOR_VILLAGE_GUARD, "left")
+	_sentry_actor.modulate = ActorVisuals.get_map_modulate(ActorVisuals.ACTOR_VILLAGE_GUARD)
+	_set_actor_facing(_shaman_actor, ActorVisuals.ACTOR_SHAMAN, "left")
 
 func _play_sequence() -> void:
 	match _cutscene_id:
@@ -456,6 +418,8 @@ func _run_mine_entry_sequence() -> void:
 	_sentry_actor.visible = true
 	_player_actor.position = _scaled(PLAYER_START_POS)
 	_sentry_actor.position = _scaled(SENTRY_START_POS)
+	_apply_player_actor_pose(_player_actor, "right", PATH_TINT_PURE if PlayerData.is_pure() else PATH_TINT_MIXED)
+	_set_actor_facing(_sentry_actor, ActorVisuals.ACTOR_VILLAGE_GUARD, "left")
 	_continue_button.text = "Enter Mine"
 	var tween := create_tween()
 	tween.tween_property(_player_actor, "position", _scaled(PLAYER_END_POS), 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
@@ -463,6 +427,9 @@ func _run_mine_entry_sequence() -> void:
 	tween.tween_property(_sentry_actor, "position", _scaled(SENTRY_END_POS), 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	tween.tween_interval(0.18)
 	await tween.finished
+	_apply_player_actor_pose(_player_actor, "right", PATH_TINT_PURE if PlayerData.is_pure() else PATH_TINT_MIXED)
+	_set_actor_facing(_sentry_actor, ActorVisuals.ACTOR_VILLAGE_GUARD, "left")
+	await _wait_beat(0.12)
 	_dialogue_panel.visible = true
 	_speaker_label.text = "Gate Sentry"
 	_dialogue_label.text = _dialogue_for_current_path()
@@ -475,19 +442,27 @@ func _run_shaman_intro_sequence() -> void:
 	_shaman_actor.visible = true
 	_player_battle_actor.position = _scaled(SHAMAN_PLAYER_START_POS)
 	_shaman_actor.position = _scaled(SHAMAN_ACTOR_START_POS)
+	_apply_player_actor_pose(_player_battle_actor, "right", Color(1.0, 1.0, 1.0, 1.0))
+	_set_actor_facing(_shaman_actor, ActorVisuals.ACTOR_SHAMAN, "left")
 	var tween := create_tween()
 	tween.tween_property(_player_battle_actor, "position", _scaled(SHAMAN_PLAYER_END_POS), 0.55).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	tween.parallel().tween_property(_shaman_actor, "position", _scaled(SHAMAN_ACTOR_END_POS), 0.65).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	await tween.finished
+	_apply_player_actor_pose(_player_battle_actor, "right", Color(1.0, 1.0, 1.0, 1.0))
+	_set_actor_facing(_shaman_actor, ActorVisuals.ACTOR_SHAMAN, "left")
+	await _wait_beat(0.12)
 	await _start_dialogue_and_wait(SHAMAN_INTRO_DIALOGUE_ID)
 	await get_tree().create_timer(SHAMAN_DIALOGUE_PAUSE_SECONDS).timeout
 	_show_shaman_choice()
 
 func _run_mine_exit_sequence() -> void:
 	_title_label.text = "Mine Exit"
+	AudioManager.play_music(AudioManager.CUE_VICTORY_EXIT, "primary", true, 0.25)
 	_player_battle_actor.visible = true
 	_player_battle_actor.position = _scaled(MINE_EXIT_PLAYER_START_POS)
 	_shaman_actor.position = _scaled(MINE_EXIT_SHAMAN_START_POS)
+	_apply_player_actor_pose(_player_battle_actor, "right", Color(1.0, 1.0, 1.0, 1.0))
+	_set_actor_facing(_shaman_actor, ActorVisuals.ACTOR_SHAMAN, "right")
 
 	var shaman_recruited := bool(_incoming_payload.get("shaman_recruited", false))
 	_shaman_actor.visible = shaman_recruited
@@ -501,8 +476,12 @@ func _run_mine_exit_sequence() -> void:
 	var tween := create_tween()
 	tween.tween_property(_player_battle_actor, "position", _scaled(MINE_EXIT_PLAYER_END_POS), 1.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	if shaman_recruited:
-		tween.parallel().tween_property(_shaman_actor, "position", _scaled(MINE_EXIT_SHAMAN_END_POS), 1.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		tween.parallel().tween_property(_shaman_actor, "position", _scaled(MINE_EXIT_SHAMAN_END_POS), 1.35).set_delay(0.08).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	await tween.finished
+	_apply_player_actor_pose(_player_battle_actor, "right", Color(1.0, 1.0, 1.0, 1.0))
+	if shaman_recruited:
+		_set_actor_facing(_shaman_actor, ActorVisuals.ACTOR_SHAMAN, "right")
+	await _wait_beat(0.1)
 
 	_narration_label.text = "The Shaman walks with you into the light." if shaman_recruited else "You emerge alone. The mine is behind you."
 	_narration_label.visible = true
@@ -536,6 +515,7 @@ func _dialogue_for_current_path() -> String:
 	return "Pure oath and %s discipline noted. Hold your resolve and the mine will open before you." % class_label
 
 func _show_shaman_choice() -> void:
+	AudioManager.play_music(AudioManager.CUE_MORAL_CHOICE, "primary", true, 0.2)
 	_choice_panel.visible = true
 	_talk_button.disabled = false
 	_fight_button.disabled = false
@@ -549,18 +529,22 @@ func _hide_shaman_choice() -> void:
 func _on_talk_button_pressed() -> void:
 	if _talk_button.disabled:
 		return
+	AudioManager.play_sfx(AudioManager.SFX_UI_CONFIRM, -7.0)
 	_hide_shaman_choice()
 	_run_recruit_branch()
 
 func _on_fight_button_pressed() -> void:
 	if _fight_button.disabled:
 		return
+	AudioManager.play_sfx(AudioManager.SFX_UI_CONFIRM, -7.0)
 	_hide_shaman_choice()
 	_launch_shaman_battle()
 
 func _on_continue_pressed() -> void:
 	if _cutscene_id != CUTSCENE_ID_MINE_ENTRY:
 		return
+	AudioManager.play_sfx(AudioManager.SFX_UI_CONFIRM, -7.0)
+	AudioManager.play_sfx(AudioManager.SFX_GATE_OPEN, -6.0)
 	_continue_button.disabled = true
 	_handoff_to_mine_map()
 
@@ -595,6 +579,7 @@ func _run_recruit_branch() -> void:
 	StatRegistry._recalculate_luck()
 
 	await _start_dialogue_and_wait(SHAMAN_RECRUIT_DIALOGUE_ID)
+	AudioManager.play_sfx(AudioManager.SFX_GATE_OPEN, -5.0)
 	SaveManager.save_game()
 	_return_to_map_after_resolution("The Shaman lowers his staff. He follows you toward the exit.")
 
@@ -772,28 +757,24 @@ func _make_button_style(texture: Texture2D) -> StyleBox:
 	style.axis_stretch_vertical = StyleBoxTexture.AXIS_STRETCH_MODE_TILE_FIT
 	return style
 
-func _load_player_cutscene_texture() -> Texture2D:
-	return _load_cropped_texture(
-		LPC_SPRITE_SHEET_PATH,
-		LPC_DOWN_IDLE_REGION,
-		_make_fallback_texture(64, 64, Color(0.58, 0.53, 0.47))
-	)
+func _apply_player_actor_pose(actor: TextureRect, direction: String, tint: Color) -> void:
+	actor.texture = _load_player_cutscene_texture(direction)
+	actor.flip_h = false
+	actor.modulate = tint
 
-func _load_shaman_texture() -> Texture2D:
-	return _load_cropped_texture(
-		SHAMAN_SPRITE_PATH,
-		SHAMAN_SPRITE_REGION,
-		_make_fallback_texture(64, 80, Color(0.33, 0.17, 0.41)),
-		true,
-		true
-	)
+func _set_actor_facing(actor: TextureRect, actor_id: String, direction: String) -> void:
+	actor.texture = ActorVisuals.get_cutscene_texture(actor_id, direction)
+	actor.modulate = ActorVisuals.get_cutscene_modulate(actor_id)
+	actor.flip_h = actor_id == ActorVisuals.ACTOR_SHAMAN and direction == "left"
 
-func _load_entry_sentry_texture() -> Texture2D:
-	return _load_cropped_texture(
-		LPC_SPRITE_SHEET_PATH,
-		LPC_RIGHT_WALK_REGION,
-		_make_fallback_texture(64, 64, Color(0.52, 0.48, 0.42))
-	)
+func _wait_beat(duration_seconds: float) -> void:
+	await get_tree().create_timer(duration_seconds).timeout
+
+func _load_player_cutscene_texture(direction: String = "down") -> Texture2D:
+	var player_frame := ActorVisuals.get_cutscene_texture(ActorVisuals.resolve_player_actor_id(), direction)
+	if player_frame != null:
+		return player_frame
+	return _make_fallback_texture(64, 64, Color(0.58, 0.53, 0.47))
 
 func _load_texture(resource_path: String) -> Texture2D:
 	if ResourceLoader.exists(resource_path, "Texture2D") or ResourceLoader.exists(resource_path):
@@ -805,51 +786,6 @@ func _load_texture(resource_path: String) -> Texture2D:
 	if image == null or image.is_empty():
 		return null
 	return ImageTexture.create_from_image(image)
-
-func _load_cropped_texture(resource_path: String, region: Rect2i, fallback: Texture2D, transparent_black: bool = false, trim_to_visible_bounds: bool = false) -> Texture2D:
-	var image := Image.load_from_file(ProjectSettings.globalize_path(resource_path))
-	if image == null or image.is_empty():
-		return fallback
-
-	var cropped := image.get_region(region)
-	if cropped == null or cropped.is_empty():
-		return fallback
-
-	if transparent_black:
-		_clear_black_background(cropped)
-
-	if trim_to_visible_bounds:
-		cropped = _trim_visible_image(cropped)
-		if cropped == null or cropped.is_empty():
-			return fallback
-
-	return ImageTexture.create_from_image(cropped)
-
-func _clear_black_background(image: Image) -> void:
-	image.convert(Image.FORMAT_RGBA8)
-	for y in range(image.get_height()):
-		for x in range(image.get_width()):
-			var pixel := image.get_pixel(x, y)
-			if pixel.a > 0.0 and pixel.r <= 0.01 and pixel.g <= 0.01 and pixel.b <= 0.01:
-				image.set_pixel(x, y, Color(pixel.r, pixel.g, pixel.b, 0.0))
-
-func _trim_visible_image(image: Image) -> Image:
-	var min_x := image.get_width()
-	var min_y := image.get_height()
-	var max_x := -1
-	var max_y := -1
-	for y in range(image.get_height()):
-		for x in range(image.get_width()):
-			if image.get_pixel(x, y).a > 0.05:
-				min_x = min(min_x, x)
-				min_y = min(min_y, y)
-				max_x = max(max_x, x)
-				max_y = max(max_y, y)
-
-	if max_x < min_x or max_y < min_y:
-		return image
-
-	return image.get_region(Rect2i(min_x, min_y, max_x - min_x + 1, max_y - min_y + 1))
 
 func _make_fallback_texture(width: int, height: int, color: Color) -> Texture2D:
 	var image := Image.create(width, height, false, Image.FORMAT_RGBA8)

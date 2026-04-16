@@ -102,6 +102,7 @@ func _on_confirm_pressed() -> void:
 	if not _is_open:
 		return
 
+	AudioManager.play_sfx(AudioManager.SFX_UI_CONFIRM, -5.0)
 	var prompt_id := _prompt_id
 	hide_prompt()
 	confirmed.emit(prompt_id)
@@ -110,6 +111,7 @@ func _on_cancel_pressed() -> void:
 	if not _is_open:
 		return
 
+	AudioManager.play_sfx(AudioManager.SFX_UI_CANCEL, -6.0)
 	var prompt_id := _prompt_id
 	hide_prompt()
 	canceled.emit(prompt_id)

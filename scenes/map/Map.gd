@@ -8,16 +8,12 @@ const MINE_BLOCKING_TILE_LAYERS: Array[int] = [2]
 const OVERLAY_BLOCKING_LAYER := 4
 const ROAD_LAYER := 1
 const OVERLAY_BLOCK_BOTTOM_ROWS := 4
+const TOWN_COLLISION_PREFIX := "TownCollision"
+const RUNTIME_COLLISION_PREFIX := "RuntimeCollision"
 const UI_PANEL_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/panel_brown.png"
 const UI_BUTTON_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_brown.png"
 const UI_BUTTON_PRESSED_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_brown_pressed.png"
 const UI_BUTTON_DISABLED_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_grey.png"
-const FIGHTER_MAP_SPRITE_PATH := "res://assets/art/external/stage_8_5/fighter_walk_sheet.png"
-const BATTLEMAGE_MAP_SPRITE_PATH := "res://assets/art/external/stage_8_5/battlemage_walk_sheet.png"
-const NPC_MAP_SPRITE_PATH := "res://assets/art/player/universal-lpc-sprite_male_01_full.png"
-const FIGHTER_FRAME_SIZE := Vector2i(64, 64)
-const BATTLEMAGE_FRAME_SIZE := Vector2i(64, 64)
-const NPC_FRAME_REGION := Rect2i(256, 128, 64, 64)
 const SHAMAN_FOLLOWER_SCENE: PackedScene = preload("res://scenes/npc/ShamanFollower.tscn")
 const PURE_PATH_TINT := Color(0.78, 0.88, 1.0, 1.0)
 const MIXED_PATH_TINT := Color(1.0, 0.84, 0.68, 1.0)
@@ -27,16 +23,17 @@ const TOWN_EXIT_PROMPT_TITLE := "Leave for the Mine?"
 const TOWN_EXIT_PROMPT_CONFIRM_TEXT := "Continue"
 const TOWN_EXIT_PROMPT_CANCEL_TEXT := "Stay"
 const TOWN_EXIT_PROMPT_TEXT := "You prepare to leave for the mine. There is no turning back. Continue?"
-const TOWN_HINT_TEXT := "Frontier Hamlet\nMove: WASD / Arrows\nB: Battle   H: HUD\nC: Cutscene   1: Pure   2: Mixed\n3: Social+Gold  4: Intel  0: Reset stats"
-const MINE_HINT_BASE_TEXT := "Kobold Mine\nMove: WASD / Arrows\nB: Battle   H: HUD\nC: Cutscene   1: Pure   2: Mixed\n3: Social+Gold  4: Intel  0: Reset stats"
+const TOWN_HINT_TEXT := "Frontier Hamlet\nMove: WASD / Arrows\nH: HUD   E: Interact"
+const MINE_HINT_BASE_TEXT := "Kobold Mine\nMove: WASD / Arrows\nH: HUD"
 const CROSSROADS_HINT_TEXT := "Crossroads\nMove: WASD / Arrows\nE: Interact"
-const MINE_BOSS_LOCKED_TEXT := "A heavy ward blocks the top shaft. Clear earlier encounter rooms first."
-const MINE_EXIT_LOCKED_TEXT := "The mine exit is sealed. Resolve the boss room first."
+const DEBUG_HINT_APPEND_TEXT := "Debug: B Battle   C Cutscene   1 Pure   2 Mixed   3 Social+Gold   4 Intel   0 Reset   L Loader"
+const MINE_BOSS_LOCKED_TEXT := "The top shaft ward still holds. Clear the western and eastern dens before facing the shaman."
+const MINE_EXIT_LOCKED_TEXT := "The exit gate remains sealed. Resolve the shaman chamber first."
 const MINE_EXIT_PROMPT_ID := "mine_exit"
 const MINE_EXIT_PROMPT_TITLE := "Leave Kobold Mine?"
 const MINE_EXIT_PROMPT_CONFIRM_TEXT := "Leave"
 const MINE_EXIT_PROMPT_CANCEL_TEXT := "Stay"
-const MINE_EXIT_PROMPT_TEXT := "Leave the mine? Stage 7 transition is still pending, but this will mark mine progression as cleared."
+const MINE_EXIT_PROMPT_TEXT := "Leave the mine and head for the crossroads?"
 
 const FRONTIER_REGION := "frontier_village"
 const TOWN_LOCATION := "starting_town"
@@ -84,6 +81,11 @@ const MINE_ENCOUNTER_LABELS: PackedStringArray = [
 	"Western Den",
 	"Eastern Den",
 ]
+const MINE_ENCOUNTER_LOCKED_TEXTS: PackedStringArray = [
+	"",
+	"The west branch is still choked with debris. Clear the Collapsed Hall first.",
+	"The east branch is not safe yet. Clear the Western Den first.",
+]
 const MINE_ENCOUNTER_RECTS: Array[Rect2i] = [
 	Rect2i(19, 18, 4, 4),
 	Rect2i(6, 10, 4, 4),
@@ -97,21 +99,19 @@ const MINE_EXIT_GATE_CELLS: Array[Vector2i] = [
 	Vector2i(35, 2),
 	Vector2i(35, 3),
 ]
-const MINE_WEST_BRANCH_BLOCKER_CELLS: Array[Vector2i] = [
-	Vector2i(15, 12),
-	Vector2i(15, 13),
-	Vector2i(15, 14),
-]
-const MINE_EAST_BRANCH_BLOCKER_CELLS: Array[Vector2i] = [
-	Vector2i(26, 12),
-	Vector2i(26, 13),
-	Vector2i(26, 14),
-]
-const MINE_TOP_SHAFT_BLOCKER_CELLS: Array[Vector2i] = [
-	Vector2i(19, 7),
-	Vector2i(20, 7),
-	Vector2i(21, 7),
-	Vector2i(22, 7),
+const MINE_WALKABLE_SECTIONS: Array[Dictionary] = [
+	{"id": "entry_chamber", "rect": Rect2i(17, 24, 8, 5)},
+	{"id": "main_spine", "rect": Rect2i(19, 15, 4, 9)},
+	{"id": "crossway", "rect": Rect2i(16, 12, 10, 3)},
+	{"id": "west_approach", "rect": Rect2i(10, 12, 6, 3)},
+	{"id": "west_den", "rect": Rect2i(5, 9, 6, 6)},
+	{"id": "east_approach", "rect": Rect2i(26, 12, 6, 3)},
+	{"id": "east_den", "rect": Rect2i(31, 8, 6, 8)},
+	{"id": "top_shaft", "rect": Rect2i(19, 7, 4, 5)},
+	{"id": "boss_threshold", "rect": Rect2i(16, 5, 10, 2)},
+	{"id": "boss_room", "rect": Rect2i(14, 1, 14, 4)},
+	{"id": "exit_approach", "rect": Rect2i(28, 2, 8, 2)},
+	{"id": "exit_gate", "rect": Rect2i(36, 1, 4, 4)},
 ]
 
 const MINE_TERRAIN_SOURCE_ID := 0
@@ -172,6 +172,47 @@ const MINE_PROP_CRATE_TILE := Vector2i(2, 0)
 const MINE_PROP_TORCH_TILE := Vector2i(5, 0)
 const MINE_PROP_TALL_STALAGMITE_TILE := Vector2i(0, 1)
 const MINE_PROP_TALL_STALAGMITE_SIZE := Vector2i(1, 2)
+const MINE_SEQUENCE_BLOCKERS: Array[Dictionary] = [
+	{
+		"id": "west_branch",
+		"unlock_progress": 1,
+		"cells": [Vector2i(15, 12), Vector2i(15, 13), Vector2i(15, 14)],
+		"props": [
+			{"tile": MINE_PROP_ROCK_CLUSTER_A_TILE, "cells": [Vector2i(15, 12)]},
+			{"tile": MINE_PROP_BOULDER_WIDE_TILE, "cells": [Vector2i(15, 13)]},
+			{"tile": MINE_PROP_CRATE_TILE, "cells": [Vector2i(15, 14)]},
+		],
+	},
+	{
+		"id": "east_branch",
+		"unlock_progress": 2,
+		"cells": [Vector2i(26, 12), Vector2i(26, 13), Vector2i(26, 14)],
+		"props": [
+			{"tile": MINE_PROP_IRON_CRATE_TILE, "cells": [Vector2i(26, 12)]},
+			{"tile": MINE_PROP_ROCK_CLUSTER_B_TILE, "cells": [Vector2i(26, 13)]},
+			{"tile": MINE_PROP_BOULDER_TILE, "cells": [Vector2i(26, 14)]},
+		],
+	},
+	{
+		"id": "top_shaft",
+		"unlock_progress": 3,
+		"cells": [Vector2i(19, 7), Vector2i(20, 7), Vector2i(21, 7), Vector2i(22, 7)],
+		"props": [
+			{"tile": MINE_PROP_BOULDER_TILE, "cells": [Vector2i(19, 7), Vector2i(22, 7)]},
+			{"tile": MINE_PROP_BOULDER_WIDE_TILE, "cells": [Vector2i(20, 7)]},
+			{"tile": MINE_PROP_SPIKE_PAIR_TILE, "cells": [Vector2i(21, 7)]},
+		],
+	},
+]
+const MINE_EXIT_GATE_BLOCKER := {
+	"cells": MINE_EXIT_GATE_CELLS,
+	"props": [
+		{"tile": MINE_PROP_FIRE_GRATE_TILE, "cells": [Vector2i(34, 2)]},
+		{"tile": MINE_PROP_IRON_CRATE_TILE, "cells": [Vector2i(35, 2)]},
+		{"tile": MINE_PROP_ROCK_CLUSTER_A_TILE, "cells": [Vector2i(34, 3)]},
+		{"tile": MINE_PROP_BOULDER_TILE, "cells": [Vector2i(35, 3)]},
+	],
+}
 
 const MINE_TERRAIN_TEXTURE_PATH := "res://assets/art/tilesets/basic caves and dungeons 32x32 standard - v1.0/tiles/tiles-all-32x32.png"
 const MINE_WALL_TEXTURE_PATH := "res://assets/art/tilesets/basic caves and dungeons 32x32 standard - v1.0/tiles/wall-tiles-32x32.png"
@@ -195,9 +236,6 @@ var _panel_texture: Texture2D
 var _button_texture: Texture2D
 var _button_pressed_texture: Texture2D
 var _button_disabled_texture: Texture2D
-var _fighter_map_frames: SpriteFrames
-var _battlemage_map_frames: SpriteFrames
-var _npc_map_texture: Texture2D
 var _player_facing := "down"
 var _shaman_follower: Node2D
 var _dev_loader_backdrop: ColorRect
@@ -223,7 +261,7 @@ func _ready() -> void:
 	_is_mine_start_map = _should_load_mine_start_map()
 	_is_crossroads_map = _active_region == CROSSROADS_REGION
 	_load_ui_textures()
-	_load_stage_8_5_sprite_textures()
+	_prepare_actor_visuals()
 
 	if _is_mine_start_map:
 		_setup_mine_start_map()
@@ -232,7 +270,8 @@ func _ready() -> void:
 	else:
 		_setup_town_map()
 
-	_apply_stage_8_5_map_sprites()
+	_apply_actor_visuals()
+	_set_town_collision_enabled(not _is_mine_start_map and not _is_crossroads_map)
 	_build_world_collision()
 	map_camera.make_current()
 	_configure_map_camera()
@@ -254,6 +293,8 @@ func _resolve_target_region() -> String:
 func _connect_overlay_signals() -> void:
 	SignalBus.dialogue_started.connect(_on_overlay_state_changed)
 	SignalBus.dialogue_ended.connect(_on_overlay_state_changed)
+	if not SignalBus.debug_overlay_visibility_changed.is_connected(_on_debug_overlay_visibility_changed):
+		SignalBus.debug_overlay_visibility_changed.connect(_on_debug_overlay_visibility_changed)
 
 	var prompt_modal = _get_prompt_modal()
 	if prompt_modal == null:
@@ -279,9 +320,10 @@ func _setup_town_map() -> void:
 	if _town_tileset != null:
 		ground_map.tile_set = _town_tileset
 
-	hint_label.text = TOWN_HINT_TEXT
+	hint_label.text = _compose_hint_text(TOWN_HINT_TEXT)
 	player.global_position = _resolve_spawn_position(player_spawn.global_position)
 	_wire_town_exit_prompt()
+	_play_region_music()
 
 func _setup_mine_start_map() -> void:
 	var incoming_location := str(_incoming_state_payload.get("return_location", _player_data().current_location))
@@ -300,6 +342,7 @@ func _setup_mine_start_map() -> void:
 	mine_spawn.position = ground_map.map_to_local(MINE_ENTRY_SPAWN_CELL)
 	player.global_position = _resolve_spawn_position(mine_spawn.global_position)
 	_update_mine_hint()
+	_play_region_music()
 
 func _setup_crossroads_map() -> void:
 	_player_data().current_location = str(_incoming_state_payload.get("return_location", CROSSROADS_LOCATION))
@@ -312,8 +355,9 @@ func _setup_crossroads_map() -> void:
 	_disable_town_only_content()
 	_build_crossroads_layout()
 	_spawn_crossroads_signpost()
-	hint_label.text = CROSSROADS_HINT_TEXT
+	hint_label.text = _compose_hint_text(CROSSROADS_HINT_TEXT)
 	player.global_position = _resolve_spawn_position(_tile_to_global_position(CROSSROADS_START_SPAWN_CELL))
+	_play_region_music()
 
 func _disable_town_only_content() -> void:
 	_town_exit_trigger_armed = false
@@ -466,18 +510,8 @@ func _rebuild_mine_geometry() -> void:
 
 func _build_mine_walkable_cells() -> Dictionary:
 	var walkable := {}
-	_mark_walkable_rect(walkable, Rect2i(17, 24, 8, 5))
-	_mark_walkable_rect(walkable, Rect2i(19, 15, 4, 9))
-	_mark_walkable_rect(walkable, Rect2i(16, 12, 10, 3))
-	_mark_walkable_rect(walkable, Rect2i(10, 12, 6, 3))
-	_mark_walkable_rect(walkable, Rect2i(5, 9, 6, 6))
-	_mark_walkable_rect(walkable, Rect2i(26, 12, 6, 3))
-	_mark_walkable_rect(walkable, Rect2i(31, 8, 6, 8))
-	_mark_walkable_rect(walkable, Rect2i(19, 7, 4, 5))
-	_mark_walkable_rect(walkable, Rect2i(16, 5, 10, 2))
-	_mark_walkable_rect(walkable, Rect2i(14, 1, 14, 4))
-	_mark_walkable_rect(walkable, Rect2i(28, 2, 8, 2))
-	_mark_walkable_rect(walkable, Rect2i(36, 1, 4, 4))
+	for section in MINE_WALKABLE_SECTIONS:
+		_mark_walkable_rect(walkable, section.get("rect", Rect2i()))
 	return walkable
 
 func _mark_walkable_rect(walkable: Dictionary, rect: Rect2i) -> void:
@@ -529,9 +563,10 @@ func _mine_wall_tile_for(cell: Vector2i, walkable_cells: Dictionary) -> Vector2i
 
 	return _variant_tile_for(cell, MINE_WALL_FILL_TILES)
 
-func _stamp_prop_cells(atlas_coord: Vector2i, cells: Array[Vector2i]) -> void:
-	for cell in cells:
-		ground_map.set_cell(3, cell, MINE_PROPS_SOURCE_ID, atlas_coord)
+func _stamp_prop_cells(atlas_coord: Vector2i, cells: Array) -> void:
+	for cell_value in cells:
+		if cell_value is Vector2i:
+			ground_map.set_cell(3, cell_value, MINE_PROPS_SOURCE_ID, atlas_coord)
 
 func _stamp_mine_props() -> void:
 	_stamp_prop_cells(MINE_PROP_CRATE_TILE, [Vector2i(19, 26), Vector2i(22, 26), Vector2i(18, 15), Vector2i(23, 15)])
@@ -602,31 +637,15 @@ func _stamp_mine_props() -> void:
 
 func _apply_mine_sequence_blockers() -> void:
 	var progress := _mine_encounter_progress()
+	for blocker in MINE_SEQUENCE_BLOCKERS:
+		if progress >= int(blocker.get("unlock_progress", 0)):
+			continue
+		_stamp_mine_blocker(blocker.get("cells", []), blocker.get("props", []))
 
-	if progress < 1:
-		_stamp_mine_blocker(MINE_WEST_BRANCH_BLOCKER_CELLS, [
-			{"tile": MINE_PROP_ROCK_CLUSTER_A_TILE, "cells": [Vector2i(15, 12)]},
-			{"tile": MINE_PROP_BOULDER_WIDE_TILE, "cells": [Vector2i(15, 13)]},
-			{"tile": MINE_PROP_CRATE_TILE, "cells": [Vector2i(15, 14)]},
-		])
-
-	if progress < 2:
-		_stamp_mine_blocker(MINE_EAST_BRANCH_BLOCKER_CELLS, [
-			{"tile": MINE_PROP_IRON_CRATE_TILE, "cells": [Vector2i(26, 12)]},
-			{"tile": MINE_PROP_ROCK_CLUSTER_B_TILE, "cells": [Vector2i(26, 13)]},
-			{"tile": MINE_PROP_BOULDER_TILE, "cells": [Vector2i(26, 14)]},
-		])
-
-	if progress < 3:
-		_stamp_mine_blocker(MINE_TOP_SHAFT_BLOCKER_CELLS, [
-			{"tile": MINE_PROP_BOULDER_TILE, "cells": [Vector2i(19, 7), Vector2i(22, 7)]},
-			{"tile": MINE_PROP_BOULDER_WIDE_TILE, "cells": [Vector2i(20, 7)]},
-			{"tile": MINE_PROP_SPIKE_PAIR_TILE, "cells": [Vector2i(21, 7)]},
-		])
-
-func _stamp_mine_blocker(cells: Array[Vector2i], prop_specs: Array[Dictionary]) -> void:
-	for cell in cells:
-		ground_map.set_cell(2, cell, MINE_WALL_SOURCE_ID, _variant_tile_for(cell, MINE_WALL_FILL_TILES))
+func _stamp_mine_blocker(cells: Array, prop_specs: Array) -> void:
+	for cell_value in cells:
+		if cell_value is Vector2i:
+			ground_map.set_cell(2, cell_value, MINE_WALL_SOURCE_ID, _variant_tile_for(cell_value, MINE_WALL_FILL_TILES))
 
 	for spec in prop_specs:
 		var atlas_coord: Vector2i = spec["tile"]
@@ -640,13 +659,11 @@ func _apply_mine_exit_gate_blocker() -> void:
 	if _player_data().get_flag(MINE_EXIT_UNLOCKED_FLAG, false):
 		return
 
-	for cell in MINE_EXIT_GATE_CELLS:
+	for cell in MINE_EXIT_GATE_BLOCKER.get("cells", []):
 		ground_map.set_cell(2, cell, MINE_WALL_SOURCE_ID, _variant_tile_for(cell, MINE_WALL_FILL_TILES))
 
-	ground_map.set_cell(3, Vector2i(34, 2), MINE_PROPS_SOURCE_ID, MINE_PROP_FIRE_GRATE_TILE)
-	ground_map.set_cell(3, Vector2i(35, 2), MINE_PROPS_SOURCE_ID, MINE_PROP_IRON_CRATE_TILE)
-	ground_map.set_cell(3, Vector2i(34, 3), MINE_PROPS_SOURCE_ID, MINE_PROP_ROCK_CLUSTER_A_TILE)
-	ground_map.set_cell(3, Vector2i(35, 3), MINE_PROPS_SOURCE_ID, MINE_PROP_BOULDER_TILE)
+	for prop_spec in MINE_EXIT_GATE_BLOCKER.get("props", []):
+		_stamp_prop_cells(prop_spec.get("tile", Vector2i.ZERO), prop_spec.get("cells", []))
 
 func _open_mine_exit_gate(rebuild_collision: bool = true) -> void:
 	if rebuild_collision:
@@ -709,16 +726,18 @@ func _build_mine_tileset() -> TileSet:
 	return tile_set
 
 func _load_png_texture(resource_path: String) -> Texture2D:
-	var image := Image.load_from_file(resource_path)
-	if image == null or image.is_empty():
+	var texture := _load_texture(resource_path)
+	if texture == null:
 		push_error("Failed to load mine texture image: %s" % resource_path)
 		return null
-
-	return ImageTexture.create_from_image(image)
+	return texture
 
 func _build_world_collision() -> void:
-	for child in world_collision.get_children():
-		child.queue_free()
+	_clear_runtime_world_collision()
+	if not _is_mine_start_map:
+		return
+
+	var collision_index := 0
 
 	var used_rect := ground_map.get_used_rect()
 	var overlay_block_start_y := used_rect.end.y - OVERLAY_BLOCK_BOTTOM_ROWS
@@ -752,9 +771,21 @@ func _build_world_collision() -> void:
 		tile_shape.size = tile_size_vector
 
 		var collision_shape := CollisionShape2D.new()
+		collision_shape.name = "%s%d" % [RUNTIME_COLLISION_PREFIX, collision_index]
 		collision_shape.shape = tile_shape
 		collision_shape.position = Vector2(cell.x, cell.y) * tile_size_vector + half_tile
 		world_collision.add_child(collision_shape)
+		collision_index += 1
+
+func _clear_runtime_world_collision() -> void:
+	for child in world_collision.get_children():
+		if child.name.begins_with(RUNTIME_COLLISION_PREFIX):
+			child.queue_free()
+
+func _set_town_collision_enabled(enabled: bool) -> void:
+	for child in world_collision.get_children():
+		if child is CollisionShape2D and child.name.begins_with(TOWN_COLLISION_PREFIX):
+			(child as CollisionShape2D).disabled = not enabled
 
 func _wire_town_exit_prompt() -> void:
 	_hide_prompt_modal()
@@ -768,18 +799,10 @@ func _wire_town_exit_prompt() -> void:
 func _wire_mine_exit_prompt() -> void:
 	_hide_prompt_modal()
 
-func _load_stage_8_5_sprite_textures() -> void:
-	_fighter_map_frames = _build_directional_sprite_frames(
-		_load_texture(FIGHTER_MAP_SPRITE_PATH),
-		FIGHTER_FRAME_SIZE
-	)
-	_battlemage_map_frames = _build_directional_sprite_frames(
-		_load_texture(BATTLEMAGE_MAP_SPRITE_PATH),
-		BATTLEMAGE_FRAME_SIZE
-	)
-	_npc_map_texture = _load_texture(NPC_MAP_SPRITE_PATH)
+func _prepare_actor_visuals() -> void:
+	ActorVisuals.get_registry()
 
-func _apply_stage_8_5_map_sprites() -> void:
+func _apply_actor_visuals() -> void:
 	_apply_player_map_sprite()
 	_apply_town_npc_sprites()
 	_sync_shaman_follower()
@@ -788,12 +811,13 @@ func _apply_player_map_sprite() -> void:
 	if not is_instance_valid(player_sprite):
 		return
 
-	var resolved_frames := _battlemage_map_frames if _player_data().resolve_vertical_slice_class_id() == PlayerData.CLASS_BATTLEMAGE else _fighter_map_frames
+	var player_actor_id := ActorVisuals.resolve_player_actor_id()
+	var resolved_frames := ActorVisuals.get_map_frames(player_actor_id)
 	if resolved_frames != null:
 		player_sprite.sprite_frames = resolved_frames
 	player_sprite.modulate = _player_path_tint()
-	player_sprite.position = Vector2(0.0, -12.0)
-	player_sprite.scale = Vector2.ONE * 0.5
+	player_sprite.position = ActorVisuals.get_map_offset(player_actor_id)
+	player_sprite.scale = ActorVisuals.get_map_scale(player_actor_id)
 	_update_player_map_animation(Vector2.ZERO)
 
 func _apply_town_npc_sprites() -> void:
@@ -808,69 +832,13 @@ func _apply_generic_npc_sprite(npc: Node) -> void:
 	if sprite == null:
 		return
 
-	if _npc_map_texture != null:
-		sprite.texture = _make_atlas_texture(_npc_map_texture, NPC_FRAME_REGION)
-	sprite.modulate = _npc_tint_for(npc.name)
-	sprite.position = Vector2(0.0, -12.0)
-	sprite.scale = Vector2.ONE * 0.5
-
-func _make_atlas_texture(texture: Texture2D, region: Rect2i) -> Texture2D:
-	if texture == null:
-		return null
-
-	var atlas := AtlasTexture.new()
-	atlas.atlas = texture
-	atlas.region = Rect2(region.position, region.size)
-	return atlas
-
-func _npc_tint_for(npc_name: String) -> Color:
-	match npc_name:
-		"IntelNPC":
-			return Color(0.88, 0.92, 1.0, 1.0)
-		"MoralChoiceNPC":
-			return Color(1.0, 0.90, 0.76, 1.0)
-		"BookstoreNPC":
-			return Color(0.92, 1.0, 0.90, 1.0)
-		_:
-			return Color(1.0, 1.0, 1.0, 1.0)
-
-func _build_directional_sprite_frames(texture: Texture2D, frame_size: Vector2i) -> SpriteFrames:
-	if texture == null:
-		return null
-
-	var sprite_frames := SpriteFrames.new()
-	var directions := {
-		"up": 0,
-		"left": 1,
-		"down": 2,
-		"right": 3,
-	}
-
-	for direction in directions.keys():
-		var row := int(directions[direction])
-		var idle_animation := "idle_%s" % direction
-		sprite_frames.add_animation(idle_animation)
-		sprite_frames.set_animation_loop(idle_animation, true)
-		sprite_frames.set_animation_speed(idle_animation, 1.0)
-		sprite_frames.add_frame(idle_animation, _make_sheet_frame(texture, frame_size, row, 4))
-
-		var walk_animation := "walk_%s" % direction
-		sprite_frames.add_animation(walk_animation)
-		sprite_frames.set_animation_loop(walk_animation, true)
-		sprite_frames.set_animation_speed(walk_animation, 10.0)
-		for column in range(9):
-			sprite_frames.add_frame(walk_animation, _make_sheet_frame(texture, frame_size, row, column))
-
-	return sprite_frames
-
-func _make_sheet_frame(texture: Texture2D, frame_size: Vector2i, row: int, column: int) -> Texture2D:
-	var atlas := AtlasTexture.new()
-	atlas.atlas = texture
-	atlas.region = Rect2(
-		Vector2(column * frame_size.x, row * frame_size.y),
-		Vector2(frame_size.x, frame_size.y)
-	)
-	return atlas
+	var actor_id := _resolve_npc_actor_id(npc)
+	var map_texture := ActorVisuals.get_map_texture(actor_id)
+	if map_texture != null:
+		sprite.texture = map_texture
+	sprite.modulate = ActorVisuals.get_map_modulate(actor_id)
+	sprite.position = ActorVisuals.get_map_offset(actor_id)
+	sprite.scale = ActorVisuals.get_map_scale(actor_id)
 
 func _update_player_map_animation(movement_vector: Vector2) -> void:
 	if not is_instance_valid(player_sprite) or player_sprite.sprite_frames == null:
@@ -894,13 +862,35 @@ func _direction_from_vector(movement_vector: Vector2) -> String:
 		return "up"
 	return "down"
 
+func _resolve_npc_actor_id(npc: Node) -> String:
+	var actor_id := str(npc.get("actor_id"))
+	if actor_id != "":
+		return actor_id
+
+	match npc.name:
+		"IntelNPC":
+			return ActorVisuals.ACTOR_VILLAGE_GUARD
+		"MoralChoiceNPC":
+			return ActorVisuals.ACTOR_TRAVELING_MERCHANT
+		"BookstoreNPC":
+			return ActorVisuals.ACTOR_BOOKSTORE_KEEPER
+		_:
+			return ActorVisuals.ACTOR_BOOKSTORE_KEEPER
+
 func _should_show_shaman_follower() -> bool:
-	return (
-		bool(_player_data().get_flag(SHAMAN_RECRUITED_FLAG, false))
-		and bool(_player_data().get_flag(MINE_EXIT_UNLOCKED_FLAG, false))
-		and not bool(_player_data().get_flag(MINE_CLEARED_FLAG, false))
-		and str(_player_data().current_region) == MINE_REGION
-	)
+	if not bool(_player_data().get_flag(SHAMAN_RECRUITED_FLAG, false)):
+		return false
+	if bool(_player_data().get_flag(SHAMAN_KILLED_FLAG, false)):
+		return false
+	if not bool(_player_data().get_flag(MINE_EXIT_UNLOCKED_FLAG, false)):
+		return false
+
+	var current_region := str(_player_data().current_region)
+	if current_region == MINE_REGION:
+		return not bool(_player_data().get_flag(MINE_CLEARED_FLAG, false))
+	if current_region == CROSSROADS_REGION:
+		return bool(_player_data().get_flag(MINE_CLEARED_FLAG, false))
+	return false
 
 func _sync_shaman_follower() -> void:
 	if not _should_show_shaman_follower():
@@ -917,9 +907,9 @@ func _sync_shaman_follower() -> void:
 	if _shaman_follower != null and _shaman_follower.has_method("configure"):
 		_shaman_follower.configure(
 			player,
-			_battlemage_map_frames,
-			Color(0.86, 1.0, 0.88, 1.0),
-			Vector2.ONE * 0.5
+			ActorVisuals.get_follower_frames(ActorVisuals.ACTOR_SHAMAN),
+			ActorVisuals.get_follower_modulate(ActorVisuals.ACTOR_SHAMAN),
+			ActorVisuals.get_follower_scale(ActorVisuals.ACTOR_SHAMAN)
 		)
 
 	if _shaman_follower != null:
@@ -1035,6 +1025,9 @@ func _on_overlay_state_changed(_unused: Variant = null) -> void:
 		_set_debug_panel_suppressed(false)
 	_update_map_overlay_visibility()
 
+func _on_debug_overlay_visibility_changed(_visible: bool) -> void:
+	_update_map_overlay_visibility()
+
 func _arm_town_exit_trigger() -> void:
 	if not is_instance_valid(town_exit_trigger):
 		return
@@ -1117,6 +1110,11 @@ func _restore_mine_progress_state() -> void:
 func _mine_encounter_progress() -> int:
 	return clampi(int(_player_data().get_flag(MINE_ENCOUNTER_PROGRESS_FLAG, 0)), 0, MINE_REGULAR_ENCOUNTER_COUNT)
 
+func _locked_route_status_for_encounter(encounter_index: int) -> String:
+	if encounter_index >= 0 and encounter_index < MINE_ENCOUNTER_LOCKED_TEXTS.size():
+		return MINE_ENCOUNTER_LOCKED_TEXTS[encounter_index]
+	return "That route is still blocked. Clear the earlier encounter rooms first."
+
 func _on_mine_encounter_trigger_body_entered(body: Node, encounter_index: int) -> void:
 	if body != player:
 		return
@@ -1132,7 +1130,7 @@ func _on_mine_encounter_trigger_body_entered(body: Node, encounter_index: int) -
 		return
 
 	if encounter_index > progress:
-		_set_mine_status("A collapsed branch blocks this route. Clear earlier encounter rooms first.")
+		_set_mine_status(_locked_route_status_for_encounter(encounter_index))
 		return
 
 	_launch_battle(_build_battle_payload(BATTLE_KIND_STANDARD, encounter_index, SUPPRESSED_TRIGGER_ENCOUNTER))
@@ -1162,6 +1160,7 @@ func _on_mine_boss_trigger_body_entered(body: Node) -> void:
 		return
 
 	player.velocity = Vector2.ZERO
+	AudioManager.play_sfx(AudioManager.SFX_GATE_OPEN, -6.0)
 	_scene_manager().change_state("cutscene", {
 		"cutscene_id": CUTSCENE_ID_SHAMAN_INTRO,
 		"return_region": _player_data().current_region,
@@ -1190,6 +1189,7 @@ func _on_mine_exit_trigger_body_entered(body: Node) -> void:
 		return
 
 	player.velocity = Vector2.ZERO
+	AudioManager.play_sfx(AudioManager.SFX_GATE_OPEN, -6.0)
 	_start_mine_exit_cutscene()
 
 func _set_mine_status(status_text: String) -> void:
@@ -1215,9 +1215,10 @@ func _update_mine_hint() -> void:
 	else:
 		objective = "Objective: Mine progression clear recorded."
 
-	hint_label.text = "%s\n%s" % [MINE_HINT_BASE_TEXT, objective]
+	var hint_lines: Array[String] = [objective]
 	if _mine_status_text != "":
-		hint_label.text += "\n%s" % _mine_status_text
+		hint_lines.append(_mine_status_text)
+	hint_label.text = _compose_hint_text(MINE_HINT_BASE_TEXT, hint_lines)
 
 	_layout_map_ui()
 
@@ -1227,6 +1228,8 @@ func _layout_map_ui() -> void:
 	var margin := 4.0 if compact_layout else 8.0
 	var panel_width: float = clampf(viewport_size.x * (0.55 if compact_layout else 0.42), 188.0, 288.0)
 	var panel_height := 148.0 if _is_mine_start_map else 104.0
+	if OS.is_debug_build():
+		panel_height += 36.0
 
 	hint_backdrop.anchor_left = 1.0
 	hint_backdrop.anchor_right = 1.0
@@ -1246,6 +1249,19 @@ func _layout_map_ui() -> void:
 	hint_label.add_theme_font_size_override("font_size", 8 if compact_layout else 9)
 	_layout_dev_location_panel(viewport_size)
 	_update_map_overlay_visibility()
+
+func _compose_hint_text(base_text: String, extra_lines: Array = []) -> String:
+	var lines := PackedStringArray([base_text])
+	for line in extra_lines:
+		if line != "":
+			lines.append(line)
+	if OS.is_debug_build():
+		lines.append(DEBUG_HINT_APPEND_TEXT)
+	return "\n".join(lines)
+
+func _play_region_music() -> void:
+	var cue_id := AudioManager.CUE_MINE if _is_mine_start_map else AudioManager.CUE_TOWN
+	AudioManager.play_music(cue_id)
 
 func _layout_dev_location_panel(viewport_size: Vector2) -> void:
 	if _dev_loader_backdrop == null or _dev_loader_panel == null:
@@ -1275,10 +1291,15 @@ func _layout_dev_location_panel(viewport_size: Vector2) -> void:
 
 func _update_map_overlay_visibility() -> void:
 	var show_hint := not _is_hud_open() and not _is_dialogue_active() and not _is_prompt_open() and not _is_dev_loader_open()
+	var debug_panel := _get_debug_panel()
+	if show_hint and debug_panel != null and not debug_panel.visible:
+		show_hint = false
 	hint_backdrop.visible = show_hint
 	hint_label.visible = show_hint
 
 func _build_dev_location_loader() -> void:
+	if not OS.is_debug_build():
+		return
 	if _dev_loader_panel != null:
 		return
 
@@ -1415,21 +1436,21 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			_show_dev_location_panel()
 			return
+		if event.is_action_pressed("debug_cutscene"):
+			get_viewport().set_input_as_handled()
+			_scene_manager().change_state("cutscene", {
+				"cutscene_id": CUTSCENE_ID_MINE_ENTRY,
+			})
+			return
 
-	if event.is_action_pressed("debug_cutscene"):
-		get_viewport().set_input_as_handled()
-		_scene_manager().change_state("cutscene", {
-			"cutscene_id": CUTSCENE_ID_MINE_ENTRY,
-		})
-		return
+		if event.is_action_pressed("debug_battle"):
+			get_viewport().set_input_as_handled()
+			_launch_battle(_build_battle_payload(BATTLE_KIND_DEBUG, -1, ""))
+			return
 
-	if event.is_action_pressed("debug_battle"):
-		get_viewport().set_input_as_handled()
-		_launch_battle(_build_battle_payload(BATTLE_KIND_DEBUG, -1, ""))
-
-	if event.is_action_pressed("full_reset"):
-		get_viewport().set_input_as_handled()
-		_full_game_reset()
+		if event.is_action_pressed("full_reset"):
+			get_viewport().set_input_as_handled()
+			_full_game_reset()
 
 func _physics_process(delta: float) -> void:
 	if _is_hud_open() or _is_dialogue_active() or _is_prompt_open() or _is_dev_loader_open():
@@ -1452,6 +1473,9 @@ func _physics_process(delta: float) -> void:
 	_distance_since_step += travelled.length()
 	while _distance_since_step >= STEP_DISTANCE:
 		_distance_since_step -= STEP_DISTANCE
+		var step_sfx := AudioManager.SFX_STEP_MINE if _is_mine_start_map else AudioManager.SFX_STEP_TOWN
+		var pitch_step := 0.96 + float(Time.get_ticks_msec() % 6) * 0.015
+		AudioManager.play_sfx(step_sfx, -13.0, pitch_step)
 		_signal_bus().action_performed.emit({"type": "walk"})
 
 func _clamp_player_to_map() -> void:
@@ -1502,6 +1526,7 @@ func _on_town_exit_trigger_body_entered(body: Node) -> void:
 func _on_town_exit_confirmed() -> void:
 	_set_debug_panel_suppressed(false)
 	_apply_mine_commit_stats_once()
+	AudioManager.play_sfx(AudioManager.SFX_GATE_OPEN, -6.0)
 	_scene_manager().change_state("cutscene", {
 		"cutscene_id": CUTSCENE_ID_MINE_ENTRY,
 	})
@@ -1546,6 +1571,12 @@ func _toggle_hud() -> void:
 	if hud != null:
 		hud.toggle()
 	_update_map_overlay_visibility()
+
+func _get_debug_panel() -> Control:
+	var overlay_host: CanvasLayer = _scene_manager().get_overlay_host()
+	if overlay_host == null:
+		return null
+	return overlay_host.get_node_or_null("DebugPanel") as Control
 
 func _is_hud_open() -> bool:
 	var hud = _get_spike_hud()
@@ -1687,14 +1718,15 @@ func _refresh_map_state_after_debug_spawn() -> void:
 	_state_transition_locked = false
 	_mine_status_text = ""
 	_clear_suppressed_mine_trigger()
-	_apply_stage_8_5_map_sprites()
+	_apply_actor_visuals()
 	_update_player_map_animation(Vector2.ZERO)
+	_play_region_music()
 
 	if _is_mine_start_map:
 		_restore_mine_progress_state()
 		_update_mine_hint()
 	else:
-		hint_label.text = CROSSROADS_HINT_TEXT if _is_crossroads_map else TOWN_HINT_TEXT
+		hint_label.text = _compose_hint_text(CROSSROADS_HINT_TEXT if _is_crossroads_map else TOWN_HINT_TEXT)
 
 	_update_map_overlay_visibility()
 
@@ -1767,13 +1799,13 @@ func _set_debug_panel_suppressed(suppressed: bool) -> void:
 		debug_panel.set_suppressed(suppressed)
 
 func _player_data() -> Node:
-	return get_node("/root/PlayerData")
+	return PlayerData
 
 func _scene_manager() -> Node:
-	return get_node("/root/SceneManager")
+	return SceneManager
 
 func _signal_bus() -> Node:
-	return get_node("/root/SignalBus")
+	return SignalBus
 
 func get_save_context() -> Dictionary:
 	return {

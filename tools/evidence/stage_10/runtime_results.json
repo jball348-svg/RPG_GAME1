@@ -1,0 +1,111 @@
+{
+	"battle_presentation": {
+		"battlemage": {
+			"class_id": "battlemage",
+			"enemy_actor_id": "kobold",
+			"music_cue": "battle"
+		},
+		"fighter": {
+			"class_id": "fighter",
+			"enemy_actor_id": "kobold",
+			"music_cue": "battle"
+		}
+	},
+	"crossroads_follow": {
+		"follower_present": true,
+		"location": "crossroads_start",
+		"music_cue": "town",
+		"region": "crossroads_region"
+	},
+	"metadata": {
+		"debug_build": true,
+		"music_catalog": {
+			"battle": {
+				"fallback": "res://assets/Music/Battle Theme — Blood and Iron 2.mp3",
+				"primary": "res://assets/Music/Battle Theme — Blood and Iron 1.mp3"
+			},
+			"boss": {
+				"fallback": "res://assets/Music/Boss Theme — The Shaman_s Chamber 2.mp3",
+				"primary": "res://assets/Music/Boss Theme — The Shaman_s Chamber 1.mp3"
+			},
+			"mine": {
+				"fallback": "res://assets/Music/Mine_Dungeon Ambient — Into the Dark 2.mp3",
+				"primary": "res://assets/Music/Mine_Dungeon Ambient — Into the Dark 1.mp3"
+			},
+			"moral_choice": {
+				"fallback": "res://assets/Music/Moral Choice Sting — The Weight 2.mp3",
+				"primary": "res://assets/Music/Moral Choice Sting — The Weight 1.mp3"
+			},
+			"town": {
+				"fallback": "res://assets/Music/Town Theme — Frontier Hamlet 2.mp3",
+				"primary": "res://assets/Music/Town Theme — Frontier Hamlet 1.mp3"
+			},
+			"victory_exit": {
+				"fallback": "res://assets/Music/Victory  Main Theme Seed 2.mp3",
+				"primary": "res://assets/Music/Victory  Main Theme Seed 1.mp3"
+			}
+		},
+		"sfx_library": [
+			"ui_confirm",
+			"ui_cancel",
+			"dialogue_advance",
+			"step_town",
+			"step_mine",
+			"attack_swing",
+			"attack_hit",
+			"spell_cast",
+			"gate_open",
+			"loot_pickup"
+		]
+	},
+	"mine_readability": {
+		"boss_gate_locked_text": "Kobold Mine\nMove: WASD / Arrows\nH: HUD\nObjective: Clear encounter 3/3 (Eastern Den).\nThe top shaft ward still holds. Clear the western and eastern dens before facing the shaman.\nDebug: B Battle   C Cutscene   1 Pure   2 Mixed   3 Social+Gold   4 Intel   0 Reset   L Loader",
+		"east_branch_locked_text": "Kobold Mine\nMove: WASD / Arrows\nH: HUD\nObjective: Clear encounter 2/3 (Western Den).\nThe east branch is not safe yet. Clear the Western Den first.\nDebug: B Battle   C Cutscene   1 Pure   2 Mixed   3 Social+Gold   4 Intel   0 Reset   L Loader",
+		"exit_gate_locked_text": "Kobold Mine\nMove: WASD / Arrows\nH: HUD\nObjective: Clear encounter 3/3 (Eastern Den).\nThe exit gate remains sealed. Resolve the shaman chamber first.\nDebug: B Battle   C Cutscene   1 Pure   2 Mixed   3 Social+Gold   4 Intel   0 Reset   L Loader",
+		"music_cue": "mine",
+		"west_branch_locked_text": "Kobold Mine\nMove: WASD / Arrows\nH: HUD\nObjective: Clear encounter 1/3 (Collapsed Hall).\nThe west branch is still choked with debris. Clear the Collapsed Hall first.\nDebug: B Battle   C Cutscene   1 Pure   2 Mixed   3 Social+Gold   4 Intel   0 Reset   L Loader"
+	},
+	"release_gate_note": {
+		"debug_build": true,
+		"note": "Release-only overlay removal still needs a non-debug executable or editor export smoke.",
+		"runtime_release_check_executed": false
+	},
+	"shaman_flows": {
+		"exit": {
+			"music_cue": "victory_exit",
+			"state_during_capture": "cutscene"
+		},
+		"intro": {
+			"choice_visible": true,
+			"music_cue": "moral_choice"
+		},
+		"kill": {
+			"boss_resolved": true,
+			"exit_unlocked": true,
+			"returned_state": "map",
+			"shaman_killed": true
+		},
+		"recruit": {
+			"boss_resolved": true,
+			"exit_unlocked": true,
+			"music_cue": "mine",
+			"recruited": true,
+			"returned_state": "map"
+		}
+	},
+	"town_checks": {
+		"blocked_probe_distance": 0.0,
+		"dialogue_advance_sfx": "dialogue_advance",
+		"hud_audio": {
+			"close": "ui_cancel",
+			"open": "ui_confirm",
+			"tab": "ui_confirm"
+		},
+		"music_cue": "town",
+		"passable_probe_distance": 33.9972686767578,
+		"prompt_audio": {
+			"cancel": "ui_cancel",
+			"confirm": "ui_confirm"
+		}
+	}
+}

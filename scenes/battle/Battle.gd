@@ -2,12 +2,8 @@ extends Node2D
 
 const REFERENCE_VIEWPORT_SIZE := Vector2(480.0, 270.0)
 
-const PLAYER_KNIGHT_SPRITE_PATH := "res://assets/art/player/universal-lpc-sprite_male_01_full.png"
-const PLAYER_BATTLEMAGE_SPRITE_PATH := "res://assets/art/external/stage_8_5/battlemage_walk_sheet.png"
-const ENEMY_KOBOLD_SPRITE_PATH := "res://assets/art/battle/LPC imp/attack - vanilla.png"
-const ENEMY_SHAMAN_SPRITE_PATH := "res://assets/art/battle/goblinsword.png"
-const ENEMY_SHAMAN_PORTRAIT_PATH := "res://assets/art/portraits/stage_8_5/shaman_portrait.png"
-const MINE_BACKGROUND_PATH := "res://assets/art/battle/monster2_combat_backgrounds/volcano.png"
+const MINE_BACKGROUND_PATH := "res://assets/art/generated/stage_8_5/mine_battle_backdrop.png"
+const MINE_BACKGROUND_FALLBACK_PATH := "res://assets/art/battle/monster2_combat_backgrounds/volcano.png"
 const WEAPON_OVERLAY_PATH := "res://assets/art/generated/stage_8_5/weapon_overlay.png"
 
 const UI_PANEL_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/panel_brown.png"
@@ -45,10 +41,6 @@ const SHAMAN_TALISMAN_LABEL := "Shaman's Talisman"
 const HEALTH_POTION_HEAL := 20
 const HUD_TAB_STATS := "stats"
 
-const KNIGHT_PLAYER_REGION := Rect2i(64, 64, 64, 64)
-const BATTLEMAGE_PLAYER_REGION := Rect2i(256, 128, 64, 64)
-const KOBOLD_ENEMY_REGION := Rect2i(64, 128, 64, 64)
-const SHAMAN_ENEMY_REGION := Rect2i(0, 0, 64, 64)
 const PLAYER_TARGET_HEIGHT := 88.0
 const ENEMY_TARGET_HEIGHT := 78.0
 const SHAMAN_TARGET_HEIGHT := 88.0
@@ -183,6 +175,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if event.is_action_pressed("ui_cancel") and _submenu_panel.visible:
 		get_viewport().set_input_as_handled()
+		AudioManager.play_sfx(AudioManager.SFX_UI_CANCEL, -7.0)
 		_show_main_menu()
 
 func _load_ui_textures() -> void:
@@ -218,7 +211,12 @@ func _build_scene() -> void:
 	_enemy_sprite.material = _make_flash_material()
 	add_child(_enemy_sprite)
 
-	_background_texture = _load_texture(MINE_BACKGROUND_PATH) if _environment_id() == "mine" else null
+	if _environment_id() == "mine":
+		_background_texture = _load_texture(MINE_BACKGROUND_PATH)
+		if _background_texture == null:
+			_background_texture = _load_texture(MINE_BACKGROUND_FALLBACK_PATH)
+	else:
+		_background_texture = null
 
 	var ui_layer := CanvasLayer.new()
 	ui_layer.layer = 5
@@ -491,9 +489,10 @@ func _configure_battle_state() -> void:
 
 	_player_name_label.text = PlayerData.get_display_class()
 	_enemy_name_label.text = "Boss Gate" if _boss_placeholder_mode else _enemy_display_name
-	_player_portrait_texture.texture = _player_sprite.texture
-	_enemy_portrait_texture.texture = _load_texture(ENEMY_SHAMAN_PORTRAIT_PATH) if _shaman_boss_mode else _enemy_sprite.texture
+	_player_portrait_texture.texture = _load_player_presentation_card()
+	_enemy_portrait_texture.texture = _load_enemy_presentation_card()
 	_append_log("The sealed chamber stirs." if _boss_placeholder_mode else _enemy_intro_log)
+	AudioManager.play_music(AudioManager.CUE_BOSS if _shaman_boss_mode or _boss_placeholder_mode else AudioManager.CUE_BATTLE)
 
 func _layout_scene() -> void:
 	var viewport_size := get_viewport_rect().size
@@ -516,11 +515,11 @@ func _layout_scene() -> void:
 	_turn_label.position = Vector2((viewport_size.x - turn_width) * 0.5, _scale_y(180.0 + BATTLE_CONTENT_Y_OFFSET))
 	_turn_label.size = Vector2(turn_width, _scale_y(18.0))
 
-	_player_portrait_panel.position = Vector2(_scale_x(18.0), _scale_y(102.0 + BATTLE_CONTENT_Y_OFFSET))
-	_player_portrait_panel.size = Vector2(_scale_x(96.0), _scale_y(82.0))
+	_player_portrait_panel.position = Vector2(_scale_x(12.0), _scale_y(96.0 + BATTLE_CONTENT_Y_OFFSET))
+	_player_portrait_panel.size = Vector2(_scale_x(86.0), _scale_y(96.0))
 
-	_enemy_portrait_panel.position = Vector2(_scale_x(366.0), _scale_y(102.0 + BATTLE_CONTENT_Y_OFFSET))
-	_enemy_portrait_panel.size = Vector2(_scale_x(96.0), _scale_y(82.0))
+	_enemy_portrait_panel.position = Vector2(_scale_x(382.0), _scale_y(96.0 + BATTLE_CONTENT_Y_OFFSET))
+	_enemy_portrait_panel.size = Vector2(_scale_x(86.0), _scale_y(96.0))
 
 	_status_label.position = Vector2(_scale_x(122.0), _scale_y(188.0 + BATTLE_CONTENT_Y_OFFSET))
 	_status_label.size = Vector2(_scale_x(228.0), _scale_y(42.0))
@@ -571,43 +570,27 @@ func _layout_submenu_panel(viewport_size: Vector2) -> void:
 	_submenu_panel.position.y = clampf(desired_y, min_top, max_top)
 
 func _apply_battle_sprite_art() -> void:
-	if _player_class_id == PlayerData.CLASS_BATTLEMAGE:
-		_player_sprite.texture = _load_cropped_texture(
-			PLAYER_BATTLEMAGE_SPRITE_PATH,
-			BATTLEMAGE_PLAYER_REGION,
-			_make_fallback_texture(32, 40, Color(0.21, 0.31, 0.55)),
-			true,
-			false
-		)
-		_player_sprite.flip_h = false
-		_player_scale_multiplier = _reference_scale_for_height(_player_sprite.texture, PLAYER_TARGET_HEIGHT, 2.0)
-	else:
-		_player_sprite.texture = _load_cropped_texture(
-			PLAYER_KNIGHT_SPRITE_PATH,
-			KNIGHT_PLAYER_REGION,
-			_make_fallback_texture(64, 64, Color(0.58, 0.53, 0.47))
-		)
-		_player_sprite.flip_h = true
-		_player_scale_multiplier = _reference_scale_for_height(_player_sprite.texture, PLAYER_TARGET_HEIGHT, 1.4)
+	var player_actor_id := ActorVisuals.resolve_player_actor_id()
+	_player_sprite.texture = ActorVisuals.get_battle_texture(player_actor_id)
+	if _player_sprite.texture == null:
+		_player_sprite.texture = _make_fallback_texture(64, 64, Color(0.58, 0.53, 0.47))
+	_player_sprite.flip_h = ActorVisuals.get_battle_flip_h(player_actor_id)
+	_player_scale_multiplier = _reference_scale_for_height(
+		_player_sprite.texture,
+		ActorVisuals.get_battle_target_height(player_actor_id, PLAYER_TARGET_HEIGHT),
+		1.4
+	)
 
-	if _shaman_boss_mode:
-		_enemy_sprite.texture = _load_cropped_texture(
-			ENEMY_SHAMAN_SPRITE_PATH,
-			SHAMAN_ENEMY_REGION,
-			_make_fallback_texture(64, 80, Color(0.33, 0.17, 0.41)),
-			true,
-			true
-		)
-		_enemy_sprite.flip_h = true
-		_enemy_scale_multiplier = _reference_scale_for_height(_enemy_sprite.texture, SHAMAN_TARGET_HEIGHT, 1.5)
-	else:
-		_enemy_sprite.texture = _load_cropped_texture(
-			ENEMY_KOBOLD_SPRITE_PATH,
-			KOBOLD_ENEMY_REGION,
-			_make_fallback_texture(64, 64, Color(0.45, 0.15, 0.14))
-		)
-		_enemy_sprite.flip_h = true
-		_enemy_scale_multiplier = _reference_scale_for_height(_enemy_sprite.texture, ENEMY_TARGET_HEIGHT, 1.5)
+	var enemy_actor_id := _enemy_actor_id()
+	_enemy_sprite.texture = ActorVisuals.get_battle_texture(enemy_actor_id)
+	if _enemy_sprite.texture == null:
+		_enemy_sprite.texture = _make_fallback_texture(64, 64, Color(0.45, 0.15, 0.14))
+	_enemy_sprite.flip_h = ActorVisuals.get_battle_flip_h(enemy_actor_id)
+	_enemy_scale_multiplier = _reference_scale_for_height(
+		_enemy_sprite.texture,
+		ActorVisuals.get_battle_target_height(enemy_actor_id, SHAMAN_TARGET_HEIGHT if _shaman_boss_mode else ENEMY_TARGET_HEIGHT),
+		1.5
+	)
 
 	_apply_weapon_overlay()
 
@@ -629,6 +612,17 @@ func _apply_weapon_overlay() -> void:
 	_weapon_overlay_sprite.position = Vector2(10.0, -4.0)
 	_weapon_overlay_sprite.rotation = deg_to_rad(-18.0)
 	_weapon_overlay_sprite.visible = true
+
+func _load_player_presentation_card() -> Texture2D:
+	var portrait := ActorVisuals.get_portrait(ActorVisuals.resolve_player_actor_id())
+	if portrait != null:
+		return portrait
+
+	return _player_sprite.texture
+
+func _load_enemy_presentation_card() -> Texture2D:
+	var portrait := ActorVisuals.get_portrait(_enemy_actor_id())
+	return portrait if portrait != null else _enemy_sprite.texture
 
 func _position_hp_widget(container: Node, top_left: Vector2) -> void:
 	var widget := container as Control
@@ -799,6 +793,7 @@ func _run_enemy_attack() -> void:
 		return
 
 	_enemy_staggered = false
+	AudioManager.play_sfx(AudioManager.SFX_ATTACK_HIT, -3.0)
 	PlayerData.take_battle_damage(_enemy_attack_damage)
 	SignalBus.action_performed.emit({"type": "take_damage", "source": _enemy_display_name.to_lower()})
 	_flash_sprite(_player_sprite)
@@ -860,12 +855,14 @@ func _choose_shaman_action() -> String:
 
 func _run_shaman_hex() -> void:
 	_player_hexed = true
+	AudioManager.play_sfx(AudioManager.SFX_SPELL_CAST, -2.0, 0.95)
 	_append_log("The Shaman casts Hex. Your next strike will falter.")
 	await get_tree().create_timer(0.55).timeout
 	_begin_player_turn()
 
 func _run_shaman_heal() -> void:
 	_shaman_heal_used = true
+	AudioManager.play_sfx(AudioManager.SFX_SPELL_CAST, -2.0, 0.88)
 	var previous_hp := _enemy_hp
 	_enemy_hp = mini(_enemy_max_hp, _enemy_hp + SHAMAN_HEAL_AMOUNT)
 	var restored := _enemy_hp - previous_hp
@@ -877,12 +874,14 @@ func _run_shaman_heal() -> void:
 func _on_attack_pressed() -> void:
 	if _input_locked:
 		return
+	AudioManager.play_sfx(AudioManager.SFX_UI_CONFIRM, -7.0)
 	_resolve_player_attack()
 
 func _on_spell_pressed() -> void:
 	if _input_locked or not PlayerData.has_battle_magik():
 		return
 
+	AudioManager.play_sfx(AudioManager.SFX_UI_CONFIRM, -7.0)
 	_show_submenu([
 		{
 			"label": "Flamebolt",
@@ -894,6 +893,7 @@ func _on_item_pressed() -> void:
 	if _input_locked:
 		return
 
+	AudioManager.play_sfx(AudioManager.SFX_UI_CONFIRM, -7.0)
 	_show_submenu([
 		{
 			"label": "Health Potion x%d" % PlayerData.get_item_count(PlayerData.HEALTH_POTION_ID),
@@ -905,18 +905,21 @@ func _on_item_pressed() -> void:
 func _on_flee_pressed() -> void:
 	if _input_locked:
 		return
+	AudioManager.play_sfx(AudioManager.SFX_UI_CONFIRM, -7.0)
 	_attempt_flee()
 
 func _on_ability_pressed() -> void:
 	if _input_locked or _ability_cooldown_remaining > 0:
 		return
 
+	AudioManager.play_sfx(AudioManager.SFX_UI_CONFIRM, -7.0)
 	if _player_class_id == PlayerData.CLASS_FIGHTER:
 		_resolve_shield_bash()
 	else:
 		_resolve_arcane_strike()
 
 func _on_submenu_option_pressed(action_id: String) -> void:
+	AudioManager.play_sfx(AudioManager.SFX_UI_CONFIRM, -7.0)
 	match action_id:
 		"cast_flamebolt":
 			_resolve_flamebolt()
@@ -926,12 +929,14 @@ func _on_submenu_option_pressed(action_id: String) -> void:
 func _resolve_player_attack() -> void:
 	_input_locked = true
 	SignalBus.action_performed.emit({"type": "attack", "context": "battle"})
+	AudioManager.play_sfx(AudioManager.SFX_ATTACK_SWING, -4.0)
 	var damage := _calculate_physical_damage(_modified_attack_power(_player_strength_for_attack() + PlayerData.get_battle_weapon_modifier()))
 	_apply_damage_to_enemy(damage, "You attack for %d damage." % damage, true)
 
 func _resolve_flamebolt() -> void:
 	_input_locked = true
 	SignalBus.action_performed.emit({"type": "cast", "spell": "flamebolt"})
+	AudioManager.play_sfx(AudioManager.SFX_SPELL_CAST, -3.0)
 	var spell_power := 6 if _player_class_id == PlayerData.CLASS_BATTLEMAGE else 8
 	var base_damage := int(round(StatRegistry.get_stat("magik.spellcasting"))) + spell_power
 	var damage := maxi(1, base_damage - _enemy_resistance)
@@ -978,6 +983,7 @@ func _attempt_flee() -> void:
 func _resolve_shield_bash() -> void:
 	_input_locked = true
 	SignalBus.action_performed.emit({"type": "shield_bash"})
+	AudioManager.play_sfx(AudioManager.SFX_ATTACK_SWING, -3.0)
 	var damage := _calculate_physical_damage(_modified_attack_power(_player_strength_for_attack() + 3))
 	_enemy_staggered = true
 	_ability_cooldown_remaining = 4
@@ -986,6 +992,7 @@ func _resolve_shield_bash() -> void:
 func _resolve_arcane_strike() -> void:
 	_input_locked = true
 	SignalBus.action_performed.emit({"type": "arcane_strike"})
+	AudioManager.play_sfx(AudioManager.SFX_SPELL_CAST, -2.0)
 	var physical_damage := _calculate_physical_damage(_modified_attack_power(_player_strength_for_attack() + PlayerData.get_battle_weapon_modifier()))
 	var magik_damage := 4
 	var total_damage := physical_damage + magik_damage
@@ -1013,6 +1020,7 @@ func _modified_attack_power(base_attack_power: int) -> int:
 func _apply_damage_to_enemy(damage: int, log_text: String, consume_defend_bonus: bool, is_heavy: bool = false) -> void:
 	_enemy_hp = maxi(0, _enemy_hp - damage)
 	_flash_sprite(_enemy_sprite)
+	AudioManager.play_sfx(AudioManager.SFX_ATTACK_HIT, -2.0 if is_heavy else -4.0)
 	if damage >= 10 or is_heavy:
 		_shake_camera(8.0)
 	_refresh_hp_ui()
@@ -1079,6 +1087,7 @@ func _run_victory_sequence() -> void:
 	var xp_reward := _xp_reward_for_current_encounter()
 	PlayerData.xp += xp_reward
 	SignalBus.action_performed.emit({"type": "battle_victory"})
+	AudioManager.play_sfx(AudioManager.SFX_LOOT_PICKUP, -4.0)
 	_loot_label.text = _build_loot_text(gold_reward, xp_reward, found_item_label)
 
 	_loot_panel.visible = true
@@ -1094,7 +1103,7 @@ func _run_victory_sequence() -> void:
 
 	SaveManager.save_game()
 
-	var open_hud_tab := ""
+	var open_hud_tab := HUD_TAB_STATS if levels_gained > 0 else ""
 	_return_to_map(
 		status_text,
 		str(_context.get("suppressed_trigger_type", "")),
@@ -1366,6 +1375,9 @@ func _make_fallback_texture(width: int, height: int, color: Color) -> Texture2D:
 	var image := Image.create(width, height, false, Image.FORMAT_RGBA8)
 	image.fill(color)
 	return ImageTexture.create_from_image(image)
+
+func _enemy_actor_id() -> String:
+	return ActorVisuals.ACTOR_SHAMAN if _shaman_boss_mode else ActorVisuals.ACTOR_KOBOLD
 
 func _encounter_kind() -> String:
 	return str(_context.get("encounter_kind", BATTLE_KIND_DEBUG))

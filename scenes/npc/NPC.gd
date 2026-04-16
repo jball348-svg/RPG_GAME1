@@ -2,6 +2,7 @@ extends Node2D
 
 @export var npc_id: String = ""
 @export var npc_name: String = ""
+@export var actor_id: String = ""
 
 @onready var interaction_zone: Area2D = $InteractionZone
 

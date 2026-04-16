@@ -58,6 +58,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if event.is_action_pressed("interact") or _is_space_pressed(event):
 		get_viewport().set_input_as_handled()
+		AudioManager.play_sfx(AudioManager.SFX_DIALOGUE_ADVANCE, -5.0)
 		DialogueManager.advance()
 		_refresh_from_current_node()
 
@@ -81,9 +82,15 @@ func _refresh_from_current_node() -> void:
 
 	speaker_label.text = str(node.get("speaker", ""))
 	body_label.text = str(node.get("text", ""))
-	_apply_portrait(str(node.get("portrait", "")))
+	_apply_portrait(str(node.get("portrait", "")), str(node.get("portrait_id", "")))
 
-func _apply_portrait(portrait_path: String) -> void:
+func _apply_portrait(portrait_path: String, portrait_id: String = "") -> void:
+	if portrait_id != "":
+		var portrait_texture := ActorVisuals.get_portrait(portrait_id)
+		if portrait_texture != null:
+			portrait_rect.texture = portrait_texture
+			return
+
 	if portrait_path == "":
 		portrait_rect.texture = _placeholder_portrait
 		return

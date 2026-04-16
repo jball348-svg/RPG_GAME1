@@ -34,25 +34,25 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 18.0
-offset_top = 16.0
-offset_right = -18.0
-offset_bottom = -16.0
+offset_left = 12.0
+offset_top = 10.0
+offset_right = -12.0
+offset_bottom = -10.0
 
 [node name="Content" type="VBoxContainer" parent="Center/Frame/FrameMargin"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 12
+theme_override_constants/separation = 8
 
 [node name="HeaderRow" type="HBoxContainer" parent="Center/Frame/FrameMargin/Content"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 8
+theme_override_constants/separation = 6
 
 [node name="TitleLabel" type="Label" parent="Center/Frame/FrameMargin/Content/HeaderRow"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 12
 text = "Field Journal"
 
 [node name="HeaderSpacer" type="Control" parent="Center/Frame/FrameMargin/Content/HeaderRow"]
@@ -60,29 +60,33 @@ layout_mode = 2
 size_flags_horizontal = 3
 
 [node name="CloseButton" type="Button" parent="Center/Frame/FrameMargin/Content/HeaderRow"]
-custom_minimum_size = Vector2(96, 0)
+custom_minimum_size = Vector2(72, 0)
 layout_mode = 2
 focus_mode = 2
 text = "Close"
 
 [node name="NavigationRow" type="HBoxContainer" parent="Center/Frame/FrameMargin/Content"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 6
 
 [node name="TabStatsButton" type="Button" parent="Center/Frame/FrameMargin/Content/NavigationRow"]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Stats"
 
 [node name="TabEquipmentButton" type="Button" parent="Center/Frame/FrameMargin/Content/NavigationRow"]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Equipment"
 
 [node name="TabQuestButton" type="Button" parent="Center/Frame/FrameMargin/Content/NavigationRow"]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Quest"
 
 [node name="TabMapButton" type="Button" parent="Center/Frame/FrameMargin/Content/NavigationRow"]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Map"
 
 [node name="Tabs" type="TabContainer" parent="Center/Frame/FrameMargin/Content"]
@@ -94,33 +98,34 @@ tabs_visible = false
 
 [node name="Stats" type="MarginContainer" parent="Center/Frame/FrameMargin/Content/Tabs"]
 layout_mode = 2
-theme_override_constants/margin_left = 6
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 6
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
 
 [node name="StatsBody" type="VBoxContainer" parent="Center/Frame/FrameMargin/Content/Tabs/Stats"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 12
+theme_override_constants/separation = 8
 
 [node name="SummaryRow" type="HBoxContainer" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 14
+theme_override_constants/separation = 10
 
 [node name="PlayerPortrait" type="TextureRect" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/SummaryRow"]
-custom_minimum_size = Vector2(140, 140)
+custom_minimum_size = Vector2(92, 112)
 layout_mode = 2
+expand_mode = 1
 stretch_mode = 5
 
 [node name="SummaryGrid" type="GridContainer" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/SummaryRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 columns = 2
-theme_override_constants/h_separation = 14
-theme_override_constants/v_separation = 8
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 4
 
 [node name="LevelLabel" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/SummaryRow/SummaryGrid"]
 layout_mode = 2
@@ -181,58 +186,70 @@ text = "-"
 [node name="AlignmentHelp" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody"]
 layout_mode = 2
 autowrap_mode = 3
-text = "Alignment is derived from your choices and flags in Stage 8.5. It is display-only here, but you can inspect it at any time."
+text = "Alignment is derived from your choices and flags in Stage 8.5. It stays display-only here."
 
 [node name="PointsBanner" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody"]
 visible = false
 layout_mode = 2
-theme_override_font_sizes/font_size = 14
-text = "Spend your unspent stat points below."
+theme_override_font_sizes/font_size = 10
+text = "0 unspent stat points available."
 
-[node name="FamiliesList" type="VBoxContainer" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody"]
+[node name="StatsScroll" type="ScrollContainer" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 8
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="FamiliesList" type="VBoxContainer" parent="Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/StatsScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
 
 [node name="Equipment" type="MarginContainer" parent="Center/Frame/FrameMargin/Content/Tabs"]
 layout_mode = 2
-theme_override_constants/margin_left = 6
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 6
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
 
 [node name="EquipmentBody" type="VBoxContainer" parent="Center/Frame/FrameMargin/Content/Tabs/Equipment"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 10
+theme_override_constants/separation = 8
 
 [node name="EquipmentIntro" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Equipment/EquipmentBody"]
 layout_mode = 2
 autowrap_mode = 3
 text = "Current loadout from the eight-slot Stage 8.5 equipment model."
 
-[node name="EquipmentList" type="VBoxContainer" parent="Center/Frame/FrameMargin/Content/Tabs/Equipment/EquipmentBody"]
+[node name="EquipmentScroll" type="ScrollContainer" parent="Center/Frame/FrameMargin/Content/Tabs/Equipment/EquipmentBody"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 8
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="EquipmentList" type="VBoxContainer" parent="Center/Frame/FrameMargin/Content/Tabs/Equipment/EquipmentBody/EquipmentScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
 
 [node name="Quest" type="MarginContainer" parent="Center/Frame/FrameMargin/Content/Tabs"]
 layout_mode = 2
-theme_override_constants/margin_left = 6
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 6
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
 
 [node name="QuestBody" type="VBoxContainer" parent="Center/Frame/FrameMargin/Content/Tabs/Quest"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 12
+theme_override_constants/separation = 8
 
 [node name="QuestTitle" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Quest/QuestBody"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 12
 text = "Quest"
 
 [node name="QuestObjective" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Quest/QuestBody"]
@@ -245,12 +262,16 @@ layout_mode = 2
 autowrap_mode = 3
 text = "-"
 
+[node name="QuestSpacer" type="Control" parent="Center/Frame/FrameMargin/Content/Tabs/Quest/QuestBody"]
+layout_mode = 2
+size_flags_vertical = 3
+
 [node name="Map" type="MarginContainer" parent="Center/Frame/FrameMargin/Content/Tabs"]
 layout_mode = 2
-theme_override_constants/margin_left = 6
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 6
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
 
 [node name="MapBody" type="VBoxContainer" parent="Center/Frame/FrameMargin/Content/Tabs/Map"]
 layout_mode = 2
@@ -260,4 +281,8 @@ size_flags_vertical = 3
 [node name="MapPlaceholder" type="Label" parent="Center/Frame/FrameMargin/Content/Tabs/Map/MapBody"]
 layout_mode = 2
 autowrap_mode = 3
-text = "Map - coming soon"
+text = "Map tab placeholder."
+
+[node name="MapSpacer" type="Control" parent="Center/Frame/FrameMargin/Content/Tabs/Map/MapBody"]
+layout_mode = 2
+size_flags_vertical = 3

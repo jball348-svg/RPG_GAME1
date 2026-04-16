@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://c8ushs002wa12"
+path="res://.godot/imported/Boss Theme — The Shaman_s Chamber 1.mp3-2993d45824a24b2c5c4eec9396df56fc.mp3str"
+
+[deps]
+
+source_file="res://assets/Music/Boss Theme — The Shaman_s Chamber 1.mp3"
+dest_files=["res://.godot/imported/Boss Theme — The Shaman_s Chamber 1.mp3-2993d45824a24b2c5c4eec9396df56fc.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

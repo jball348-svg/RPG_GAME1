@@ -1,27 +1,27 @@
 # RPG_GAME1
 
-An archetypal high fantasy RPG. You choose at the start whether you are **Pure** (one class, optionally specialised) or **Mixed** (multiclass, versatile but diluted). This choice drives the game's central conflict - a war between Pure and Mixed factions - and every NPC, faction, and moral decision responds to it. The allegory is intentional.
-
-Built solo in Godot 4 (GDScript). Target platform: PC / Steam.
+An archetypal high fantasy RPG built in Godot 4. The player chooses **Pure** or **Mixed** at the start, and that identity drives the central faction conflict, progression flavor, and moral framing of the slice.
 
 ---
 
 ## Status
 
-Currently in production - building the vertical slice (core loop playable start to finish).
-
 | Phase | Status |
 |---|---|
 | Pre-production | Complete |
 | Technical spike | Complete |
-| Vertical slice | In progress - Stage 8 complete, Stage 8.5 spec pack published |
+| Vertical slice | Stage 10 implementation complete, awaiting outside feedback |
 
-Current focus: Stage 8.5 implementation prep. The admin/spec pass is documented and the next implementation pass should execute the Stage 8.5 tickets.
+Current focus: prepare and run the first outside playtest, then handle follow-up fixes in a separate pass.
 
 Primary references:
-- `docs/vertical_slice_plan.md`
 - `docs/HANDOVER.md`
-- `docs/stage_8_5_master_plan.md`
+- `docs/vertical_slice_plan.md`
+- `docs/stage_10_master_plan.md`
+- `docs/stage_10_identity_matrix.md`
+- `docs/stage_10_audio_asset_research.md`
+- `docs/stage_10_playtest_packet.md`
+- `tools/stage_10_runtime_harness.tscn`
 
 ---
 
@@ -29,61 +29,77 @@ Primary references:
 
 1. Install Godot 4.6+
 2. Clone this repo
-3. Open Godot -> Import -> select this folder
-4. Run the project (`F5`) or open `scenes/main/Main.tscn`
-5. The game boots into the starting town map, or loads `user://save_game.json` if a save already exists
+3. Open Godot and import this folder
+4. Run the project with `F5`, or open `scenes/main/Main.tscn`
+5. The game boots into the current map state, or resumes from `user://save_game.json` if a save exists
 
-**Movement:** `WASD` or arrow keys  
-**Current debug controls:** `P` skip battle -> victory, `L` location loader, `B` battle, `H` HUD, `C` cutscene, `1` Pure path, `2` Mixed path, `3` Social + gold, `4` Intelligence, `0` reset stats
+Normal controls:
+- `WASD` or arrow keys to move
+- `E` / `Space` to interact or advance dialogue
+- `H` to open the HUD
+
+Debug controls are gated behind `OS.is_debug_build()` and should not be treated as release behavior.
 
 ---
 
-## Current slice snapshot
+## Current Slice Snapshot
 
-- Core loop currently playable: Load -> Town -> Leave -> Cutscene -> Mine -> Battles -> Boss choice -> Exit
-- Stage 8 save/load is implemented through `SaveManager` and currently persists live vertical-slice systems: stats, flags, ghost flags, inventory, equipment, HP, clock, and world return context
-- Stage 8.5 is not implemented yet. The repo now includes a full planning/spec pack for portraits, map sprites, HUD rebuild, leveling, alignment, and battle equipment rendering
+- Core loop playable end to end: Load -> Town -> Leave -> Cutscene -> Mine -> Battles -> Boss choice -> Exit -> Crossroads
+- Stage 10 now includes:
+  - `AudioManager` autoload for music and pooled SFX
+  - `ActorVisuals` autoload as the shared actor presentation registry
+  - dialogue portrait IDs plus registry-driven actor lookup
+  - registry-driven player, NPC, battle, cutscene, and follower visuals
+  - town collision cleanup and named mine blocker/walkable data
+  - release-safe debug gating in main flow and map hints
+  - Stage 10 runtime harness scaffold plus playtest packet
+- First-pass Stage 10 SFX are repo-local generated placeholder `OGG` files committed under `assets/SFX/`
+- Outside feedback integration is intentionally deferred to the next pass
 
 ---
 
 ## Architecture
 
 ```text
-autoloads/        Global singletons - always running
-  SignalBus.gd    All game signals
-  StatRegistry.gd Stat tree, action modifiers, Luck derivation
-  GameClock.gd    Always-on clock, never pauses
-  PlayerData.gd   Class, path, flags, ghost flags, age, inventory, equipment, HP
-  SceneManager.gd Game state loader (Map / Battle / HUD / Cutscene)
-  DialogueManager.gd NPC dialogue trees and condition checks
-  SaveManager.gd  Save/load orchestration for the vertical slice
+autoloads/        Global singletons
+  SignalBus.gd    Cross-scene signals
+  StatRegistry.gd Stat tree, modifiers, Luck derivation
+  GameClock.gd    Always-on clock
+  PlayerData.gd   Class, path, flags, inventory, HP, progression
+  SceneManager.gd State loader (Map / Battle / Cutscene)
+  DialogueManager.gd Dialogue trees and branching
+  SaveManager.gd  Save/load orchestration
+  AlignmentSystem.gd Derived alignment labels
+  ActorVisuals.gd Shared actor presentation registry
+  AudioManager.gd Shared music + SFX layer
 scenes/
   main/           Entry point and persistent overlay host
-  map/            Top-down map state
-  battle/         Turn-based battle state
-  hud/            Current summary overlay; Stage 8.5 target is a tabbed HUD rebuild
+  map/            Top-down exploration state
+  battle/         Turn-based combat state
+  hud/            Tabbed HUD overlay
   cutscene/       Scripted sequence state
-  debug/          Dev-only stat/clock overlay (removed before release)
+  debug/          Dev-only overlay
 assets/
-  art/            Mood boards, tilesets, sprites, battle art, UI art
+  art/            Tilesets, UI, sprites, portraits, generated support art
+  Music/          Locked Stage 10 music candidates
+  SFX/            Stage 10 placeholder runtime SFX + provenance notes
 docs/
-  HANDOVER.md               Shared project memory and current state
-  vertical_slice_plan.md    Stage-by-stage build plan
-  art_direction.md          Visual rules plus placeholder-art policy
-  stage_8_5_master_plan.md  Stage 8.5 execution order and planning method
-  stage_8_5_asset_research.md Asset audit, provenance notes, source shortlist
-  stage_8_5_systems_spec.md Stage 8.5 design lock for systems and interfaces
-  stage_8_5_tickets.md      Ticket-by-ticket implementation handoff
+  HANDOVER.md                Source-of-truth project handoff
+  vertical_slice_plan.md     Stage-by-stage slice status
+  stage_10_master_plan.md    Stage 10 implementation summary
+  stage_10_identity_matrix.md Shared actor visual mapping
+  stage_10_audio_asset_research.md Music lock + SFX inventory
+  stage_10_playtest_packet.md Playtest brief, checklist, issue log template
+tools/
+  stage_8_5_runtime_harness.*
+  stage_10_runtime_harness.*
+  evidence/
 ```
 
 ---
 
-## Design
+## Notes
 
-- **Stat system:** 6 top-level stat families (Physical, Magik, Intelligence, Social, Will, Holy), each with sub-skills that increase through use.
-- **Visibility tiers:** Some stats are always shown, some unlock later, and some remain ghost systems the player never directly sees.
-- **Pure vs Mixed:** Not just a class choice - a political identity. The world responds.
-- **Time:** An always-on clock that never pauses. Age is tracked. Buffs expire. The world keeps moving while menus are open.
-- **Art sourcing policy:** Placeholder art can come from any free-compatible source, but provenance, license, and attribution obligations must be logged before it becomes a default implementation asset.
-
-Full design and implementation planning live in `docs/`.
+- Placeholder art and audio remain allowed only when provenance is logged in-repo.
+- The Stage 10 runtime harness was added, but Godot CLI was not available in this shell session, so the harness was not executed here.
+- The next milestone is not more implementation scope. It is outside playtest coverage plus a tightly-scoped follow-up fix pass.

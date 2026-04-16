@@ -55,6 +55,7 @@ func load_game() -> bool:
 	StatRegistry.apply_save_data(save_root.get("stats", {}))
 	GameClock.apply_save_data(save_root.get("clock", {}))
 	PlayerData.apply_save_data(save_root.get("player", {}))
+	PlayerData.ensure_spike_defaults()
 	PlayerData.current_region = str(world_payload.get("return_region", PlayerData.current_region))
 	PlayerData.current_location = str(world_payload.get("return_location", PlayerData.current_location))
 

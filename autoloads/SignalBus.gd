@@ -37,3 +37,8 @@ signal flag_set(flag_name: String, value: Variant)
 # --- Progression signals ---
 # Emitted once for each level gained after XP overflow is resolved.
 signal level_up(level: int)
+
+# --- Debug overlay signals ---
+# Emitted whenever the persistent debug panel visibility changes so scene-local
+# helper overlays can follow the same user-hidden state.
+signal debug_overlay_visibility_changed(visible: bool)

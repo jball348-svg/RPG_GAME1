@@ -106,6 +106,13 @@ This is the key locked decision from design: character personalisation is visibl
 - Equipment and class visually clear
 - Class-specific animations for key story moments (mine entrance, boss confrontation, etc.) in production
 
+### Identity continuity rules
+- A named actor must read as the same character in every state where they appear: map sprite, battle render, HUD portrait/avatar, dialogue portrait, cutscene actor, and follower/companion form.
+- Framing can change between states. Identity markers cannot. Species read, hair or hat silhouette, face shape, major costume read, and primary accent colours must stay coherent.
+- Placeholder reuse is acceptable only when it preserves that read. A portrait that looks like a different species or a follower that reuses the wrong class sprite is a Stage 10 polish issue, not "good enough forever."
+- Story-critical town NPCs should not rely on tint alone if they share the same base silhouette and occupy the same play space. If placement plus tint is not enough for first-glance recognition, the art direction is not carrying its share of the work.
+- Before any Stage 10 visual implementation, build a simple source-of-truth mapping for each critical actor so future polish does not fix one state while quietly breaking another.
+
 ---
 
 ## Tileset rules

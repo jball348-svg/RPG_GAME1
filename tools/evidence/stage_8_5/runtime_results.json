@@ -1,0 +1,35 @@
+{
+	"battle_levelup_return": {
+		"hud_open": true,
+		"hud_tab": "stats",
+		"level": 2,
+		"returned_to_map": true,
+		"unspent_points": 3
+	},
+	"boot_from_current_save": {
+		"has_save": true,
+		"location": "mine_post_boss",
+		"region": "kobold_mine",
+		"state": "map"
+	},
+	"collision": {
+		"blocked_probe_distance": 33.9984893798828,
+		"passable_probe_distance": 51.0027770996094
+	},
+	"crossroads_follow": {
+		"follower_present": true,
+		"location": "crossroads_start",
+		"region": "crossroads_region"
+	},
+	"debug_toggle": {
+		"debug_visible_after_restore": true,
+		"hint_hidden_with_debug_hidden": true,
+		"hint_visible_before_toggle": true
+	},
+	"shaman_kill_branch": {
+		"boss_resolved": true,
+		"exit_unlocked": true,
+		"returned_to_map": true,
+		"shaman_killed": true
+	}
+}

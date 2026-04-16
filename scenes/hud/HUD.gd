@@ -39,8 +39,6 @@ const UI_INSET_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion
 const UI_BUTTON_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_brown.png"
 const UI_BUTTON_PRESSED_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_brown_pressed.png"
 const UI_BUTTON_DISABLED_TEXTURE_PATH := "res://assets/art/UI/kenney_ui-pack-rpg-expansion/PNG/buttonLong_grey.png"
-const LPC_SPRITE_SHEET_PATH := "res://assets/art/player/universal-lpc-sprite_male_01_full.png"
-const PORTRAIT_REGION := Rect2i(256, 128, 64, 64)
 
 const MINE_ENCOUNTER_PROGRESS_FLAG := "mine_encounter_progress"
 const MINE_BOSS_RESOLVED_FLAG := "mine_boss_resolved"
@@ -72,8 +70,8 @@ var _button_disabled_texture: Texture2D
 @onready var _moral_value: Label = $Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/SummaryRow/SummaryGrid/MoralValue
 @onready var _gold_value: Label = $Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/SummaryRow/SummaryGrid/GoldValue
 @onready var _points_banner: Label = $Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/PointsBanner
-@onready var _families_list: VBoxContainer = $Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/FamiliesList
-@onready var _equipment_list: VBoxContainer = $Center/Frame/FrameMargin/Content/Tabs/Equipment/EquipmentBody/EquipmentList
+@onready var _families_list: VBoxContainer = $Center/Frame/FrameMargin/Content/Tabs/Stats/StatsBody/StatsScroll/FamiliesList
+@onready var _equipment_list: VBoxContainer = $Center/Frame/FrameMargin/Content/Tabs/Equipment/EquipmentBody/EquipmentScroll/EquipmentList
 @onready var _quest_title: Label = $Center/Frame/FrameMargin/Content/Tabs/Quest/QuestBody/QuestTitle
 @onready var _quest_objective: Label = $Center/Frame/FrameMargin/Content/Tabs/Quest/QuestBody/QuestObjective
 @onready var _quest_status: Label = $Center/Frame/FrameMargin/Content/Tabs/Quest/QuestBody/QuestStatus
@@ -104,10 +102,13 @@ func toggle() -> void:
 func set_open(open: bool) -> void:
 	if open and not _can_open():
 		return
+	if _is_open == open:
+		return
 	_is_open = open
 	visible = open
 	mouse_filter = Control.MOUSE_FILTER_STOP if open else Control.MOUSE_FILTER_IGNORE
 	_backdrop.visible = open
+	AudioManager.play_sfx(AudioManager.SFX_UI_CONFIRM if open else AudioManager.SFX_UI_CANCEL, -6.0)
 	if open:
 		_refresh_all()
 		_tabs.current_tab = _tab_index_for_id(_current_tab)
@@ -235,9 +236,19 @@ func _on_viewport_size_changed() -> void:
 
 func _layout_for_viewport() -> void:
 	var viewport_size := get_viewport_rect().size
-	var frame_width := clampf(viewport_size.x - 32.0, 320.0, 880.0)
-	var frame_height := clampf(viewport_size.y - 32.0, 220.0, 640.0)
+	var compact_layout := viewport_size.x <= 640.0 or viewport_size.y <= 360.0
+	var frame_width := clampf(viewport_size.x - (20.0 if compact_layout else 48.0), 304.0, 448.0 if compact_layout else 880.0)
+	var frame_height := clampf(viewport_size.y - (16.0 if compact_layout else 40.0), 224.0, 252.0 if compact_layout else 640.0)
 	_frame.custom_minimum_size = Vector2(frame_width, frame_height)
+	_title_label.add_theme_font_size_override("font_size", 12 if compact_layout else 18)
+	_close_button.custom_minimum_size = Vector2(72.0 if compact_layout else 96.0, 0.0)
+	_close_button.add_theme_font_size_override("font_size", 8 if compact_layout else 10)
+	_player_portrait.custom_minimum_size = Vector2(92.0, 112.0) if compact_layout else Vector2(124.0, 144.0)
+	_points_banner.add_theme_font_size_override("font_size", 10 if compact_layout else 14)
+	_quest_title.add_theme_font_size_override("font_size", 12 if compact_layout else 18)
+	for button in [_tab_stats_button, _tab_equipment_button, _tab_quest_button, _tab_map_button]:
+		button.custom_minimum_size = Vector2(0.0, 22.0 if compact_layout else 28.0)
+		button.add_theme_font_size_override("font_size", 8 if compact_layout else 10)
 
 func _on_close_pressed() -> void:
 	set_open(false)
@@ -251,6 +262,7 @@ func _on_tab_changed(tab_index: int) -> void:
 func _on_tab_button_pressed(tab_id: String) -> void:
 	_current_tab = tab_id
 	_tabs.current_tab = _tab_index_for_id(tab_id)
+	AudioManager.play_sfx(AudioManager.SFX_UI_CONFIRM, -7.0)
 	_refresh_tab_buttons()
 
 func _refresh_tab_buttons() -> void:
@@ -273,6 +285,7 @@ func _on_allocate_pressed(family_key: String) -> void:
 		return
 	if not StatRegistry.apply_family_allocation(family_key):
 		return
+	AudioManager.play_sfx(AudioManager.SFX_UI_CONFIRM, -5.0)
 	PlayerData.unspent_stat_points -= 1
 	SaveManager.save_game()
 	_refresh_all()
@@ -296,7 +309,7 @@ func _refresh_all() -> void:
 	_refresh_stats_tab()
 	_refresh_equipment_tab()
 	_refresh_quest_tab()
-	_map_placeholder.text = "Map - coming soon"
+	_map_placeholder.text = "Map tab placeholder.\nTravel notes and region sketching land here next."
 
 func _refresh_stats_tab() -> void:
 	var axes := AlignmentSystem.get_axis_labels()
@@ -308,6 +321,10 @@ func _refresh_stats_tab() -> void:
 	_moral_value.text = str(axes.get("moral", "Neutral"))
 	_gold_value.text = str(PlayerData.gold)
 	_points_banner.visible = PlayerData.unspent_stat_points > 0
+	_points_banner.text = "%d unspent stat point%s available." % [
+		PlayerData.unspent_stat_points,
+		"" if PlayerData.unspent_stat_points == 1 else "s",
+	]
 	_player_portrait.texture = _load_player_portrait()
 
 	for family_key in FAMILY_ORDER:
@@ -349,7 +366,11 @@ func _refresh_quest_tab() -> void:
 	_quest_status.text = "Current location: %s" % PlayerData.current_location.replace("_", " ").capitalize()
 
 func _load_player_portrait() -> Texture2D:
-	return _load_cropped_texture(LPC_SPRITE_SHEET_PATH, PORTRAIT_REGION, _make_fallback_texture(64, 64, Color(0.54, 0.44, 0.34)))
+	var portrait := ActorVisuals.get_portrait(ActorVisuals.resolve_player_actor_id())
+	if portrait != null:
+		return portrait
+
+	return _make_fallback_texture(64, 64, Color(0.54, 0.44, 0.34))
 
 func _can_open() -> bool:
 	return SceneManager.current_state_name == "map"
@@ -370,24 +391,6 @@ func _load_texture(resource_path: String) -> Texture2D:
 	if image == null or image.is_empty():
 		return null
 	return ImageTexture.create_from_image(image)
-
-func _load_cropped_texture(resource_path: String, region: Rect2i, fallback: Texture2D) -> Texture2D:
-	var source_texture := _load_texture(resource_path)
-	if source_texture != null:
-		var atlas := AtlasTexture.new()
-		atlas.atlas = source_texture
-		atlas.region = Rect2(region.position, region.size)
-		return atlas
-
-	var image := Image.load_from_file(ProjectSettings.globalize_path(resource_path))
-	if image == null or image.is_empty():
-		return fallback
-
-	var cropped := image.get_region(region)
-	if cropped == null or cropped.is_empty():
-		return fallback
-
-	return ImageTexture.create_from_image(cropped)
 
 func _make_fallback_texture(width: int, height: int, color: Color) -> Texture2D:
 	var image := Image.create(width, height, false, Image.FORMAT_RGBA8)

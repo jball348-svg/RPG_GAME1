@@ -96,6 +96,7 @@ func set_suppressed(suppressed: bool) -> void:
 
 func _refresh_visibility() -> void:
 	visible = _should_be_visible()
+	SignalBus.debug_overlay_visibility_changed.emit(visible)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_debug"):
@@ -104,6 +105,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _should_be_visible() -> bool:
+	if not OS.is_debug_build():
+		return false
+
 	if _user_hidden:
 		return false
 

@@ -48,9 +48,9 @@ Classic JRPG pacing: top-down 2D map, turn-based battle, HUD menus, cutscenes. D
 | Pure/Mixed flag | Not a stat. A flag plus reputation logic. Lives in `PlayerData.gd`. |
 | Tile resolution | 32x32. Scrolling map, not screen-shifting. |
 | Art tone | Desaturated earth tones, grim beauty, no bright primaries, no cartoon. Refs: Baldur's Gate, LotR, GoT, Elden Ring |
-| Character art | Map = class sprite only. Battle + HUD + Cutscene = full equipment render target. |
+| Character art | Map = class sprite only. Battle + HUD + Cutscene = full equipment render target. Stage 10 must keep the avatar, portrait, battle render, cutscene actor, and any follower version visually coherent for each named actor. |
 | Placeholder art policy | Free-compatible placeholder sources are allowed only when provenance, license, and attribution obligations are logged in `docs/stage_8_5_asset_research.md`. |
-| Audio | Music generated via AI (Suno/Udio). SFX from free-compatible sources. Stored locally, gitignored. |
+| Audio | Music candidates live in `assets/Music/` and are locked for Stage 10 via `AudioManager.gd`. First-pass runtime SFX now live in `assets/SFX/` as repo-local generated placeholders and are logged in `docs/stage_10_audio_asset_research.md` plus `assets/SFX/SFX_List.md`. |
 
 ---
 
@@ -58,9 +58,9 @@ Classic JRPG pacing: top-down 2D map, turn-based battle, HUD menus, cutscenes. D
 
 See `docs/vertical_slice_plan.md` for the full stage breakdown.
 
-**Stages complete:** 1-8, 8.5 Polish Pass (T01-T10)  
-**Current focus:** Post-8.5 — dev sign-off and playtester pass  
-**Recently completed:** Stage 8.5 Polish Pass: HUD tabbed navigation, NPC sprite fix, cutscene facing, portrait restore, tilemap audit, shaman follow speed, debug O-key toggle, graphics quality, full game reset
+**Stages complete:** 1-9, plus Stage 10 implementation for `T01` through `T11`  
+**Current focus:** Outside playtest readiness and post-feedback fix planning  
+**Recently completed:** Shared Stage 10 audio/visual systems, collision/readability cleanup, release-safe debug gating, runtime harness scaffold, and playtest packet.
 
 ### Vertical slice checklist
 - [x] Real tilesets integrated
@@ -73,8 +73,15 @@ See `docs/vertical_slice_plan.md` for the full stage breakdown.
 - [x] Mine exit -> new area
 - [x] Save system
 - [x] Stage 8.5 MVP feature implementation (portraits, sprites, HUD, leveling, alignment, equipment-render spike)
-- [ ] Dev sign-off
-- [ ] Polish + playtester pass
+- [x] Dev sign-off
+- [x] Stage 10 implementation pass (`T01`-`T11`)
+- [ ] Outside playtester pass and follow-up fixes
+
+### Current Stage 10 priorities
+- Run `tools/stage_10_runtime_harness.tscn` or the equivalent manual capture flow inside Godot.
+- Put the slice in front of an outside playtester without debug guidance.
+- Triage only the issues surfaced by that playtest.
+- Keep Stage 10 scope closed until feedback exists.
 
 ---
 
@@ -97,8 +104,10 @@ Current behavior:
   - `GameClock` time
   - map/world return context for load back into the map state
 
-Important limitation:
-- Progression fields appear in the `PlayerData` save payload as placeholders today, but real `level`, `xp`, `xp_to_next_level`, and `unspent_stat_points` logic is a Stage 8.5 task. Do not claim that Stage 8 already shipped the full leveling system.
+Stage 8.5 follow-through:
+- `PlayerData` now owns real `level`, `xp`, `xp_to_next_level`, and `unspent_stat_points` data.
+- Old Stage 8 saves are backfilled through `PlayerData.ensure_spike_defaults()` after load, so missing starter equipment / progression defaults do not break resume.
+- Battle victory can return to map with `open_hud_tab = "stats"` after level-up.
 
 ---
 
@@ -171,7 +180,7 @@ Open registry principle: add a key to `StatRegistry.gd` and entries to `action_m
 | HUD | Portrait or full-body | Yes - full loadout target |
 | Cutscene | Full sprite, animated | Yes |
 
-Map sprites: Pure = muted gold accent, Mixed = muted teal accent. Battle sprites: target layered rendering, but current implementation is still placeholder-driven.
+Map sprites: Pure = muted gold accent, Mixed = muted teal accent. Battle sprites: target layered rendering, but current implementation is still placeholder-driven. Stage 10 must remove obvious identity mismatches between player/shaman map, HUD, battle, dialogue, and cutscene presentations.
 
 ---
 
@@ -181,7 +190,7 @@ Map sprites: Pure = muted gold accent, Mixed = muted teal accent. Battle sprites
 |---|---|---|
 | Map | Movement, NPC interaction, exploration | Movement, Social, Endurance |
 | Battle | Turn-based combat | Strength, Spellcasting, Will, Holy |
-| HUD | Current summary overlay; Stage 8.5 target is tabbed review and stat allocation | Clock keeps running |
+| HUD | Tabbed overlay for stats, equipment, quest, and map review | Clock keeps running |
 | Cutscene | Scripted sequences, dialogue, flags | Clock keeps running, story flags fire |
 
 Transitions: Map <-> Battle, Map <-> Cutscene. HUD overlays map and does not replace it.
@@ -208,16 +217,18 @@ Transitions: Map <-> Battle, Map <-> Cutscene. HUD overlays map and does not rep
 | `autoloads/SignalBus.gd` | All game signals |
 | `autoloads/StatRegistry.gd` | Stat tree, action modifiers, Luck derivation |
 | `autoloads/GameClock.gd` | Always-on clock |
-| `autoloads/PlayerData.gd` | Class, path, flags, ghost flags, age, inventory, equipment, HP, save payload placeholders for progression |
+| `autoloads/PlayerData.gd` | Class, path, flags, ghost flags, age, inventory, equipment, HP, and real progression state |
 | `autoloads/SceneManager.gd` | Game state loader, payload passing |
 | `autoloads/DialogueManager.gd` | NPC dialogue trees and condition evaluation |
 | `autoloads/SaveManager.gd` | Save/load orchestration and autosave hooks |
+| `autoloads/ActorVisuals.gd` | Shared actor presentation registry for map, battle, portrait, cutscene, and follower states |
+| `autoloads/AudioManager.gd` | Shared music + pooled SFX layer for Stage 10 |
 | `scenes/main/` | Root shell, persistent `OverlayHost` |
 | `scenes/map/` | WASD movement, town/mine/crossroads regions, encounter triggers, stat events |
 | `scenes/battle/Battle.gd` | Full turn-based battle system and victory/return flow |
 | `scenes/hud/` | Tabbed HUD overlay (Stats / Equipment / Quest / Map), stat allocation, portrait display |
 | `scenes/cutscene/` | Payload-driven `mine_entry`, `shaman_intro`, and `mine_exit` sequences |
-| `scenes/ui/DialogueBox.gd` | Existing dialogue portrait slot and portrait-path loader |
+| `scenes/ui/DialogueBox.gd` | Dialogue portrait slot with `portrait_id` and path fallback support |
 | `scenes/debug/` | Dev-only overlay - gated by `OS.is_debug_build()` |
 
 ---
@@ -231,7 +242,7 @@ Debug builds only:
 - `B` - force battle
 - `H` - toggle HUD
 - `C` - force cutscene
-- `O` - toggle debug panel visibility
+- `O` - toggle debug panel visibility and the on-screen controls/help overlay
 - `F9` - full game reset (delete save, reset all state)
 - `1` / `2` - set Pure / Mixed path
 - `3` - bump Social + gold
@@ -258,7 +269,8 @@ assets/
     player/
     UI/
     Mood Board/
-  audio/          (gitignored - local only, not committed)
+  Music/
+  SFX/
 docs/
   HANDOVER.md
   vertical_slice_plan.md
@@ -268,10 +280,13 @@ docs/
   stage_8_5_asset_research.md
   stage_8_5_systems_spec.md
   stage_8_5_tickets.md
+  stage_10_master_plan.md
+  stage_10_audio_asset_research.md
+  stage_10_tickets.md
 project.godot
 ```
 
-Audio files are gitignored. Store them in `assets/audio/` locally. Do not commit binary audio to the repo.
+The repo currently tracks the generated music candidates under `assets/Music/`. `assets/SFX/` exists but does not yet contain committed runtime SFX files. Treat new binary audio imports as deliberate additions and document provenance first.
 
 ---
 
@@ -287,6 +302,22 @@ Start every Stage 8.5 implementation session with these files:
 
 Suggested opener for future agents:
 > "Read `docs/HANDOVER.md`, `docs/vertical_slice_plan.md`, and the Stage 8.5 spec pack. I am implementing Ticket TXX from Stage 8.5."
+
+---
+
+## Stage 10 handoff pack
+
+Start every Stage 10 verification or post-playtest session with these files:
+- `docs/HANDOVER.md`
+- `docs/vertical_slice_plan.md`
+- `docs/stage_10_master_plan.md`
+- `docs/stage_10_identity_matrix.md`
+- `docs/stage_10_audio_asset_research.md`
+- `docs/stage_10_playtest_packet.md`
+- `docs/stage_10_tickets.md`
+
+Suggested opener for future agents:
+> "Read `docs/HANDOVER.md`, `docs/vertical_slice_plan.md`, and the Stage 10 handoff pack. I am running verification or handling post-playtest fixes for Stage 10."
 
 ---
 

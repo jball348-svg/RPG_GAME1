@@ -5,6 +5,7 @@ var dialogue_trees: Dictionary = {
 		{
 			"speaker": "Village Guard",
 			"text": "The Kobold leader is a half-breed Shaman. Take fire and coin.",
+			"portrait_id": "village_guard",
 			"portrait": "",
 			"conditions": [
 				{"type": "stat_gte", "stat": "social.charm", "value": 10.0},
@@ -16,6 +17,7 @@ var dialogue_trees: Dictionary = {
 		{
 			"speaker": "Village Guard",
 			"text": "The mine's blocked. Something's taken up in there.",
+			"portrait_id": "village_guard",
 			"portrait": "",
 			"conditions": [],
 			"next": -1,
@@ -25,6 +27,7 @@ var dialogue_trees: Dictionary = {
 		{
 			"speaker": "Traveling Merchant",
 			"text": "I passed a creature on the road - part Kobold, part something else. Leading them, it was. Whether you kill it or parley... that'll say something about you.",
+			"portrait_id": "traveling_merchant",
 			"portrait": "",
 			"conditions": [
 				{"type": "flag_set", "flag": "shaman_warning_given", "negate": true},
@@ -38,6 +41,7 @@ var dialogue_trees: Dictionary = {
 		{
 			"speaker": "Traveling Merchant",
 			"text": "I've told you all I know, friend. The rest is up to you.",
+			"portrait_id": "traveling_merchant",
 			"portrait": "",
 			"conditions": [],
 			"next": -1,
@@ -47,6 +51,7 @@ var dialogue_trees: Dictionary = {
 		{
 			"speaker": "The Shaman",
 			"text": "Another pureblood who fears what they cannot name.",
+			"portrait_id": "shaman",
 			"portrait": "res://assets/art/portraits/stage_8_5/shaman_portrait.png",
 			"conditions": [
 				{"type": "pure_path"},
@@ -57,6 +62,7 @@ var dialogue_trees: Dictionary = {
 		{
 			"speaker": "The Shaman",
 			"text": "You carry both bloods. I see the war in you.",
+			"portrait_id": "shaman",
 			"portrait": "res://assets/art/portraits/stage_8_5/shaman_portrait.png",
 			"conditions": [
 				{"type": "mixed_path"},
@@ -66,6 +72,7 @@ var dialogue_trees: Dictionary = {
 		{
 			"speaker": "The Shaman",
 			"text": "Someone warned you. And still you came.",
+			"portrait_id": "shaman",
 			"portrait": "res://assets/art/portraits/stage_8_5/shaman_portrait.png",
 			"conditions": [
 				{"type": "flag_set", "flag": "shaman_warning_given"},
@@ -77,6 +84,7 @@ var dialogue_trees: Dictionary = {
 		{
 			"speaker": "The Shaman",
 			"text": "The Shaman nods. No words. The chamber opens.",
+			"portrait_id": "shaman",
 			"portrait": "res://assets/art/portraits/stage_8_5/shaman_portrait.png",
 			"conditions": [],
 			"next": -1,
@@ -86,6 +94,7 @@ var dialogue_trees: Dictionary = {
 		{
 			"speaker": "Bookstore Keeper",
 			"text": "Ah, a student of Destruction. This tome is yours.",
+			"portrait_id": "bookstore_keeper",
 			"portrait": "",
 			"conditions": [
 				{"type": "stat_gte", "stat": "intelligence.understanding", "value": 10.0},
@@ -100,6 +109,7 @@ var dialogue_trees: Dictionary = {
 		{
 			"speaker": "Bookstore Keeper",
 			"text": "Study well. Come back when you need more.",
+			"portrait_id": "bookstore_keeper",
 			"portrait": "",
 			"conditions": [
 				{"type": "flag_set", "flag": "destruction_spell_unlocked"},
@@ -110,6 +120,7 @@ var dialogue_trees: Dictionary = {
 		{
 			"speaker": "Bookstore Keeper",
 			"text": "You lack the understanding to use this. Come back when you've studied more.",
+			"portrait_id": "bookstore_keeper",
 			"portrait": "",
 			"conditions": [],
 			"next": -1,

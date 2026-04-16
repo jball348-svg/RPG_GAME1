@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://sypy5q7a7bpj"
+path="res://.godot/imported/Battle Theme — Blood and Iron 2.mp3-065075c5dfc706befd92e16575a27872.mp3str"
+
+[deps]
+
+source_file="res://assets/Music/Battle Theme — Blood and Iron 2.mp3"
+dest_files=["res://.godot/imported/Battle Theme — Blood and Iron 2.mp3-065075c5dfc706befd92e16575a27872.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

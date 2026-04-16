@@ -5,7 +5,6 @@ const DEBUG_PANEL_SCENE: PackedScene = preload("res://scenes/debug/DebugPanel.ts
 const DIALOGUE_BOX_SCENE: PackedScene = preload("res://scenes/ui/DialogueBox.tscn")
 const PROMPT_MODAL_SCENE: PackedScene = preload("res://scenes/ui/PromptModal.tscn")
 const SCREEN_FADER_SCENE: PackedScene = preload("res://scenes/ui/ScreenFader.tscn")
-const LEVEL_UP_OVERLAY_SCENE: PackedScene = preload("res://scenes/hud/LevelUpOverlay.tscn")
 
 @onready var state_host: Node = $StateHost
 @onready var overlay_host: CanvasLayer = $OverlayHost
@@ -17,7 +16,6 @@ func _ready() -> void:
 	_ensure_dialogue_box()
 	_ensure_prompt_modal()
 	_ensure_screen_fader()
-	_ensure_level_up_overlay()
 	if SaveManager.has_save():
 		if not SaveManager.load_game():
 			SceneManager.change_state("map")
@@ -35,6 +33,8 @@ func _ensure_spike_hud() -> void:
 	overlay_host.add_child(hud)
 
 func _ensure_debug_panel() -> void:
+	if not OS.is_debug_build():
+		return
 	if overlay_host.get_node_or_null("DebugPanel") != null:
 		return
 
@@ -69,12 +69,3 @@ func _ensure_screen_fader() -> void:
 	screen_fader.name = "ScreenFader"
 	screen_fader.z_index = 100
 	overlay_host.add_child(screen_fader)
-
-func _ensure_level_up_overlay() -> void:
-	if overlay_host.get_node_or_null("LevelUpOverlay") != null:
-		return
-
-	var level_up: Control = LEVEL_UP_OVERLAY_SCENE.instantiate() as Control
-	level_up.name = "LevelUpOverlay"
-	level_up.z_index = 90
-	overlay_host.add_child(level_up)

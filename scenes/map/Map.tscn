@@ -22,6 +22,45 @@ size = Vector2(96, 64)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_48h8m"]
 size = Vector2(20, 20)
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_town_bookstore_rear"]
+size = Vector2(192, 64)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_town_bookstore_left"]
+size = Vector2(64, 96)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_town_bookstore_right"]
+size = Vector2(64, 96)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_town_trees_west_left"]
+size = Vector2(128, 112)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_town_trees_west_right"]
+size = Vector2(96, 112)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_town_hall_rear"]
+size = Vector2(288, 96)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_town_hall_west"]
+size = Vector2(96, 128)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_town_hall_east"]
+size = Vector2(96, 128)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_town_trees_east_lower_left"]
+size = Vector2(128, 96)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_town_trees_east_lower_right"]
+size = Vector2(96, 96)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_town_trees_east_upper"]
+size = Vector2(96, 96)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_town_bookstore_road_edge"]
+size = Vector2(32, 96)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_town_hall_road_edge"]
+size = Vector2(32, 128)
+
 [sub_resource type="Gradient" id="Gradient_jx2fk"]
 offsets = PackedFloat32Array(0, 1)
 colors = PackedColorArray(0.717647, 0.603922, 0.337255, 1, 0.717647, 0.603922, 0.337255, 1)
@@ -57,6 +96,58 @@ layer_4/tile_data = PackedInt32Array(524320, 458752, 70, 589856, 458752, 71, 655
 
 [node name="WorldCollision" type="StaticBody2D" parent="." unique_id=1514159810]
 
+[node name="TownCollisionBookstoreRear" type="CollisionShape2D" parent="WorldCollision"]
+position = Vector2(224, 416)
+shape = SubResource("RectangleShape2D_town_bookstore_rear")
+
+[node name="TownCollisionBookstoreLeftWall" type="CollisionShape2D" parent="WorldCollision"]
+position = Vector2(160, 480)
+shape = SubResource("RectangleShape2D_town_bookstore_left")
+
+[node name="TownCollisionBookstoreRightWall" type="CollisionShape2D" parent="WorldCollision"]
+position = Vector2(288, 480)
+shape = SubResource("RectangleShape2D_town_bookstore_right")
+
+[node name="TownCollisionSouthTreesLeft" type="CollisionShape2D" parent="WorldCollision"]
+position = Vector2(96, 640)
+shape = SubResource("RectangleShape2D_town_trees_west_left")
+
+[node name="TownCollisionSouthTreesRight" type="CollisionShape2D" parent="WorldCollision"]
+position = Vector2(208, 640)
+shape = SubResource("RectangleShape2D_town_trees_west_right")
+
+[node name="TownCollisionHallRear" type="CollisionShape2D" parent="WorldCollision"]
+position = Vector2(1056, 368)
+shape = SubResource("RectangleShape2D_town_hall_rear")
+
+[node name="TownCollisionHallWestWall" type="CollisionShape2D" parent="WorldCollision"]
+position = Vector2(944, 448)
+shape = SubResource("RectangleShape2D_town_hall_west")
+
+[node name="TownCollisionHallEastWall" type="CollisionShape2D" parent="WorldCollision"]
+position = Vector2(1168, 448)
+shape = SubResource("RectangleShape2D_town_hall_east")
+
+[node name="TownCollisionEastTreesLowerLeft" type="CollisionShape2D" parent="WorldCollision"]
+position = Vector2(992, 656)
+shape = SubResource("RectangleShape2D_town_trees_east_lower_left")
+
+[node name="TownCollisionEastTreesLowerRight" type="CollisionShape2D" parent="WorldCollision"]
+position = Vector2(1104, 656)
+shape = SubResource("RectangleShape2D_town_trees_east_lower_right")
+
+[node name="TownCollisionEastUpperTrees" type="CollisionShape2D" parent="WorldCollision"]
+position = Vector2(1168, 528)
+shape = SubResource("RectangleShape2D_town_trees_east_upper")
+
+[node name="TownCollisionBookstoreRoadEdge" type="CollisionShape2D" parent="WorldCollision"]
+position = Vector2(352, 496)
+shape = SubResource("RectangleShape2D_town_bookstore_road_edge")
+
+[node name="TownCollisionHallRoadEdge" type="CollisionShape2D" parent="WorldCollision"]
+position = Vector2(896, 480)
+shape = SubResource("RectangleShape2D_town_hall_road_edge")
+
 [node name="Triggers" type="Node2D" parent="." unique_id=1622875716]
 
 [node name="TownExitTrigger" type="Area2D" parent="." unique_id=988198537]
@@ -86,7 +177,7 @@ shape = SubResource("RectangleShape2D_vyhe5")
 [node name="BookstoreNpcZone" type="Area2D" parent="Triggers" unique_id=18696996]
 
 [node name="@CollisionShape2D@20" type="CollisionShape2D" parent="Triggers/BookstoreNpcZone" unique_id=615443748]
-position = Vector2(304, 416)
+position = Vector2(336, 416)
 shape = SubResource("RectangleShape2D_qfku7")
 
 [node name="PlayerSpawn" type="Marker2D" parent="." unique_id=162430249]
@@ -105,7 +196,7 @@ texture_filter = 1
 position = Vector2(0, -12)
 
 [node name="MapCamera" type="Camera2D" parent="Player" unique_id=1949770270]
-zoom = Vector2(0.5, 0.5)
+zoom = Vector2(1, 1)
 position_smoothing_enabled = true
 position_smoothing_speed = 8.0
 
@@ -113,16 +204,19 @@ position_smoothing_speed = 8.0
 position = Vector2(528, 400)
 npc_id = "intel_npc"
 npc_name = "Village Guard"
+actor_id = "village_guard"
 
 [node name="MoralChoiceNPC" parent="." instance=ExtResource("3_npc")]
 position = Vector2(624, 240)
 npc_id = "moral_choice_npc"
 npc_name = "Traveling Merchant"
+actor_id = "traveling_merchant"
 
 [node name="BookstoreNPC" parent="." instance=ExtResource("3_npc")]
-position = Vector2(304, 416)
+position = Vector2(336, 416)
 npc_id = "bookstore_npc"
 npc_name = "Bookstore Keeper"
+actor_id = "bookstore_keeper"
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=2101638366]
 layer = 10
