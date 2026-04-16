@@ -12,7 +12,7 @@ What changed in implementation:
 
 Limits of this pass:
 - the SFX set is placeholder-quality by design
-- cue audition still needs a human playtest pass in-engine
+- cue audition remains a future polish question if audio is revisited in the next-phase repo
 
 ---
 
@@ -81,7 +81,7 @@ Current Stage 10 wiring:
 
 ## Follow-up Guidance
 
-- Outside playtest is the right time to decide whether any placeholder SFX need to be replaced with sourced assets.
+- If audio is revisited in the next-phase repo, decide whether any placeholder SFX should be replaced with sourced assets.
 - If sourced replacements are imported later:
   - keep the stable runtime filenames
   - update `assets/SFX/SFX_List.md` immediately

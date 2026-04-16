@@ -1,7 +1,9 @@
 # Stage 10 Playtest Packet
 
-Stage 10 is implementation-complete and ready for the first outside playtest.
-This pass stops here. Feedback-driven fixes belong to the next pass.
+This packet is now an archived Stage 10 verification artifact.
+It was created for the slice closeout pass and is retained as the reference checklist for how Stage 10 was evaluated.
+
+If the next-phase cloned repo wants fresh user testing, adapt this packet there rather than treating it as pending work in `RPG_GAME1`.
 
 ---
 
@@ -82,4 +84,4 @@ Notes:
 
 - Runtime harness entry point: `tools/stage_10_runtime_harness.tscn`
 - Expected evidence output directory: `tools/evidence/stage_10/`
-- If Godot CLI is unavailable, collect the same evidence manually in-editor and keep filenames close to the harness naming pattern
+- If this packet is reused in the future, keep any manual evidence filenames close to the harness naming pattern

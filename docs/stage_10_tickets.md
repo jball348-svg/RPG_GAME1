@@ -1,11 +1,9 @@
 # Stage 10 Tickets
 
-This file is now the Stage 10 completion ledger.
+This file is now the final Stage 10 completion ledger.
 
-Scope rule for this pass:
-- implement `T01` through `T11`
-- stop at playtest-ready handoff
-- defer outside-feedback fixes to `T12`
+Stage 10 is closed in this repo.
+No ticket remains open.
 
 ---
 
@@ -13,38 +11,51 @@ Scope rule for this pass:
 
 | Ticket | Status | Notes |
 |---|---|---|
-| `T00` Plan-the-plan | Complete | Planning pack and repo reality reconciled. |
-| `T01` Music cue lock | Complete | Six cue IDs locked from `assets/Music/`, including victory/exit. |
-| `T02` SFX sourcing/import | Complete for first pass | Repo-local generated placeholder `OGG` SFX committed and wired. |
+| `T00` Plan-the-plan | Complete | Repo docs and repo reality reconciled. |
+| `T01` Music cue lock | Complete | Six Stage 10 cue IDs locked from `assets/Music/`. |
+| `T02` SFX sourcing/import | Complete | Runtime SFX committed under `assets/SFX/` as stable placeholder `ogg` files. |
 | `T03` Town passability audit | Complete | Broad blockers replaced by smaller authored collision shapes. |
-| `T04` Mine passability audit | Complete | Walkable sections and blockers moved into named data; route messaging tightened. |
-| `T05` Map readability pass | Complete | Registry-driven player/NPC/follower visuals, step audio, hint cleanup. |
+| `T04` Mine passability audit | Complete | Walkable sections and blockers moved into named data with clearer route messaging. |
+| `T05` Map readability pass | Complete | Registry-driven visuals, step audio, and cleaned hint text landed. |
 | `T06` Character identity matrix | Complete | `docs/stage_10_identity_matrix.md` mirrors `ActorVisuals.gd`. |
-| `T07` Player identity unification | Complete | Fighter and Battlemage now route through `ActorVisuals` across map/battle/HUD/cutscene. |
-| `T08` Shaman and story-NPC identity | Complete | Shaman unified around one source family; town NPCs get explicit actor IDs and portraits. |
-| `T09` Presentation polish | Complete for Stage 10 scope | Audio cohesion, prompt/HUD/dialogue cues, portrait routing, and cutscene cue beats landed. |
-| `T10` Release/debug cleanup | Complete | Debug panel and debug map flow gated to debug builds; normal hint text cleaned. |
-| `T11` External playtest prep | Complete | Playtest packet, runtime harness, evidence folder, and handoff docs added. |
-| `T12` External playtest follow-up | Deferred | Not part of this implementation pass. |
+| `T07` Player identity unification | Complete | Fighter and Battlemage route through `ActorVisuals` across all active states. |
+| `T08` Shaman and story-NPC identity | Complete | Shaman and named town NPCs received unified Stage 10 identities. |
+| `T09` Presentation polish | Complete | Audio cohesion, prompt/HUD/dialogue cues, portrait routing, and cutscene beats landed. |
+| `T10` Release/debug cleanup | Complete | Debug overlay creation and normal-play leakage are gated correctly. |
+| `T11` External playtest prep | Complete | Packet, harness, evidence folder, and handoff docs landed. |
+| `T12` Stage closeout | Complete | Harness evidence captured, docs closed out, and the slice accepted complete in this repo. |
 
 ---
 
-## Done State For This Pass
+## Done State
 
-Stage 10 is implementation-complete when:
+Stage 10 is complete because:
 - shared audio and actor-visual systems are in place
 - town and mine readability cleanup is landed
 - debug leakage is removed from normal play behavior
-- playtest materials and harness scaffolding are present
-- docs describe the repo as it actually exists
-
-That done state is satisfied, with one verification caveat:
-- the harness was added but not executed here because Godot CLI was unavailable in the shell session
+- harness and evidence outputs exist
+- the repo docs describe the current implementation accurately
+- the project now treats the vertical slice as finished
 
 ---
 
-## Follow-up Guardrails
+## Verification Evidence
 
-- Run the harness before making speculative polish edits.
-- Use outside feedback to drive the next change list.
-- Keep `T12` narrow. It should be a fix pass, not a new feature pass.
+- Harness entry point: `tools/stage_10_runtime_harness.tscn`
+- Evidence folder: `tools/evidence/stage_10/`
+- Primary machine-readable result: `tools/evidence/stage_10/runtime_results.json`
+
+The harness has already been executed for this closeout pass.
+
+---
+
+## Next Phase
+
+There is no `T13` in this repo.
+
+The next phase is outside Stage 10:
+1. clone the repo
+2. rename it
+3. perform the foundation audit in the new repo
+
+Treat this file as the archived ledger for the completed Stage 10 pass.

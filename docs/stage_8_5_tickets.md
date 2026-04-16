@@ -1,13 +1,21 @@
 # Stage 8.5 Tickets
 
-This file is the executable handoff for the next implementation pass.
-Each ticket is intended to be decision-complete.
+This file is now the historical ticket archive for the completed Stage 8.5 pass.
+Each ticket below records what the pass was designed to land.
+
+## Completion Summary
+
+| Ticket Range | Status |
+|---|---|
+| `T00` | Complete |
+| `T01` - `T11` | Complete |
+| `T12` | Complete |
 
 ---
 
 ## T00 - Plan-the-plan
 
-**Status:** Complete in this docs pass
+**Status:** Complete
 
 **Goal**
 - Audit current docs and code

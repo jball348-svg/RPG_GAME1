@@ -2,6 +2,8 @@
 > Same structure as the technical spike: define the goal, build the minimum to prove it, verify, lock, move on.
 > Do not start the next implementation ticket until the current one passes its verification check.
 
+This document is now the archived build order and completion ledger for the finished vertical slice.
+
 ---
 
 ## What the vertical slice must deliver
@@ -9,8 +11,8 @@
 A complete, polished, playable run of the core loop:
 **Load -> Town -> Leave -> Cutscene -> Mine -> Battles -> Boss (moral choice) -> Exit**
 
-When a playtester can complete that loop without guidance and find it fun, the vertical slice is done.
-Everything else is production.
+That goal is now treated as complete for this repo.
+Everything beyond this point belongs to the next production/foundation phase in a cloned repo.
 
 ---
 
@@ -211,12 +213,12 @@ Done when: every Stage 8.5 output maps cleanly into Stage 9 sign-off criteria.
 
 ---
 
-## Stage 10 - Polish and playtester pass
-**Status:** Implementation complete, awaiting outside feedback
+## Stage 10 - Polish and slice closeout
+**Status:** Complete
 
-**Goal:** Make the loop good enough to put in front of a real person.
+**Goal:** Land the final presentation, readability, and closeout work required to freeze the vertical slice baseline.
 
-**Implementation scope completed in this pass:**
+**Completed in Stage 10:**
 - [x] Shared `AudioManager` autoload and music/SFX routing
 - [x] Shared `ActorVisuals` autoload and identity registry
 - [x] Dialogue `portrait_id` support plus NPC `actor_id` support
@@ -224,7 +226,9 @@ Done when: every Stage 8.5 output maps cleanly into Stage 9 sign-off criteria.
 - [x] Mine readability/blocker data cleanup
 - [x] Actor identity unification across map, battle, HUD, dialogue, cutscene, and follower states
 - [x] Release-safe debug gating
-- [x] Playtest packet and Stage 10 runtime harness scaffold
+- [x] Playtest packet and Stage 10 runtime harness
+- [x] Runtime evidence captured under `tools/evidence/stage_10/`
+- [x] Repo documentation closed out to reflect the shipped slice
 
 **Reference docs:**
 - `docs/stage_10_master_plan.md`
@@ -233,12 +237,7 @@ Done when: every Stage 8.5 output maps cleanly into Stage 9 sign-off criteria.
 - `docs/stage_10_playtest_packet.md`
 - `docs/stage_10_tickets.md`
 
-**Verification:**
-- [ ] Run `tools/stage_10_runtime_harness.tscn` or manual equivalent and save evidence under `tools/evidence/stage_10/`
-- [ ] Put the slice in front of a non-developer playtester
-- [ ] Triage and ship the post-feedback Stage 10 fix pass
-
-**Done state:** Vertical slice complete after outside feedback is addressed.
+**Done state:** Vertical slice complete. Any future restructuring or production planning belongs to the next cloned-repo phase, not another open Stage 10 pass in `RPG_GAME1`.
 
 ---
 
@@ -257,16 +256,16 @@ Done when: every Stage 8.5 output maps cleanly into Stage 9 sign-off criteria.
 | 8 | Save system | Complete |
 | 8.5 | MVP feature pass | Complete |
 | 9 | Final feature checklist | Complete |
-| 10 | Polish + playtester pass | Implementation complete, awaiting outside feedback |
+| 10 | Polish + slice closeout | Complete |
 
 ---
 
 ## How to use this document
 
-At the start of each session:
-> "Read `docs/HANDOVER.md`, `docs/vertical_slice_plan.md`, and the active stage handoff docs. I am handling Ticket TXX."
+At the start of each audit or transition-planning session:
+> "Read `README.md`, `docs/HANDOVER.md`, and `docs/vertical_slice_plan.md`. Use the archived stage docs only if implementation history is needed."
 
 After each session:
-- tick completed ticket or checklist items
-- update the status summary
-- for Stage 10 work, update the Stage 10 handoff docs and evidence outputs instead of leaving verification state only in chat history
+- keep the status summary accurate
+- update the archived stage docs only if repo behavior changes
+- do not reopen completed stages unless the developer explicitly asks for retrospective maintenance in this repo

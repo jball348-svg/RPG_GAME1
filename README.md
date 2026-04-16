@@ -1,6 +1,7 @@
 # RPG_GAME1
 
-An archetypal high fantasy RPG built in Godot 4. The player chooses **Pure** or **Mixed** at the start, and that identity drives the central faction conflict, progression flavor, and moral framing of the slice.
+An archetypal high-fantasy RPG vertical slice built in Godot 4.
+This repo now represents a completed technical spike plus a completed vertical slice, and is being kept as the reference baseline before the next phase begins in a cloned repo.
 
 ---
 
@@ -10,18 +11,53 @@ An archetypal high fantasy RPG built in Godot 4. The player chooses **Pure** or 
 |---|---|
 | Pre-production | Complete |
 | Technical spike | Complete |
-| Vertical slice | Stage 10 implementation complete, awaiting outside feedback |
+| Vertical slice | Complete |
 
-Current focus: prepare and run the first outside playtest, then handle follow-up fixes in a separate pass.
+Current repo mode:
+- Finished slice baseline
+- Documentation and handoff reference
+- No new active feature phase inside this repo
 
-Primary references:
-- `docs/HANDOVER.md`
-- `docs/vertical_slice_plan.md`
-- `docs/stage_10_master_plan.md`
-- `docs/stage_10_identity_matrix.md`
-- `docs/stage_10_audio_asset_research.md`
-- `docs/stage_10_playtest_packet.md`
-- `tools/stage_10_runtime_harness.tscn`
+Next phase:
+- clone the repo
+- rename it for the next production branch
+- run a foundation pass to mark what code should be kept, removed, or rebuilt
+- do not start that work here unless explicitly asked
+
+---
+
+## What This Repo Actually Ships
+
+- A full playable loop: Town -> mine commitment -> mine exploration -> three regular encounters -> Shaman choice -> mine exit -> crossroads
+- Fresh boot defaults to the Pure/Fighter slice profile if no save exists
+- Mixed/Battlemage is still available through save state or debug path switching
+- A dedicated class-selection screen is not part of this repo yet
+- Town interaction with three named NPC beats:
+  - Village Guard: deeper intel requires `social.charm >= 10` and `20` gold
+  - Traveling Merchant: one-time warning about the Shaman
+  - Bookstore Keeper: `intelligence.understanding >= 10` unlocks the bookstore flag path
+- Turn-based combat with:
+  - `Attack`
+  - `Spell`
+  - `Item`
+  - `Flee`
+  - `Ability`
+- Slice class expression:
+  - Pure/Fighter: `Shield Bash`
+  - Mixed/Battlemage: `Flamebolt` and `Arcane Strike`
+- Progression and HUD systems:
+  - XP rewards and level-ups
+  - stat-family point spending
+  - alignment label
+  - equipment tab
+  - quest tab
+  - map tab placeholder
+- Stage 10 presentation systems:
+  - `ActorVisuals` for shared actor identity across map, battle, HUD, dialogue, cutscene, and follower states
+  - `AudioManager` for locked music cues and pooled SFX playback
+  - town collision cleanup and mine readability cleanup
+  - release-safe debug gating
+  - runtime harness plus evidence output under `tools/evidence/stage_10/`
 
 ---
 
@@ -29,32 +65,65 @@ Primary references:
 
 1. Install Godot 4.6+
 2. Clone this repo
-3. Open Godot and import this folder
+3. Import the folder into Godot
 4. Run the project with `F5`, or open `scenes/main/Main.tscn`
-5. The game boots into the current map state, or resumes from `user://save_game.json` if a save exists
-
-Normal controls:
-- `WASD` or arrow keys to move
-- `E` / `Space` to interact or advance dialogue
-- `H` to open the HUD
-
-Debug controls are gated behind `OS.is_debug_build()` and should not be treated as release behavior.
+5. If `user://save_game.json` exists, the game resumes from that save
+6. If no save exists, the game starts from the town slice baseline
 
 ---
 
-## Current Slice Snapshot
+## Controls
 
-- Core loop playable end to end: Load -> Town -> Leave -> Cutscene -> Mine -> Battles -> Boss choice -> Exit -> Crossroads
-- Stage 10 now includes:
-  - `AudioManager` autoload for music and pooled SFX
-  - `ActorVisuals` autoload as the shared actor presentation registry
-  - dialogue portrait IDs plus registry-driven actor lookup
-  - registry-driven player, NPC, battle, cutscene, and follower visuals
-  - town collision cleanup and named mine blocker/walkable data
-  - release-safe debug gating in main flow and map hints
-  - Stage 10 runtime harness scaffold plus playtest packet
-- First-pass Stage 10 SFX are repo-local generated placeholder `OGG` files committed under `assets/SFX/`
-- Outside feedback integration is intentionally deferred to the next pass
+Normal play:
+- `WASD` or arrow keys: move
+- `E`: interact on the map
+- `E`, `Space`, or `Enter`: advance dialogue and confirm prompts
+- `Esc` or other Godot cancel input: back out of prompts or close the HUD
+- `H`: open or close the HUD
+
+Debug-only behavior:
+- debug panel, loader, battle skip, path switching, and reset tools are gated behind `OS.is_debug_build()`
+- see `docs/HANDOVER.md` for the full debug control list
+
+---
+
+## Gameplay Snapshot
+
+Town:
+- The player starts in Frontier Hamlet near the Kobold mine.
+- Leaving town triggers a point-of-no-return prompt and a one-time stat bump to `will.resolve` and `holy.faith`.
+
+Mine:
+- Progression is intentionally ordered.
+- The player clears the Collapsed Hall, Western Den, and Eastern Den before the boss route fully opens.
+- Blocked routes explain why they are blocked.
+
+Battle:
+- Standard Kobold encounters grant `30 XP`.
+- The Shaman battle grants `80 XP`.
+- The Shaman battle blocks fleeing.
+- Health potions are usable in battle.
+- The player starts with a `Starter Blade`, and the battle presentation includes the Stage 8.5 weapon-overlay spike.
+
+Progression:
+- `xp_to_next_level` is a flat `100`.
+- Each level grants `3` unspent stat points.
+- Spending one point on a stat family adds `+1` to every non-derived child skill in that family.
+- `social.luck` stays derived and is never spent directly.
+
+Choice outcome:
+- Recruiting the Shaman grants stat rewards, unlocks the exit, and enables the crossroads follower.
+- Killing the Shaman grants the talisman item, unlocks the exit, and records the kill branch instead.
+
+HUD:
+- `Stats`, `Equipment`, `Quest`, and `Map`
+- `Map` is still placeholder text in this repo
+
+Save behavior:
+- autosave on map entry
+- autosave when dialogue ends on the map
+- autosave after battle victory
+- autosave after Shaman recruit resolution
 
 ---
 
@@ -65,13 +134,13 @@ autoloads/        Global singletons
   SignalBus.gd    Cross-scene signals
   StatRegistry.gd Stat tree, modifiers, Luck derivation
   GameClock.gd    Always-on clock
-  PlayerData.gd   Class, path, flags, inventory, HP, progression
+  PlayerData.gd   Identity, flags, inventory, equipment, HP, progression
   SceneManager.gd State loader (Map / Battle / Cutscene)
   DialogueManager.gd Dialogue trees and branching
   SaveManager.gd  Save/load orchestration
   AlignmentSystem.gd Derived alignment labels
   ActorVisuals.gd Shared actor presentation registry
-  AudioManager.gd Shared music + SFX layer
+  AudioManager.gd Shared music and SFX layer
 scenes/
   main/           Entry point and persistent overlay host
   map/            Top-down exploration state
@@ -79,17 +148,18 @@ scenes/
   hud/            Tabbed HUD overlay
   cutscene/       Scripted sequence state
   debug/          Dev-only overlay
+  ui/             Dialogue, prompt, and transition support
 assets/
   art/            Tilesets, UI, sprites, portraits, generated support art
   Music/          Locked Stage 10 music candidates
-  SFX/            Stage 10 placeholder runtime SFX + provenance notes
+  SFX/            Stage 10 runtime SFX plus provenance notes
 docs/
-  HANDOVER.md                Source-of-truth project handoff
-  vertical_slice_plan.md     Stage-by-stage slice status
-  stage_10_master_plan.md    Stage 10 implementation summary
-  stage_10_identity_matrix.md Shared actor visual mapping
-  stage_10_audio_asset_research.md Music lock + SFX inventory
-  stage_10_playtest_packet.md Playtest brief, checklist, issue log template
+  HANDOVER.md                Source-of-truth handoff
+  vertical_slice_plan.md     Archived stage-by-stage slice ledger
+  stage_10_master_plan.md    Stage 10 closure summary
+  stage_10_identity_matrix.md Actor presentation matrix
+  stage_10_audio_asset_research.md Music lock and SFX inventory
+  stage_10_playtest_packet.md Archived Stage 10 verification packet
 tools/
   stage_8_5_runtime_harness.*
   stage_10_runtime_harness.*
@@ -98,8 +168,20 @@ tools/
 
 ---
 
+## Key References
+
+- `docs/HANDOVER.md`
+- `docs/vertical_slice_plan.md`
+- `docs/stage_10_master_plan.md`
+- `docs/stage_10_identity_matrix.md`
+- `docs/stage_10_audio_asset_research.md`
+- `tools/stage_10_runtime_harness.tscn`
+- `tools/evidence/stage_10/`
+
+---
+
 ## Notes
 
-- Placeholder art and audio remain allowed only when provenance is logged in-repo.
-- The Stage 10 runtime harness was added, but Godot CLI was not available in this shell session, so the harness was not executed here.
-- The next milestone is not more implementation scope. It is outside playtest coverage plus a tightly-scoped follow-up fix pass.
+- The Stage 10 harness has been run and evidence is stored under `tools/evidence/stage_10/`.
+- The repo still uses placeholder-quality art/audio in places, but all active runtime assets are documented in-repo.
+- The next step is not more vertical-slice work in `RPG_GAME1`. It is a cloned-repo foundation pass.

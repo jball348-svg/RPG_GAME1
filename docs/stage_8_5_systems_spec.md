@@ -1,9 +1,14 @@
 # Stage 8.5 Systems Spec
 
+## Status
+
+Implemented and archived.
+This document records the Stage 8.5 design lock that shipped.
+
 ## Summary
 
-This document is the design lock for the Stage 8.5 feature pass.
-If an implementation choice is described here, the implementing agent should follow it rather than improvise.
+This document is the design lock that guided the Stage 8.5 feature pass.
+If you are auditing behavior in the current repo, treat this as historical reference rather than a pending implementation brief.
 
 Stage 8.5 covers:
 - one Shaman dialogue portrait

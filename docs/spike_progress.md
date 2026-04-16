@@ -1,67 +1,92 @@
-# Technical Spike — Progress Log
+# Technical Spike - Progress Log
+
+## Status
+
+The technical spike is complete and archived.
+
+What it proved:
+- map movement and stat events
+- battle action wiring
+- clock continuity across states
+- Pure/Mixed-aware dialogue branching
+- the four-state shell that the later slice was built on
+
+This file is now historical reference, not an active plan.
+
+---
 
 ## Goal
-Prove four things before building the game.
 
-## Success criteria
-- [x] Walk on map → Movement skill increments in debug panel
-- [x] Press attack in battle → Strength increments
-- [ ] Clock runs across all four state transitions without pausing
-- [ ] Pure/Mix flag → NPC shows different dialogue line
+Prove the foundational scene architecture and systemic loops before vertical-slice production began.
 
-## Day log
+---
 
-### Day 1 — Autoloads + scaffold
-- [x] SignalBus.gd — all game signals declared
-- [x] StatRegistry.gd — full stat tree, action modifier map, temp modifiers
-- [x] GameClock.gd — always-on clock, speed multiplier, day/night cycle
-- [x] PlayerData.gd — class, path, flags, ghost flags, age, inventory sketch
-- [x] project.godot — autoloads registered
-- [x] Folder structure created
-- [x] Stat registry design doc
+## Success Criteria
 
-### Day 2 — SceneManager + Map
-- [x] `SceneManager.gd` added as an autoload for exclusive state changes
-- [x] `Main.tscn` / `Main.gd` added as the permanent scene shell
-- [x] `Map.tscn` / `Map.gd` added with bounded 4-direction placeholder movement
-- [x] `DebugPanel.tscn` / `DebugPanel.gd` added as a persistent overlay
-- [x] `project.godot` updated with `move_*` actions for `WASD` + arrow keys
-- [x] Walking emits `SignalBus.action_performed({ "type": "walk" })` on step intervals
-- [x] Debug panel shows live state, clock, flags, and stat values
-- [x] Proof complete: walking increments `physical.movement` by `0.02` and displays immediately
+- [x] Walk on map -> Movement skill increments in the debug panel
+- [x] Press attack in battle -> Strength increments
+- [x] Clock runs across the four state transitions without pausing
+- [x] Pure/Mixed flag -> NPC shows different dialogue line
 
-### Day 3 — Battle scene
-- [x] `Battle.tscn` / `Battle.gd` added as a minimal battle proof scene
-- [x] `project.godot` updated with `debug_battle` on `B`, plus reserved Day 4 inputs: `toggle_hud`, `debug_cutscene`, `set_path_pure`, `set_path_mixed`
-- [x] `Map.tscn` / `Map.gd` updated with an on-screen hint and a temporary map-side `B` trigger into battle through `SceneManager.change_state("battle")`
-- [x] Battle scene includes `Attack`, `Cast Spell`, and `Return to Map` buttons
-- [x] `Attack` emits `SignalBus.action_performed({ "type": "attack" })`
-- [x] `Cast Spell` emits `SignalBus.action_performed({ "type": "cast" })`
-- [x] Return path to map goes back through `SceneManager.change_state("map")`
-- [x] Proof complete: `attack` increments `physical.strength`, `cast` increments `magik.spellcasting` + `magik.attunement`, and the clock/debug overlay persist across the map → battle → map round-trip
+---
 
-### Day 4 — HUD + Cutscene
-- [x] Add a minimal HUD overlay under `OverlayHost` (not a `SceneManager` state)
-- [x] Toggle HUD on `H` while keeping the map visible underneath
-- [x] Block map movement while HUD is open, but keep the clock running
-- [x] Show placeholder inventory/equipment framing, current clock, current path/class, and a compact stat summary
-- [x] Add a temporary map-side cutscene trigger on `C`
-- [x] Use `PlayerData.chosen_path` as the spike source of truth, defaulting to `pure` if unset
-- [x] Add dev-only allegiance switches: `1` = Pure, `2` = Mixed
-- [x] Create `Cutscene.tscn` / `Cutscene.gd`
-- [x] Run one short scripted placeholder movement sequence
-- [x] Show one of two dialogue lines based on the Pure/Mixed path
-- [x] Return to map through `SceneManager`; manual continuity proof is queued for Day 5 verification
-- [x] Headless smoke passes: `godot --headless --path . --quit-after 4`
-- [x] Headless cutscene load passes: `godot --headless --path . --scene res://scenes/cutscene/Cutscene.tscn --quit-after 4`
+## Day Log
 
-### Day 5 — Wire + verify
-- [x] Boot from `Main` and confirm blank `chosen_path` defaults to `pure` in the debug panel and HUD
-- [x] Walk on map, open HUD with `H`, confirm movement stops while HUD is open, and confirm the clock keeps advancing
-- [x] Use `1` and `2` on map and confirm the path updates immediately in debug + HUD without a scene reload
-- [x] Trigger cutscene with `C` as Pure and confirm the Pure dialogue branch, scripted movement, and return to map
-- [x] Trigger cutscene with `C` as Mixed and confirm the Mixed dialogue branch, scripted movement, and return to map
-- [x] Re-run the battle proof with `B`, `Attack`, `Cast Spell`, and `Return to Map`; confirm HUD stays hidden outside map
-- [x] If all checks pass, mark the remaining two success criteria green and close the technical spike
+### Day 1 - Autoloads and scaffold
 
-All spike activity and tests passed, completed clean. Spike finished successfully
+- [x] `SignalBus.gd`
+- [x] `StatRegistry.gd`
+- [x] `GameClock.gd`
+- [x] `PlayerData.gd`
+- [x] autoload registration in `project.godot`
+- [x] initial folder structure
+- [x] stat-registry design doc
+
+### Day 2 - SceneManager and map
+
+- [x] `SceneManager.gd` added as the exclusive state-transition owner
+- [x] `Main.tscn` and `Main.gd` added as the permanent shell
+- [x] `Map.tscn` and `Map.gd` added with bounded four-direction movement
+- [x] `DebugPanel.tscn` and `DebugPanel.gd` added as a persistent overlay
+- [x] walking emits `SignalBus.action_performed({ "type": "walk" })`
+- [x] debug panel displays live stats, flags, and clock
+- [x] movement stat proof completed
+
+### Day 3 - Battle scene
+
+- [x] `Battle.tscn` and `Battle.gd` added as the first battle proof
+- [x] debug battle trigger added on `B`
+- [x] battle actions for `Attack`, `Cast Spell`, and `Return to Map`
+- [x] map -> battle -> map round-trip confirmed
+- [x] attack and cast stat increments confirmed
+
+### Day 4 - HUD and cutscene
+
+- [x] HUD overlay added under `OverlayHost`
+- [x] HUD toggle added on `H`
+- [x] map movement blocked while HUD is open
+- [x] clock continues while HUD is open
+- [x] cutscene trigger added on `C`
+- [x] path-dependent dialogue proof added
+- [x] cutscene returns to map through `SceneManager`
+
+### Day 5 - Wire and verify
+
+- [x] blank `chosen_path` defaults to `pure`
+- [x] path switching reflects immediately in debug UI and HUD
+- [x] cutscene branch changes with Pure vs Mixed
+- [x] battle proof rerun after the full shell wiring
+- [x] all remaining spike success criteria closed
+
+---
+
+## Spike Outcome
+
+The spike shipped the architecture that the vertical slice later expanded:
+- persistent main shell
+- exclusive scene-state transitions
+- map, battle, HUD, and cutscene separation
+- stat/event plumbing
+- debug-first validation tools
+
+No spike work remains open in this repo.

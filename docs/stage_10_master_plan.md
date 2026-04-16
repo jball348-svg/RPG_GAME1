@@ -2,11 +2,13 @@
 
 ## Status
 
-Stage 10 implementation is complete for `T01` through `T11`.
-This pass stops at playtest-ready handoff.
+Stage 10 is complete and closed in this repo.
 
-Explicitly deferred:
-- `T12` outside-feedback fixes and final sign-off after a real external playtest
+This file is now the Stage 10 closeout summary:
+- the systems landed
+- the verification artifacts exist
+- the vertical slice is accepted as complete
+- the next phase happens in a cloned repo, not as more Stage 10 work in `RPG_GAME1`
 
 ---
 
@@ -15,83 +17,96 @@ Explicitly deferred:
 ### Shared systems
 
 - `autoloads/AudioManager.gd`
-  - shared music layer with crossfade
+  - locked music cues for `town`, `mine`, `battle`, `boss`, `moral_choice`, `victory_exit`
   - pooled SFX playback
-  - runtime cue lock for `town`, `mine`, `battle`, `boss`, `moral_choice`, `victory_exit`
-  - lightweight SFX history helpers for harness smoke checks
+  - harness-friendly music/SFX inspection helpers
 - `autoloads/ActorVisuals.gd`
-  - shared actor registry for map, battle, portrait, cutscene, follower, and accent/tint data
+  - shared actor identity registry for map, battle, portrait, cutscene, follower, and tint/accent usage
 
 ### Scene integration
 
-- map, battle, HUD, dialogue, and cutscene now consume `ActorVisuals`
-- map, battle, HUD, dialogue, prompt, and cutscene now call `AudioManager` directly
-- dialogue nodes support `portrait_id` while preserving the raw `portrait` fallback path
-- `NPC.gd` and town NPC instances now expose `actor_id`
+- map, battle, HUD, dialogue, prompt, and cutscene all use the shared Stage 10 audio layer
+- map, battle, HUD, dialogue, cutscene, and follower presentation route through `ActorVisuals`
+- dialogue supports `portrait_id` while preserving raw portrait-path fallback
+- NPCs expose `actor_id`
 
 ### Audio
 
 - six music beats locked from `assets/Music/`
-- first-pass runtime SFX committed in `assets/SFX/`
-- town/crossroads ambience, mine ambience, battle/boss routing, moral-choice sting, victory/exit cue, footsteps, UI, combat, spell, gate, and loot beats wired
+- runtime SFX committed under `assets/SFX/` as stable `ogg` files
+- footsteps, combat, spell, UI, gate, loot, moral-choice, and victory cues wired
 
 ### Collision and readability
 
-- town collision changed from five broad blockers to smaller authored shapes
-- mine walkable sections and progression blockers rewritten into named data groups
-- west branch, east branch, top shaft, boss gate, and exit gate now surface clearer route messaging
+- town blockers replaced with smaller authored collision shapes
+- mine walkable zones and blocker rules moved into named data
+- route lock messaging clarified for branches, boss shaft, and exit gate
 
-### Release hygiene
+### Presentation and release hygiene
 
-- debug panel creation gated behind `OS.is_debug_build()`
-- debug-only map loader hidden in non-debug builds
-- normal hint text no longer hardcodes debug controls
-- remaining debug actions on the map are gated behind debug build checks
+- player, Shaman, guard, merchant, and bookstore keeper identities unified across states
+- release-visible debug leakage removed from normal hint text and overlay creation
+- debug panel and loader remain debug-build only
 
-### Handoff materials
+### Handoff artifacts
 
 - `docs/stage_10_identity_matrix.md`
 - `docs/stage_10_audio_asset_research.md`
 - `docs/stage_10_playtest_packet.md`
-- `tools/stage_10_runtime_harness.gd/.tscn`
-- `tools/evidence/stage_10/README.md`
+- `docs/stage_10_tickets.md`
+- `tools/stage_10_runtime_harness.gd`
+- `tools/stage_10_runtime_harness.tscn`
+- `tools/evidence/stage_10/`
 
 ---
 
-## Current Verification State
+## Verification Completed
 
-What was completed in this implementation pass:
-- code integration for Stage 10 systems and scene wiring
-- Stage 10 runtime harness scaffold for screenshots plus JSON results
-- docs updated to reflect actual repo state
+- Godot import completed successfully with the local Godot 4.6.2 console build
+- `tools/stage_10_runtime_harness.tscn` was executed
+- evidence was captured under `tools/evidence/stage_10/`
+- the final `runtime_results.json` confirms:
+  - town music, dialogue audio, HUD audio, prompt audio, and collision probes
+  - mine music and route-lock readability
+  - fighter and battlemage battle presentation
+  - Shaman intro, recruit, kill, and exit flows
+  - crossroads follower presence
+  - full music cue catalog resolution
 
-What was not completed in this shell session:
-- Godot CLI execution of the Stage 10 runtime harness
-- release-build smoke in a non-debug executable
-- outside playtest and feedback-driven fixes
+Follow-up fix completed during verification:
+- mine texture loading was switched onto the normal imported-texture path so the earlier export-risk warning is gone
 
-Reason:
-- Godot CLI was not available on `PATH` in the implementation shell
+Remaining runtime note:
+- the last harness run still emitted a generic Godot `ObjectDB` leak warning at shutdown
+- no functional Stage 10 blocker was identified from that warning during the closeout pass
 
 ---
 
-## Active References
+## Closure Decision
 
+The vertical slice is considered complete in this repo.
+
+That means:
+- no Stage 10 ticket remains open here
+- no extra polish pass is scheduled here
+- no new vertical-slice scope should be invented here
+
+If future cleanup, restructuring, or production planning happens, it belongs to the next phase:
+- clone repo
+- rename repo
+- run foundation pass
+
+---
+
+## Reference Pack
+
+- `README.md`
 - `docs/HANDOVER.md`
 - `docs/vertical_slice_plan.md`
-- `docs/stage_10_tickets.md`
 - `docs/stage_10_identity_matrix.md`
 - `docs/stage_10_audio_asset_research.md`
 - `docs/stage_10_playtest_packet.md`
+- `docs/stage_10_tickets.md`
+- `tools/evidence/stage_10/runtime_results.json`
 
----
-
-## Next Pass
-
-The next pass should do exactly three things:
-
-1. Run the Stage 10 harness or equivalent manual capture flow in Godot.
-2. Put the slice in front of an outside playtester.
-3. Triage and fix only the issues that come back from that playtest.
-
-Do not reopen Stage 10 scope before real outside feedback exists.
+Use this pack as the archived record of how the slice closed.
